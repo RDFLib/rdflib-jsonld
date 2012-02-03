@@ -1,0 +1,39 @@
+{
+  "http://example.com/joe/foaf.rdf" : {
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" : [ {
+        "value" : "http://xmlns.com/foaf/0.1/PersonalProfileDocument",
+        "type" : "uri"
+        }
+
+      ],
+    "http://xmlns.com/foaf/0.1/primaryTopic" : [ {
+        "value" : "http://www.example.com/joe#me",
+        "type" : "uri"
+        }
+
+      ]
+    }
+  ,
+  "http://www.example.com/joe#me" : {
+    "http://www.w3.org/1999/02/22-rdf-syntax-ns#type" : [ {
+        "value" : "http://xmlns.com/foaf/0.1/Person",
+        "type" : "uri"
+        }
+
+      ],
+    "http://xmlns.com/foaf/0.1/name" : [ {
+        "value" : "Joe Bloggs",
+        "lang" : "en",
+        "type" : "literal"
+        }
+
+      ],
+    "http://xmlns.com/foaf/0.1/age" : [ {
+        "value" : "59",
+        "datatype" : "http://www.w3.org/2001/XMLSchema#integer",
+        "type" : "literal"
+        }
+
+      ]
+    }
+}

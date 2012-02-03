@@ -1,0 +1,14 @@
+/* example3.json - a comment at the start of the file */
+
+// C++ style comment
+
+{
+  "triples" : [
+    {
+      "subject"   : { "type" : "uri", "value" : "http://example.org/about" },
+      "predicate" : { "type" : "uri", "value" : "http://purl.org/dc/elements/1.1/creator" },
+      // Comment in the middle
+      "object"    : { "type" : "literal", "value" : "Anna Wilder" }
+    }
+  ]
+}

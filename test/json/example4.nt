@@ -1,0 +1,5 @@
+<http://example.com/joe/foaf.rdf> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/PersonalProfileDocument> .
+<http://example.com/joe/foaf.rdf> <http://xmlns.com/foaf/0.1/primaryTopic> <http://www.example.com/joe#me> .
+<http://www.example.com/joe#me> <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://xmlns.com/foaf/0.1/Person> .
+<http://www.example.com/joe#me> <http://xmlns.com/foaf/0.1/name> "Joe Bloggs"@en .
+<http://www.example.com/joe#me> <http://xmlns.com/foaf/0.1/age> "59"^^<http://www.w3.org/2001/XMLSchema#integer> .

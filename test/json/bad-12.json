@@ -1,0 +1,7 @@
+/* bad-12.json - Not RDF/JSON */
+
+{
+  "key1" : "value1",
+  "key2" : "value2",
+  "key3" : "value3"
+}

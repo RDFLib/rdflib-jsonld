@@ -1,0 +1,11 @@
+/* bad-06.json - Missing term type */
+
+{
+  "triples" : [
+    {
+      "subject"   : { "type" : "uri", "value" : "http://example.org/about" },
+      "predicate" : { "type" : "uri", "value" : "http://purl.org/dc/elements/1.1/creator" },
+      "object"    : { "value" : "Anna Wilder" },
+    }
+  ]
+}

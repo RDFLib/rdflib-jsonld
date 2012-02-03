@@ -1,0 +1,11 @@
+/* bad-11.json - Syntax error in the JSON - extra square-brace */
+
+{
+  "triples" : [
+    {
+      "subject"   : { "type" : "uri", "value" : "http://example.org/about" ]},
+      "predicate" : { "type" : "uri", "value" : "http://purl.org/dc/elements/1.1/creator" },
+      "object"    : { "type" : "literal", "value" : "Anna Wilder" }
+    }
+  ]
+}

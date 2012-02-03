@@ -1,0 +1,11 @@
+/* bad-05.json - Invalid attribute */
+
+{
+  "triples" : [
+    {
+      "subject"   : { "type" : "uri", "value" : "http://example.org/about" },
+      "predicate" : { "type" : "uri", "value" : "http://purl.org/dc/elements/1.1/creator" },
+      "object"    : { "type" : "literal", "value" : "Anna Wilder", "foo" : "bar" }
+    }
+  ]
+}

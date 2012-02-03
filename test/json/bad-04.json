@@ -1,0 +1,7 @@
+/* bad-04.json - Resource-centric JSON missing an object */
+
+{
+    "http://example.org/about" : {
+        "http://purl.org/dc/elements/1.1/creator" : [ {} ]
+    }
+}

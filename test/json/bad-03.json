@@ -1,0 +1,10 @@
+/* bad-03.json - No object defined for triple */
+
+{
+  "triples" : [
+    {
+      "subject"   : { "type" : "uri", "value" : "http://example.org/about" },
+      "predicate" : { "type" : "uri", "value" : "http://purl.org/dc/elements/1.1/creator" }
+    }
+  ]
+}

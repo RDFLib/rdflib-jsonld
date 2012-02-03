@@ -1,0 +1,11 @@
+/* bad-11.json - Document with a float value */
+
+{
+  "triples" : [
+    {
+      "subject"   : { "type" : "uri", "value" : "http://example.org/about" },
+      "predicate" : { "type" : "uri", "value" : "http://purl.org/dc/elements/1.1/creator" },
+      "object"    : { "type" : "literal", "value" : 4.4 }
+    }
+  ]
+}

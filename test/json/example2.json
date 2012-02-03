@@ -1,0 +1,57 @@
+{
+  "triples" : [
+    {
+      "subject"   : { "type" : "uri", "value" : "http://example.org/about" },
+      "predicate" : { "type" : "uri", "value" : "http://purl.org/dc/elements/1.1/creator" },
+      "object"    : { "type" : "literal", "value" : "Anna Wilder" }
+    },{
+      "subject"   : { "type" : "uri", "value" : "http://example.org/about" },
+      "predicate" : { "type" : "uri", "value" : "http://purl.org/dc/elements/1.1/title" },
+      "object"    : { "type" : "literal", "value" : "Anna's Homepage", "lang" : "en" }
+    },{
+      "subject"   : { "type" : "uri", "value" : "http://example.org/about" },
+      "predicate" : { "type" : "uri", "value" : "http://xmlns.com/foaf/0.1/maker" },
+      "object"    : { "type" : "bnode", "value" : "_:person" }
+    },{
+      "subject"   : { "type" : "bnode", "value" : "_:person" },
+      "predicate" : { "type" : "uri", "value" : "http://xmlns.com/foaf/0.1/homepage" },
+      "object"    : { "type" : "uri", "value" : "http://example.org/about" }
+    },{
+      "subject"   : { "type" : "bnode", "value" : "_:person" },
+      "predicate" : { "type" : "uri", "value" : "http://xmlns.com/foaf/0.1/made" },
+      "object"    : { "type" : "uri", "value" : "http://example.org/about" }
+    },{
+      "subject"   : { "type" : "bnode", "value" : "_:person" },
+      "predicate" : { "type" : "uri", "value" : "http://xmlns.com/foaf/0.1/name" },
+      "object"    : { "type" : "literal", "value" : "Anna Wilder" }
+    },{
+      "subject"   : { "type" : "bnode", "value" : "_:person" },
+      "predicate" : { "type" : "uri", "value" : "http://xmlns.com/foaf/0.1/firstName" },
+      "object"    : { "type" : "literal", "value" : "Anna" }
+    },{
+      "subject"   : { "type" : "bnode", "value" : "_:person" },
+      "predicate" : { "type" : "uri", "value" : "http://xmlns.com/foaf/0.1/surname" },
+      "object"    : { "type" : "literal", "value" : "Wilder" }
+    },{
+      "subject"   : { "type" : "bnode", "value" : "_:person" },
+      "predicate" : { "type" : "uri", "value" : "http://xmlns.com/foaf/0.1/depiction" },
+      "object"    : { "type" : "uri", "value" : "http://example.org/pic.jpg" }
+    },{
+      "subject"   : { "type" : "bnode", "value" : "_:person" },
+      "predicate" : { "type" : "uri", "value" : "http://xmlns.com/foaf/0.1/nick" },
+      "object"    : { "type" : "literal", "value" : "wildling" }
+    },{
+      "subject"   : { "type" : "bnode", "value" : "_:person" },
+      "predicate" : { "type" : "uri", "value" : "http://xmlns.com/foaf/0.1/nick" },
+      "object"    : { "type" : "literal", "value" : "wilda" }
+    },{
+      "subject"   : { "type" : "bnode", "value" : "_:person" },
+      "predicate" : { "type" : "uri", "value" : "http://xmlns.com/foaf/0.1/age" },
+      "object"    : { "type" : "literal", "value" : "48", "datatype" : "http://www.w3.org/2001/XMLSchema#integer" }
+    },{
+      "subject"   : { "type" : "bnode", "value" : "_:person" },
+      "predicate" : { "type" : "uri", "value" : "http://xmlns.com/foaf/0.1/mbox_sha1sum" },
+      "object"    : { "type" : "literal", "value" : "69e31bbcf58d432950127593e292a55975bc66fd" }
+    }
+  ]
+}
