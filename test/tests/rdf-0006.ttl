@@ -1,0 +1,7 @@
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+
+  <http://greggkellogg.net/foaf#me> dc:created "1957-02-27"^^xsd:date
+
+ .

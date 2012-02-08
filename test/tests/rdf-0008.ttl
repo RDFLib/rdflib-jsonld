@@ -1,0 +1,2 @@
+
+  _:a <http://example.com/default#foo> "bar" .

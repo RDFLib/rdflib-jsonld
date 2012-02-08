@@ -1,0 +1,4 @@
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+
+
+  <http://greggkellogg.net/foaf#me> foaf:knows <http://manu.sporny.org/#me> .

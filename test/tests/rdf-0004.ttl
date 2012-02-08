@@ -1,0 +1,5 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+
+  _:s rdfs:label "A plain literal with a lang tag."@en-us .
+
