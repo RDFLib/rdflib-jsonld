@@ -69,9 +69,9 @@ def test_cases():
         yield gt, e
 
 
-# import sys
-# if sys.version_info <= (2,5):
-#     raise SkipTest('test execution code broken in Python 2.4')
+import sys
+if sys.version_info <= (2,5):
+    raise SkipTest('test execution code broken in Python 2.4')
 
 if __name__ == "__main__":
     test_cases()
