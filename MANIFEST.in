@@ -1,4 +1,4 @@
 include *.md
-recursive-include rdflib_rdfjson *.py
+recursive-include rdflib_jsonld *.py
 include setup.*
 graft test
