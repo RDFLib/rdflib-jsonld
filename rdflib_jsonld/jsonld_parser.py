@@ -8,10 +8,7 @@ Graph. See:
 
 Example usage::
 
-    >>> from rdflib import Graph, plugin, URIRef, Literal
-    >>> from rdflib.parser import Parser
-    >>> plugin.register('json-ld', Parser,
-    ...     'rdfextras.parsers.jsonld', 'JsonLDParser')
+    >>> from rdflib import Graph, URIRef, Literal
     >>> test_json = '''
     ... {
     ...     "@context": {
