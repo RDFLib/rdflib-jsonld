@@ -43,10 +43,10 @@ __version__ = find_version('rdflib_jsonld/__init__.py')
 
 install_requires = ["rdflib>=3.0", 
                     "rdfextras>=0.2", 
-                    ],
+                    ]
 
 if sys.version_info[:2] < (2,6):
-    install_requires.append(0, "simplejson")
+    install_requires += ["simplejson"]
 
 config = dict(
     name = 'rdflib-jsonld',
@@ -72,6 +72,7 @@ config = dict(
     classifiers = ["Programming Language :: Python",
                    "Programming Language :: Python :: 2",
                    "Programming Language :: Python :: 3",
+                   "Programming Language :: Python :: 2.4",
                    "Programming Language :: Python :: 2.5",
                    "Programming Language :: Python :: 2.6",
                    "Programming Language :: Python :: 2.7",
