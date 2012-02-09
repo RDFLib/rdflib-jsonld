@@ -1,6 +1,10 @@
 from glob import glob
 from os import path as p
-import json
+try:
+    import json
+except ImportError:
+    import simplejson as json
+    
 from rdflib import Graph
 from rdflib.compare import isomorphic
 # from rdfextras.ldcontext import Context
