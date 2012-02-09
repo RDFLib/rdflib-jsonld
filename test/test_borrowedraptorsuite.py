@@ -1,8 +1,7 @@
-import os
+import os, sys
 from random import choice
 from nose.exc import SkipTest
 import rdflib
-
 import logging
 log = logging.getLogger(__file__)
 
@@ -54,7 +53,12 @@ def test_cases():
         else:
             e.skip = None
         # e.skip = True
-        gt = deepcopy(genericbadjsontest)
+        if sys.version_info[:2] == (2,4):
+            import pickle
+            gbjt = pickle.dumps(genericbadjsontest)
+            gt = pickle.loads(gbjt)
+        else:
+            gt = deepcopy(genericbadjsontest)
         gt.__doc__ = tfile
         yield gt, e
     for example in examples:
@@ -64,14 +68,15 @@ def test_cases():
             e.skip = skiptests[gname]
         else:
             e.skip = None
-        gt = deepcopy(generictest)
+        if sys.version_info[:2] == (2,4):
+            import pickle
+            gjt = pickle.dumps(generictest)
+            gt = pickle.loads(gjt)
+        else:
+            gt = deepcopy(generictest)
         gt.__doc__ = tfile
         yield gt, e
 
-
-import sys
-if sys.version_info <= (2,5):
-    raise SkipTest('test execution code broken in Python 2.4')
 
 if __name__ == "__main__":
     test_cases()
