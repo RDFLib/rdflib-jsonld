@@ -90,12 +90,13 @@ def to_rdf(tree, graph, base=None, context_data=None):
 
     return graph
 
-
+import re
+bNodeIdRegexp = re.compile(r'^_:(.+)')   
 def _add_to_graph(state, node):
     graph, context, base = state
     id_val = node.get(context.id_key)
-    if id_val:
-        subj = URIRef(context.expand(id_val), base) 
+    if id_val and (not bNodeIdRegexp.match (id_val)):
+            subj = URIRef(context.expand(id_val), base)
     else:
         subj = BNode()
 
