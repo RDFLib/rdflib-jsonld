@@ -117,7 +117,7 @@ def to_tree(graph, context_data=None, base=None, generate_compact=True):
     if len(nodes) == 1:
         tree.update(nodes[0])
     else:
-        tree[context.id_key] = nodes
+        tree[context.graph_key] = nodes
 
     return tree
 
