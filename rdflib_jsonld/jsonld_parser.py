@@ -39,7 +39,7 @@ from rdflib.parser import Parser
 from rdflib.namespace import RDF, XSD
 from rdflib.term import URIRef, BNode, Literal
 
-from rdfextras.ldcontext import Context, Term, CONTEXT_KEY, ID_KEY, LIST_KEY
+from rdfextras.ldcontext import Context, Term, CONTEXT_KEY, ID_KEY, LIST_KEY, GRAPH_KEY
 from rdfextras.ldcontext import source_to_json
 
 __all__ = ['JsonLDParser', 'to_rdf']
@@ -90,12 +90,13 @@ def to_rdf(tree, graph, base=None, context_data=None):
 
     return graph
 
-
+import re
+bNodeIdRegexp = re.compile(r'^_:(.+)')   
 def _add_to_graph(state, node):
     graph, context, base = state
     id_val = node.get(context.id_key)
-    if id_val:
-        subj = URIRef(context.expand(id_val), base) 
+    if id_val and (not bNodeIdRegexp.match (id_val)):
+            subj = URIRef(context.expand(id_val), base)
     else:
         subj = BNode()
 
@@ -105,6 +106,10 @@ def _add_to_graph(state, node):
         if pred_key == context.type_key:
             pred = RDF.type
             term = Term(None, None, context.id_key)
+        elif pred_key == context.graph_key:
+            for onode in obj_nodes:
+                _add_to_graph(state,onode)                        
+            continue
         else:
             pred_uri = context.expand(pred_key)
             pred = URIRef(pred_uri)

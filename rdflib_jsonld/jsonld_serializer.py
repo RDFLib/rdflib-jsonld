@@ -117,7 +117,7 @@ def to_tree(graph, context_data=None, base=None, generate_compact=True):
     if len(nodes) == 1:
         tree.update(nodes[0])
     else:
-        tree[context.id_key] = nodes
+        tree[context.graph_key] = nodes
 
     return tree
 
@@ -196,8 +196,10 @@ def _to_raw_value(state, o):
             return {context.lang_key: o.language,
                     context.literal_key: v}
         elif o.datatype:
-            if o.datatype in PLAIN_LITERAL_TYPES:
-                return o.toPython()
+            #https://github.com/RDFLib/rdflib-jsonld/issues/4
+            #serialize data type regardless
+            #if o.datatype in PLAIN_LITERAL_TYPES:
+            #    return o.toPython()
             return {context.type_key: context.shrink(o.datatype),
                     context.literal_key: v}
         else:
