@@ -78,18 +78,19 @@ test01_json = """\
 }
 """
 
+
 class JsonLDParserTestCase(unittest.TestCase):
     identifier = "rdflib_test"
 
     def setUp(self):
         self.json_graph = Graph()
         self.n3_graph = Graph()
-    
+
     def tearDown(self):
         self.json_graph = self.n3_graph = None
 
     def test_parse01(self):
-        self.json_graph.parse(data=test01_json, format="json-ld")
+        g = self.json_graph.parse(data=test01_json, format="json-ld")
         self.n3_graph.parse(data=test01_n3, format="n3")
         self.assertTrue(self.json_graph.isomorphic(self.n3_graph))
 
@@ -103,13 +104,14 @@ class JsonLDParserTestCase(unittest.TestCase):
         self.n3_graph.parse(data=test03_n3, format="n3")
         self.assertTrue(self.json_graph.isomorphic(self.n3_graph))
 
+
 # Slightly lame, assumes JSON-LD parsing is error-free
 class JsonLDSerializerTestCase(unittest.TestCase):
     identifier = "rdflib_test"
 
     def setUp(self):
         self.n3_graph = Graph()
-    
+
     def tearDown(self):
         self.n3_graph = None
 
@@ -117,16 +119,19 @@ class JsonLDSerializerTestCase(unittest.TestCase):
         self.n3_graph.parse(data=test01_n3, format="n3")
         json_data = self.n3_graph.serialize(data=test01_json, format="json-ld")
         gjson = Graph()
-        self.assert_(gjson.parse(data=json_data, format="json-ld").isomorphic(self.n3_graph))
+        self.assert_(gjson.parse(data=json_data, format="json-ld"
+                      ).isomorphic(self.n3_graph))
 
     def test_serialize_02(self):
         self.n3_graph.parse(data=test02_n3, format="n3")
         json_data = self.n3_graph.serialize(data=test02_json, format="json-ld")
         gjson = Graph()
-        self.assert_(gjson.parse(data=json_data, format="json-ld").isomorphic(self.n3_graph))
+        self.assert_(gjson.parse(data=json_data, format="json-ld"
+                    ).isomorphic(self.n3_graph))
 
     def test_serialize_03(self):
         self.n3_graph.parse(data=test03_n3, format="n3")
         json_data = self.n3_graph.serialize(data=test03_json, format="json-ld")
         gjson = Graph()
-        self.assert_(gjson.parse(data=json_data, format="json-ld").isomorphic(self.n3_graph))
+        self.assert_(gjson.parse(data=json_data, format="json-ld"
+                    ).isomorphic(self.n3_graph))

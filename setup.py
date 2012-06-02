@@ -17,7 +17,7 @@ def setup_python3():
     from distutils.filelist import FileList
     from distutils import dir_util, file_util, util, log
     from os.path import join
-  
+
     tmp_src = join("build", "src")
     log.set_verbosity(1)
     fl = FileList()
@@ -31,13 +31,14 @@ def setup_python3():
         outf, copied = file_util.copy_file(f, join(tmp_src, f), update=1)
         if copied and outf.endswith(".py"):
             outfiles_2to3.append(outf)
-  
+
     util.run_2to3(outfiles_2to3)
-  
+
     # arrange setup to use the copy
     sys.path.insert(0, tmp_src)
 
     return tmp_src
+
 
 # Find version. We have to do this because we can't import it in Python 3 until
 # its been automatically converted in the setup process.
@@ -50,18 +51,18 @@ def find_version(filename):
 
 __version__ = find_version('rdflib_jsonld/__init__.py')
 
-install_requires = ["rdflib>=3.0", 
-                    "rdfextras>=0.2", 
+install_requires = ["rdflib>=3.0",
+                    "rdfextras>=0.2",
                     ]
 
-if sys.version_info[:2] < (2,6):
+if sys.version_info[:2] < (2, 6):
     install_requires += ["simplejson"]
 
 config = dict(
     name = 'rdflib-jsonld',
     description = "rdflib extension adding JSON-LD parser and serializer",
-    author = "Graham Higgins",
-    author_email = "gjhiggins@gmail.com",
+    maintainer = "RDFLib Team",
+    maintainer_email = "http://groups.google.com/group/rdflib-dev",
     url = "https://github.com/RDFLib/rdflib-jsonld",
     version = __version__,
     download_url = "https://github.com/RDFLib/rdflib-jsonld/zipball/master",
@@ -69,27 +70,25 @@ config = dict(
     platforms = ["any"],
     long_description = \
     """
-    This parser/serialiser will 
+    This parser/serialiser will
 
-    * read in an JSON-LD formatted document and create an RDF graph 
-    * serialize an RDF graph to JSON-LD formatted output 
+    * read in an JSON-LD formatted document and create an RDF graph
+    * serialize an RDF graph to JSON-LD formatted output
 
     See:
 
         http://json-ld.org/
     """,
-    classifiers = ["Programming Language :: Python",
-                   "Programming Language :: Python :: 2",
-                   "Programming Language :: Python :: 3",
-                   "Programming Language :: Python :: 2.4",
-                   "Programming Language :: Python :: 2.5",
-                   "Programming Language :: Python :: 2.6",
-                   "Programming Language :: Python :: 2.7",
-                   "Programming Language :: Python :: 3.2",
-                   "License :: OSI Approved :: BSD License",
-                   "Topic :: Software Development :: Libraries :: Python Modules",
-                   "Operating System :: OS Independent",
-                   "Natural Language :: English",
+    classifiers = [
+        "Programming Language :: Python",
+        "Programming Language :: Python :: 2",
+        "Programming Language :: Python :: 2.5",
+        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2.7",
+        "License :: OSI Approved :: BSD License",
+        "Topic :: Software Development :: Libraries :: Python Modules",
+        "Operating System :: OS Independent",
+        "Natural Language :: English",
                    ],
     packages = ["rdflib_jsonld"],
     test_suite = "test",
@@ -117,4 +116,3 @@ else:
 
 
 setup(**config)
-
