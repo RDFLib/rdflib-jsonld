@@ -3,6 +3,15 @@
 import sys
 import re
 
+# Ridiculous as it may seem, we need to import multiprocessing and logging here
+# in order to get tests to pass smoothly on python 2.7.
+try:
+    import multiprocessing
+    import logging
+except:
+    pass
+
+
 def setup_python3():
     # Taken from "distribute" setup.py
     from distutils.filelist import FileList
