@@ -39,8 +39,8 @@ from rdflib.parser import Parser
 from rdflib.namespace import RDF, XSD
 from rdflib.term import URIRef, BNode, Literal
 
-from rdfextras.ldcontext import Context, Term, CONTEXT_KEY, ID_KEY, LIST_KEY
-from rdfextras.ldcontext import source_to_json
+from ldcontext import Context, Term, CONTEXT_KEY, ID_KEY, LIST_KEY
+from ldcontext import source_to_json
 
 __all__ = ['JsonLDParser', 'to_rdf']
 

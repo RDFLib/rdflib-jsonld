@@ -44,8 +44,8 @@ from rdflib.serializer import Serializer
 from rdflib.term import URIRef, Literal, BNode
 from rdflib.namespace import RDF, XSD
 
-from rdfextras.ldcontext import Context, ID_KEY, LIST_KEY, SET_KEY
-from rdfextras.ldcontext import json
+from ldcontext import Context, ID_KEY, LIST_KEY, SET_KEY
+from ldcontext import json
 
 __all__ = ['JsonLDSerializer', 'to_tree']
 
