@@ -1,4 +1,9 @@
 {
-  "@context": { "chem": "http://example/chem#"},
-  "chem:protons": 12
+    "@context": {
+        "measure": "http://example/measure#"
+    },
+    "http://example/chem#protons": {
+        "@type": "http://www.w3.org/2001/XMLSchema#integer",
+        "@value": "12"
+    }
 }
