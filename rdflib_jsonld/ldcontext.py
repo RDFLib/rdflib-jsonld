@@ -24,13 +24,14 @@ CONTEXT_KEY = '@context'
 LANG_KEY = '@language'
 ID_KEY = '@id'
 TYPE_KEY = '@type'
-LITERAL_KEY = '@literal'
+LITERAL_KEY = '@value'
 LIST_KEY = '@list'
-CONTAINER_KEY = '@container' # EXPERIMENTAL
-SET_KEY = '@set' # EXPERIMENTAL
-REV_KEY = '@rev' # EXPERIMENTAL
-
-KEYS = set([LANG_KEY, ID_KEY, TYPE_KEY, LITERAL_KEY, LIST_KEY, REV_KEY])
+CONTAINER_KEY = '@container'  # EXPERIMENTAL
+SET_KEY = '@set'  # EXPERIMENTAL
+REV_KEY = '@rev'  # EXPERIMENTAL
+GRAPH_KEY = '@graph'
+KEYS = set(
+    [LANG_KEY, ID_KEY, TYPE_KEY, LITERAL_KEY, LIST_KEY, REV_KEY, GRAPH_KEY])
 
 
 class Context(object):
@@ -54,6 +55,7 @@ class Context(object):
     container_key = CONTAINER_KEY
     set_key = SET_KEY
     rev_key = property(lambda self: self._key_map.get(REV_KEY, REV_KEY))
+    graph_key = GRAPH_KEY
 
     def load(self, source, base=None, visited_urls=None):
         if CONTEXT_KEY in source:
