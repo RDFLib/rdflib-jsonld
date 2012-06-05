@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 import unittest
-import json
+try:
+    import json
+except ImportError:
+    import simplejson as json
 from rdflib import ConjunctiveGraph, Graph
 from rdflib.compare import isomorphic
 from rdflib_jsonld.jsonld_parser import to_rdf
