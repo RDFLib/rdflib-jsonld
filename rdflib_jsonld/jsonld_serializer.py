@@ -32,6 +32,7 @@ Example usage::
     }
 
 """
+
 # NOTE: This code writes the entire JSON object into memory before serialising,
 # but we should consider streaming the output to deal with arbitrarily large
 # graphs.
@@ -57,7 +58,7 @@ class JsonLDSerializer(Serializer):
 
     def serialize(self, stream, base=None, encoding=None, **kwargs):
         """
-        @@ TODO: add docstring describing usage
+        @@ TODO: add docstring describing args and returned value type
         """
         encoding = encoding or 'utf-8'
         if encoding not in ('utf-8', 'utf-16'):
@@ -79,7 +80,7 @@ class JsonLDSerializer(Serializer):
 
 def to_tree(graph, context_data=None, base=None, generate_compact=True):
     """
-    @@ TODO: add docstring describing usage
+    @@ TODO: add docstring describing args and returned value type
     """
 
     tree = {}

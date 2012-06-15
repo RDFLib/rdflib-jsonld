@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from rdflib.py3compat import format_doctest_out as uformat
 uformat("""
-This serialiser will read in an JSON-LD formatted document and create an RDF
+This parser will read in an JSON-LD formatted document and create an RDF
 Graph. See:
 
     http://json-ld.org/
@@ -29,7 +29,8 @@ Example usage::
     ...     Literal(%(u)s"Someone's Homepage", lang=%(u)s'en'))]
     True
 
-""")
+"""
+)
 # NOTE: This code reads the entire JSON object into memory before parsing, but
 # we should consider streaming the input to deal with arbitrarily large graphs.
 
@@ -45,9 +46,6 @@ __all__ = ['JsonLDParser', 'to_rdf']
 
 
 class JsonLDParser(Parser):
-    """
-    @@ TODO: add docstring describing args and returned value type
-    """
     def __init__(self):
         super(JsonLDParser, self).__init__()
 

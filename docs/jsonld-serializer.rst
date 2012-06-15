@@ -1,17 +1,17 @@
-.. _rdfextras.serializers.rdfjson: an rdfxtras plugin serializer
+.. _rdflib_jsonld.jsonld_serializer: an RDFLib plugin JSONLD serializer
 
 =======================================
-JSONLD serializer plug-in for rdflib
+JSONLD serializer plug-in for RDFLib
 =======================================
-|today|
 
-Using the plug-in JSONLD serializer with rdflib
+Using the plug-in JSONLD serializer with RDFLib
 ------------------------------------------------
 
-Usage with rdflib is straightforward: register the plugin, load in an rdflib 
-Graph, serialize the graph.
+The plugin serializer is automatically registered if installed by
+setuptools, otherwise call ``rdfextras.registerplugins()`` after
+importing, as shown below.
 
-.. warning:: Under construction
+Read in an RDFLib Graph and serialize it, specifying ``format='json-ld'``.
 
 .. code-block:: python
 
@@ -42,17 +42,12 @@ Graph, serialize the graph.
         }
     }
 
+Module contents
+---------------
 
-Modules
---------
-
-.. currentmodule:: rdfextras.serializers.jsonld
-
-.. automodule:: rdfextras.serializers.jsonld
+.. currentmodule:: rdflib_jsonld.jsonld_serializer
 
 .. autoclass:: JsonLDSerializer
    :members: serialize
 
 .. autofunction:: to_tree
-
-
