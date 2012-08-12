@@ -51,9 +51,7 @@ def find_version(filename):
 
 __version__ = find_version('rdflib_jsonld/__init__.py')
 
-install_requires = ["rdflib>=3.0",
-                    "rdfextras>=0.2",
-                    ]
+install_requires = ["rdflib>=3.0"]
 
 if sys.version_info[:2] < (2, 6):
     install_requires += ["simplejson"]
@@ -92,7 +90,7 @@ config = dict(
                    ],
     packages = ["rdflib_jsonld"],
     test_suite = "test",
-    install_requires = ["rdflib>=3.0", "rdfextras>=0.1"],
+    install_requires = install_requires,
     entry_points = {
         'rdf.plugins.parser': [
             'json-ld = rdflib_jsonld.jsonld_parser:JsonLDParser',
