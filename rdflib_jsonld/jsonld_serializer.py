@@ -27,7 +27,7 @@ Example usage::
         "@id": "http://example.org/about",
         "dc:title": {
             "@language": "en",
-            "@literal": "Someone's Homepage"
+            "@value": "Someone's Homepage"
         }
     }
 
@@ -43,7 +43,7 @@ from rdflib.serializer import Serializer
 from rdflib.term import URIRef, Literal, BNode
 from rdflib.namespace import RDF, XSD
 
-from ldcontext import Context, ID_KEY, LIST_KEY, SET_KEY
+from ldcontext import Context, GRAPH_KEY, ID_KEY, LIST_KEY, SET_KEY
 from ldcontext import json
 
 __all__ = ['JsonLDSerializer', 'to_tree']
@@ -94,8 +94,8 @@ def to_tree(graph, context_data=None, base=None, generate_compact=True):
                     unicode(ns) != u"http://www.w3.org/XML/1998/namespace")
 
     if isinstance(context_data, Context):
-            context = context_data
-            context_data = context.to_dict()
+        context = context_data
+        context_data = context.to_dict()
     else:
         context = Context(context_data)
 
@@ -113,6 +113,10 @@ def to_tree(graph, context_data=None, base=None, generate_compact=True):
             current = _subject_to_node(state, s)
             nodes.append(current)
 
+    if not context_data:
+        if len(nodes) == 1:
+            return nodes[0]
+        return nodes
     if len(nodes) == 1:
         tree.update(nodes[0])
     else:
@@ -167,10 +171,9 @@ def _handles_for_property(state, p, objs):
                 #o if unicode(o.datatype) == term.coercion
                 #        else _to_raw_value(state, o)
                 # for py24:
-                repr_value = (lambda o: (
-                        unicode(o.datatype) == term.coercion) \
-                        and o \
-                        or _to_raw_value(state, o))
+                repr_value = (lambda o:
+                        (unicode(o.datatype) == term.coercion) and o
+                        or  _to_raw_value(state, o))
     else:
         if not term and p == RDF.type:
             repr_value = iri_to_id
@@ -198,14 +201,14 @@ def _to_raw_value(state, o):
         v = o
         if o.language and o.language != context.lang:
             return {context.lang_key: o.language,
-                    context.literal_key: v}
+                    context.value_key: v}
         elif o.datatype:
              #https://github.com/RDFLib/rdflib-jsonld/issues/4
              #serialize data type regardless
              #if o.datatype in PLAIN_LITERAL_TYPES:
              #    return o.toPython()
             return {context.type_key: context.shrink(o.datatype),
-                    context.literal_key: v}
+                    context.value_key: v}
         else:
             return v
 

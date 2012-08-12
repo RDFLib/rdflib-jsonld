@@ -19,7 +19,7 @@ Example usage::
     ...     "@id": "http://example.org/about",
     ...     "dc:title": {
     ...         "@language": "en",
-    ...         "@literal": "Someone's Homepage"
+    ...         "@value": "Someone's Homepage"
     ...     }
     ... }
     ... '''
@@ -29,8 +29,8 @@ Example usage::
     ...     Literal(%(u)s"Someone's Homepage", lang=%(u)s'en'))]
     True
 
-"""
-)
+""")
+
 # NOTE: This code reads the entire JSON object into memory before parsing, but
 # we should consider streaming the input to deal with arbitrarily large graphs.
 
@@ -72,11 +72,11 @@ def to_rdf(tree, graph, base=None, context_data=None):
     @@ TODO: add docstring describing args and returned value type
     """
     context = Context()
-    context.load(context_data or tree.get(CONTEXT_KEY) or {}, base)
-
-    id_obj = tree.get(context.id_key)
-    resources = id_obj
-    if not isinstance(id_obj, list):
+    if isinstance(tree, list):
+        resources = tree
+    else:
+        context.load(context_data or tree.get(CONTEXT_KEY) or {}, base)
+        resources = tree.get(context.graph_key)
         resources = [tree]
 
     for term in context.terms:
@@ -99,7 +99,7 @@ def _add_to_graph(state, node):
     if id_val and (not bNodeIdRegexp.match(id_val)):
         subj = URIRef(context.expand(id_val), base)
     else:
-        subj = BNode()
+        subj = BNode() # TODO: use bnode id if given
 
     for pred_key, obj_nodes in node.items():
         if pred_key in (CONTEXT_KEY, context.id_key):
@@ -161,12 +161,12 @@ def _to_object(state, term, node):
                 node = {context.id_key: context.expand(node)}
             else:
                 node = {context.type_key: term.coercion,
-                        context.literal_key: node}
+                        context.value_key: node}
 
     if context.lang_key in node:
-        return Literal(node[context.literal_key], lang=node[context.lang_key])
-    elif context.type_key and context.literal_key in node:
-        return Literal(node[context.literal_key],
+        return Literal(node[context.value_key], lang=node[context.lang_key])
+    elif context.type_key in node and context.value_key in node:
+        return Literal(node[context.value_key],
                 datatype=context.expand(node[context.type_key]))
     else:
         return _add_to_graph(state, node)
