@@ -64,46 +64,49 @@ class Context(object):
             sources = source
         else:
             sources = [source]
-        terms, simple_terms = [], []
-        for obj in sources:
-            if isinstance(obj, basestring):
-                url = urljoin(base, obj)
+        for data in sources:
+            if isinstance(data, basestring):
+                url = urljoin(base, data)
                 visited_urls = visited_urls or []
                 visited_urls.append(url)
                 sub_defs = source_to_json(url)
                 self.load(sub_defs, base, visited_urls)
                 continue
-            for key, value in obj.items():
+            for key, value in data.items():
                 if key == LANG_KEY:
                     self.lang = value
                 elif isinstance(value, unicode) and value in KEYS:
                     self._key_map[value] = key
                 else:
-                    term = self._create_term(key, value)
-                    if term.coercion:
-                        terms.append(term)
-                    else:
-                        simple_terms.append(term)
-        for term in simple_terms + terms:
-            # TODO: expansion for these shoold be done by recursively looking up
-            # keys in source (would also avoid this use of simple_terms).
-            if term.iri:
-                term.iri = self.expand(term.iri)
-            if term.coercion:
-                term.coercion = self.expand(term.coercion)
-            self.add_term(term)
+                    term = self._create_term(data, key, value)
+                    self.add_term(term)
 
-    def _create_term(self, key, dfn):
+    def _create_term(self, data, key, dfn):
         if isinstance(dfn, dict):
-            iri = dfn.get(ID_KEY)
-            coercion = dfn.get(TYPE_KEY)
+            iri = self._rec_expand(data, dfn.get(ID_KEY))
+            coercion = self._rec_expand(data, dfn.get(TYPE_KEY))
             container = dfn.get(CONTAINER_KEY)
             if not container and dfn.get(LIST_KEY) is True:
                 container = LIST_KEY
             return Term(iri, key, coercion, container)
         else:
-            iri = self.expand(dfn)
+            iri = self._rec_expand(data, dfn)
             return Term(iri, key)
+
+    def _rec_expand(self, data, expr, prev=None):
+        if expr == prev:
+            return expr
+        pfx, nxt = self._prep_expand(expr)
+        if pfx:
+            nxt = data.get(pfx) + nxt
+        return self._rec_expand(data, nxt, expr)
+
+    def _prep_expand(self, expr):
+        if ':' in expr:
+            pfx, local = expr.split(':', 1)
+            if not local.startswith('//'):
+                return pfx, local
+        return None, expr
 
     def add_term(self, term):
         self._iri_map[term.iri] = term
@@ -131,11 +134,13 @@ class Context(object):
 
     def expand(self, term_curie_or_iri):
         term_curie_or_iri = unicode(term_curie_or_iri)
-        if ':' in term_curie_or_iri:
-            pfx, term = term_curie_or_iri.split(':', 1)
+        pfx, local = self._prep_expand(term_curie_or_iri)
+        # TODO: is empty string pfx (test/tests/rdf-0009.jsonld) really ok?
+        #if pfx:
+        if pfx is not None:
             ns = self._term_map.get(pfx)
             if ns and ns.iri:
-                return ns.iri + term
+                return ns.iri + local
         else:
             term = self._term_map.get(term_curie_or_iri)
             if term:
