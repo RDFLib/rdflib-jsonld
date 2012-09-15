@@ -73,6 +73,7 @@ def to_rdf(tree, graph, base=None, context_data=None):
     """
     context = Context()
     if isinstance(tree, list):
+        context.load(context_data or {}, base)
         resources = tree
     else:
         context.load(context_data or tree.get(CONTEXT_KEY) or {}, base)
@@ -82,6 +83,8 @@ def to_rdf(tree, graph, base=None, context_data=None):
     for term in context.terms:
         if term.iri and term.iri.endswith(('/', '#', ':')):
             graph.bind(term.key, term.iri)
+    if context.vocab:
+            graph.bind(None, context.vocab)
 
     state = graph, context, base
     for node in resources:
@@ -106,7 +109,7 @@ def _add_to_graph(state, node):
             continue
         if pred_key == context.type_key:
             pred = RDF.type
-            term = Term(None, None, context.id_key)
+            term = Term(None, None, ID_KEY)
         elif pred_key == context.graph_key:
             for onode in obj_nodes:
                 _add_to_graph(state, onode)
@@ -158,7 +161,7 @@ def _to_object(state, term, node):
             return Literal(node, lang=context.lang)
         else:
             if term.coercion == ID_KEY:
-                node = {context.id_key: context.expand(node)}
+                node = {context.id_key: node}
             else:
                 node = {context.type_key: term.coercion,
                         context.value_key: node}
