@@ -30,6 +30,7 @@ CONTAINER_KEY = '@container'
 SET_KEY = '@set'
 REV_KEY = '@rev'  # EXPERIMENTAL
 GRAPH_KEY = '@graph'
+VOCAB_KEY = '@vocab'
 KEYS = set(
     [LANG_KEY, ID_KEY, TYPE_KEY, VALUE_KEY, LIST_KEY, REV_KEY, GRAPH_KEY])
 
@@ -41,6 +42,7 @@ class Context(object):
         self._iri_map = {}
         self._term_map = {}
         self.lang = None
+        self.vocab = None
         if source:
             self.load(source)
 
@@ -56,6 +58,7 @@ class Context(object):
     set_key = SET_KEY
     rev_key = property(lambda self: self._key_map.get(REV_KEY, REV_KEY))
     graph_key = property(lambda self: self._key_map.get(GRAPH_KEY, GRAPH_KEY))
+    vocab_key = VOCAB_KEY
 
     def load(self, source, base=None, visited_urls=None):
         if CONTEXT_KEY in source:
@@ -75,6 +78,8 @@ class Context(object):
             for key, value in data.items():
                 if key == LANG_KEY:
                     self.lang = value
+                elif key == self.vocab_key:
+                    self.vocab = value
                 elif isinstance(value, unicode) and value in KEYS:
                     self._key_map[value] = key
                 else:
@@ -128,6 +133,8 @@ class Context(object):
             term = self._iri_map.get(ns)
             if term:
                 return ":".join((term.key, name))
+            elif ns == self.vocab:
+                return term
         except:
             pass
         return iri
@@ -145,12 +152,16 @@ class Context(object):
             term = self._term_map.get(term_curie_or_iri)
             if term:
                 return term.iri
+            elif self.vocab:
+                return self.vocab + term_curie_or_iri
         return term_curie_or_iri
 
     def to_dict(self):
         data = {}
         if self.lang:
             data[LANG_KEY] = self.lang
+        if self.vocab:
+            data[VOCAB_KEY] = self.vocab
         for key, alias in self._key_map.items():
             if key != alias:
                 data[alias] = key
