@@ -134,7 +134,7 @@ class Context(object):
             if term:
                 return ":".join((term.key, name))
             elif ns == self.vocab:
-                return term
+                return name
         except:
             pass
         return iri
