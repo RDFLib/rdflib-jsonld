@@ -58,7 +58,6 @@ class Context(object):
     set_key = SET_KEY
     rev_key = property(lambda self: self._key_map.get(REV_KEY, REV_KEY))
     graph_key = property(lambda self: self._key_map.get(GRAPH_KEY, GRAPH_KEY))
-    vocab_key = VOCAB_KEY
 
     def load(self, source, base=None, visited_urls=None):
         if CONTEXT_KEY in source:
@@ -75,11 +74,11 @@ class Context(object):
                 sub_defs = source_to_json(url)
                 self.load(sub_defs, base, visited_urls)
                 continue
+            self.lang = data.get(LANG_KEY)
+            self.vocab = data.get(VOCAB_KEY)
             for key, value in data.items():
-                if key == LANG_KEY:
-                    self.lang = value
-                elif key == self.vocab_key:
-                    self.vocab = value
+                if key in (LANG_KEY, VOCAB_KEY):
+                    continue
                 elif isinstance(value, unicode) and value in KEYS:
                     self._key_map[value] = key
                 else:
@@ -101,17 +100,21 @@ class Context(object):
     def _rec_expand(self, data, expr, prev=None):
         if expr == prev:
             return expr
-        pfx, nxt = self._prep_expand(expr)
+        is_term, pfx, nxt = self._prep_expand(expr)
+        if is_term and self.vocab:
+            return self.vocab + expr
         if pfx:
             nxt = data.get(pfx) + nxt
         return self._rec_expand(data, nxt, expr)
 
     def _prep_expand(self, expr):
-        if ':' in expr:
-            pfx, local = expr.split(':', 1)
-            if not local.startswith('//'):
-                return pfx, local
-        return None, expr
+        if ':' not in expr:
+            return True, None, expr
+        pfx, local = expr.split(':', 1)
+        if not local.startswith('//'):
+            return False, pfx, local
+        else:
+            return False, None, expr
 
     def add_term(self, term):
         self._iri_map[term.iri] = term
@@ -141,7 +144,7 @@ class Context(object):
 
     def expand(self, term_curie_or_iri):
         term_curie_or_iri = unicode(term_curie_or_iri)
-        pfx, local = self._prep_expand(term_curie_or_iri)
+        is_term, pfx, local = self._prep_expand(term_curie_or_iri)
         # TODO: is empty string pfx (test/tests/rdf-0009.jsonld) really ok?
         #if pfx:
         if pfx is not None:

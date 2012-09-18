@@ -36,6 +36,7 @@ Example usage::
 # NOTE: This code writes the entire JSON object into memory before serialising,
 # but we should consider streaming the output to deal with arbitrarily large
 # graphs.
+# NOTE: Don't use ternaries here (to support py24..)
 
 import warnings
 
@@ -154,7 +155,6 @@ def _key_and_node(state, p, objs):
 def _handles_for_property(state, p, objs):
     (graph, context, base) = state
     repr_value = lambda o: _to_raw_value(state, o)
-    # context.shrink(o) if isinstance(o, URIRef) else o # py2.4 compat
     iri_to_id = (lambda o:
             isinstance(o, URIRef) and context.shrink(o) or o)
     term = context.get_term(unicode(p))
@@ -168,11 +168,10 @@ def _handles_for_property(state, p, objs):
             if term.coercion == ID_KEY:
                 repr_value = iri_to_id
             else:
-                #o if unicode(o.datatype) == term.coercion
-                #        else _to_raw_value(state, o)
-                # for py24:
                 repr_value = (lambda o:
-                        (unicode(o.datatype) == term.coercion) and o
+                        (isinstance(o, Literal) and
+                            unicode(o.datatype) == term.coercion)
+                        and o
                         or  _to_raw_value(state, o))
     else:
         if not term and p == RDF.type:
