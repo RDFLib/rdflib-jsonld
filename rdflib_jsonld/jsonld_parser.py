@@ -92,17 +92,16 @@ def to_rdf(tree, graph, base=None, context_data=None):
 
     return graph
 
-import re
-bNodeIdRegexp = re.compile(r'^_:(.+)')
-
 
 def _add_to_graph(state, node):
     graph, context, base = state
     id_val = node.get(context.id_key)
-    if id_val and (not bNodeIdRegexp.match(id_val)):
-        subj = URIRef(context.expand(id_val), base)
+    if not id_val:
+        subj = BNode()
+    elif id_val.startswith('_:'):
+        subj = BNode(id_val[2:])
     else:
-        subj = BNode() # TODO: use bnode id if given
+        subj = URIRef(context.expand(id_val), base)
 
     for pred_key, obj_nodes in node.items():
         if pred_key in (CONTEXT_KEY, context.id_key):
