@@ -87,12 +87,24 @@ class Context(object):
 
     def _create_term(self, data, key, dfn):
         if isinstance(dfn, dict):
-            iri = self._rec_expand(data, dfn.get(ID_KEY))
-            coercion = self._rec_expand(data, dfn.get(TYPE_KEY))
+
+            if ID_KEY not in dfn and self.vocab:
+                iri = self.vocab + key
+            else:
+                iri = self._rec_expand(data, dfn.get(ID_KEY))
+
+            coerceval = dfn.get(TYPE_KEY)
+            if coerceval in (ID_KEY, TYPE_KEY):
+                coercion = coerceval
+            else:
+                coercion = self._rec_expand(data, coerceval)
+
             container = dfn.get(CONTAINER_KEY)
             if not container and dfn.get(LIST_KEY) is True:
                 container = LIST_KEY
+
             return Term(iri, key, coercion, container)
+
         else:
             iri = self._rec_expand(data, dfn)
             return Term(iri, key)
