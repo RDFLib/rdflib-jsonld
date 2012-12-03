@@ -167,7 +167,7 @@ class Context(object):
             term = self._term_map.get(term_curie_or_iri)
             if term:
                 return term.iri
-            elif self.vocab:
+            elif self.vocab and ':' not in term_curie_or_iri:
                 return self.vocab + term_curie_or_iri
         return term_curie_or_iri
 
