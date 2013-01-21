@@ -89,9 +89,10 @@ def to_tree(graph, context_data=None, base=None, generate_compact=True):
     # incrementally. (Use rdflib features for this, e.g. RecursiveSerializer?)
     if not context_data:
         if generate_compact:
-            context_data = dict((pfx, unicode(ns))
-                                for (pfx, ns) in graph.namespaces() if pfx and
-                                unicode(ns) != u"http://www.w3.org/XML/1998/namespace")
+            context_data = dict(
+                (pfx, unicode(ns))
+                for (pfx, ns) in graph.namespaces() if pfx and
+                unicode(ns) != u"http://www.w3.org/XML/1998/namespace")
 
     if isinstance(context_data, Context):
             context = context_data
