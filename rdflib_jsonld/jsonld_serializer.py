@@ -49,7 +49,7 @@ from ldcontext import json
 __all__ = ['JsonLDSerializer', 'to_tree']
 
 PLAIN_LITERAL_TYPES = set([XSD.integer, XSD.float, XSD.double, XSD.decimal,
-        XSD.boolean, XSD.string])
+                           XSD.boolean, XSD.string])
 
 
 class JsonLDSerializer(Serializer):
@@ -63,7 +63,7 @@ class JsonLDSerializer(Serializer):
         encoding = encoding or 'utf-8'
         if encoding not in ('utf-8', 'utf-16'):
             warnings.warn("JSON should be encoded as unicode. " +
-                    "Given encoding was: %s" % encoding)
+                          "Given encoding was: %s" % encoding)
 
         context_data = kwargs.get('context')
         generate_compact = kwargs.get('compact', True)
@@ -71,9 +71,9 @@ class JsonLDSerializer(Serializer):
         separators = (',', ': ')
         sort_keys = True
         tree = to_tree(self.store, context_data, base,
-                generate_compact=generate_compact)
+                       generate_compact=generate_compact)
         data = json.dumps(tree, indent=indent, separators=separators,
-                sort_keys=sort_keys)
+                          sort_keys=sort_keys)
 
         stream.write(data.encode(encoding, 'replace'))
 
@@ -90,8 +90,8 @@ def to_tree(graph, context_data=None, base=None, generate_compact=True):
     if not context_data:
         if generate_compact:
             context_data = dict((pfx, unicode(ns))
-                    for (pfx, ns) in graph.namespaces() if pfx and
-                    unicode(ns) != u"http://www.w3.org/XML/1998/namespace")
+                                for (pfx, ns) in graph.namespaces() if pfx and
+                                unicode(ns) != u"http://www.w3.org/XML/1998/namespace")
 
     if isinstance(context_data, Context):
             context = context_data
@@ -152,7 +152,7 @@ def _handles_for_property(state, p, objs):
     repr_value = lambda o: _to_raw_value(state, o)
     # context.shrink(o) if isinstance(o, URIRef) else o # py2.4 compat
     iri_to_id = (lambda o:
-            isinstance(o, URIRef) and context.shrink(o) or o)
+                 isinstance(o, URIRef) and context.shrink(o) or o)
     term = context.get_term(unicode(p))
     if term:
         p_key = term.key
@@ -168,9 +168,9 @@ def _handles_for_property(state, p, objs):
                 #        else _to_raw_value(state, o)
                 # for py24:
                 repr_value = (lambda o: (
-                        unicode(o.datatype) == term.coercion) \
-                        and o \
-                        or _to_raw_value(state, o))
+                    unicode(o.datatype) == term.coercion)
+                    and o
+                    or _to_raw_value(state, o))
     else:
         if not term and p == RDF.type:
             repr_value = iri_to_id
@@ -216,6 +216,6 @@ def _to_collection(state, subj):
         return {context.list_key: []}
     elif (subj, RDF.first, None) in graph:
         return {context.list_key: list(_to_raw_value(state, o)
-                                for o in graph.items(subj))}
+                                       for o in graph.items(subj))}
     else:
         return None

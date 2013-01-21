@@ -30,7 +30,7 @@ Example usage::
     True
 
 """
-)
+        )
 # NOTE: This code reads the entire JSON object into memory before parsing, but
 # we should consider streaming the input to deal with arbitrarily large graphs.
 
@@ -39,7 +39,7 @@ from rdflib.parser import Parser
 from rdflib.namespace import RDF, XSD
 from rdflib.term import URIRef, BNode, Literal
 
-from ldcontext import Context, Term, CONTEXT_KEY, ID_KEY, LIST_KEY, GRAPH_KEY
+from ldcontext import Context, Term, CONTEXT_KEY, ID_KEY, LIST_KEY
 from ldcontext import source_to_json
 
 __all__ = ['JsonLDParser', 'to_rdf']
@@ -56,10 +56,10 @@ class JsonLDParser(Parser):
         encoding = kwargs.get('encoding') or 'utf-8'
         if encoding not in ('utf-8', 'utf-16'):
             warnings.warn("JSON should be encoded as unicode. " +
-                    "Given encoding was: %s" % encoding)
+                          "Given encoding was: %s" % encoding)
 
         base = kwargs.get('base') or sink.absolutize(
-                source.getPublicId() or source.getSystemId() or "")
+            source.getPublicId() or source.getSystemId() or "")
 
         context_data = kwargs.get('context')
 
@@ -167,6 +167,6 @@ def _to_object(state, term, node):
         return Literal(node[context.literal_key], lang=node[context.lang_key])
     elif context.type_key and context.literal_key in node:
         return Literal(node[context.literal_key],
-                datatype=context.expand(node[context.type_key]))
+                       datatype=context.expand(node[context.type_key]))
     else:
         return _add_to_graph(state, node)

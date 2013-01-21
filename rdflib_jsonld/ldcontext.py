@@ -50,7 +50,8 @@ class Context(object):
     lang_key = property(lambda self: self._key_map.get(LANG_KEY, LANG_KEY))
     id_key = property(lambda self: self._key_map.get(ID_KEY, ID_KEY))
     type_key = property(lambda self: self._key_map.get(TYPE_KEY, TYPE_KEY))
-    literal_key = property(lambda self: self._key_map.get(LITERAL_KEY, LITERAL_KEY))
+    literal_key = property(
+        lambda self: self._key_map.get(LITERAL_KEY, LITERAL_KEY))
     list_key = property(lambda self: self._key_map.get(LIST_KEY, LIST_KEY))
     container_key = CONTAINER_KEY
     set_key = SET_KEY
@@ -60,10 +61,10 @@ class Context(object):
     def load(self, source, base=None, visited_urls=None):
         if CONTEXT_KEY in source:
             source = source[CONTEXT_KEY]
-        if isinstance(source, list): 
-            sources = source 
+        if isinstance(source, list):
+            sources = source
         else:
-            sources=[source]
+            sources = [source]
         terms, simple_terms = [], []
         for obj in sources:
             if isinstance(obj, basestring):
@@ -85,8 +86,8 @@ class Context(object):
                     else:
                         simple_terms.append(term)
         for term in simple_terms + terms:
-            # TODO: expansion for these shoold be done by recursively looking up
-            # keys in source (would also avoid this use of simple_terms).
+            # TODO: expansion for these shoold be done by recursively looking
+            # up keys in source (would also avoid this use of simple_terms).
             if term.iri:
                 term.iri = self.expand(term.iri)
             if term.coercion:
@@ -152,7 +153,8 @@ class Context(object):
         for term in self.terms:
             obj = term.iri
             if term.coercion:
-                obj = {IRI_KEY: term.iri}
+                # obj = {IRI_KEY: term.iri}
+                obj = {ID_KEY: term.iri}
                 if term.coercion == REV_KEY:
                     obj = {REV_KEY: term.iri}
                 else:
@@ -160,7 +162,7 @@ class Context(object):
             if term.container:
                 obj[CONTAINER_KEY] = term.container
                 if term.container == LIST_KEY:
-                    obj[LIST_KEY] = True # TODO: deprecated form?
+                    obj[LIST_KEY] = True  # TODO: deprecated form?
             if obj:
                 data[term.key] = obj
         return data
@@ -177,11 +179,9 @@ class Term(object):
 def source_to_json(source):
     # TODO: conneg for JSON (fix support in rdflib's URLInputSource!)
     source = create_input_source(source)
-    
-    stream=source.getByteStream()
-    try: 
+
+    stream = source.getByteStream()
+    try:
         return json.load(stream)
-    finally: 
+    finally:
         stream.close()
-
-
