@@ -1,2 +1,1 @@
-rdfextras>=0.3
 rdflib>=3.2.0

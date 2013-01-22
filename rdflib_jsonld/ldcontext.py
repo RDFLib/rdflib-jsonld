@@ -11,6 +11,7 @@ definition of contexts. See:
 from urlparse import urljoin
 try:
     import json
+    assert json  # workaround for pyflakes issue #13
 except ImportError:
     import simplejson as json
 
