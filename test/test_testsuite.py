@@ -1,7 +1,9 @@
 from os import chdir, path as p
+from io import StringIO
 import logging
 import json
 from rdflib import ConjunctiveGraph
+from rdflib.py3compat import PY3
 from rdflib.compare import isomorphic
 from rdflib_jsonld.jsonld_parser import to_rdf
 from rdflib_jsonld.jsonld_serializer import to_tree
@@ -41,7 +43,8 @@ def read_manifest():
     for m in manifestdata.get('sequence'):
         if 'Rdf' in m:
             f = open(m.split('/')[-1], 'r')
-            md = json.load(f)
+            fio = StringIO(f.read())
+            md = json.load(fio)
             f.close()
             for test in md.get('sequence'):
                 category, testnum, direction = test.get(
@@ -140,7 +143,8 @@ def _load_test_expectedpath(inputpath, expectedpath, context):
 def _load_test_inputpath(inputpath, expectedpath, context):
     if '.jsonld' in inputpath:
         f = open(inputpath, 'rb')
-        test_tree = json.load(f)
+        fio = StringIO(f.read().decode('utf-8'))
+        test_tree = json.load(fio)
         f.close()
     elif '.nq' in inputpath:
         test_tree = ConjunctiveGraph()
@@ -173,8 +177,14 @@ def _to_json(tree):
 
 
 def jsonld_compare(expected, result):
-    expected = json.loads(expected)
-    result = json.loads(result)
+    if isinstance(expected, str if PY3 else basestring):
+        expected = json.loads(StringIO(expected).read())
+    else:
+        expected = json.loads(StringIO(expected.decode('utf-8')).read())
+    if isinstance(result, str if PY3 else basestring):
+        result = json.loads(StringIO(result).read())
+    else:
+        result = json.loads(StringIO(result.decode('utf-8')).read())
     expected = expected[0] if isinstance(expected, list) else expected
     result = result[0] if isinstance(result, list) else result
     return len(expected) == len(result)
