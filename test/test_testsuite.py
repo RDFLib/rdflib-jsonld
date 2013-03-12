@@ -1,11 +1,7 @@
 from os import chdir, path as p
-try:
-    import json
-except ImportError:
-    import simplejson as json
 import logging
+import json
 from rdflib import ConjunctiveGraph
-from rdflib.namespace import NamespaceManager
 from rdflib.compare import isomorphic
 from rdflib_jsonld.jsonld_parser import to_rdf
 from rdflib_jsonld.jsonld_serializer import to_tree
