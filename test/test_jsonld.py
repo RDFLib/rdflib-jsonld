@@ -1,6 +1,10 @@
 from glob import glob
 from os import path as p
-import json
+try:
+    import json
+    assert json
+except ImportError:
+    import simplejson as json
 
 from rdflib import Graph
 from rdflib.compare import isomorphic

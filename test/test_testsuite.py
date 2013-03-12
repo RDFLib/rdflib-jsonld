@@ -1,9 +1,14 @@
 from os import chdir, path as p
-from io import StringIO
-import logging
-import json
-from rdflib import ConjunctiveGraph
 from rdflib.py3compat import PY3
+if PY3:
+    from io import StringIO
+import logging
+try:
+    import json
+    assert json
+except ImportError:
+    import simplejson as json
+from rdflib import ConjunctiveGraph
 from rdflib.compare import isomorphic
 from rdflib_jsonld.jsonld_parser import to_rdf
 from rdflib_jsonld.jsonld_serializer import to_tree
@@ -142,8 +147,8 @@ def _load_test_expectedpath(inputpath, expectedpath, context):
 def _load_test_inputpath(inputpath, expectedpath, context):
     if '.jsonld' in inputpath:
         f = open(inputpath, 'rb')
-        fio = StringIO(f.read().decode('utf-8'))
-        test_tree = json.load(fio)
+        test_tree = json.load(
+            StringIO(f.read().decode('utf-8')) if PY3 else f)
         f.close()
     elif '.nq' in inputpath:
         test_tree = ConjunctiveGraph()

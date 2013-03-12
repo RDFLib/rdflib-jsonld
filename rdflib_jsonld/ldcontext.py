@@ -8,7 +8,6 @@ definition of contexts. See:
 """
 
 # from __future__ import with_statement
-from io import StringIO
 from urlparse import urljoin
 try:
     import json
@@ -19,7 +18,8 @@ except ImportError:
 from rdflib.namespace import RDF, split_uri
 from rdflib.parser import create_input_source
 from rdflib.py3compat import PY3
-
+if PY3:
+    from io import StringIO
 
 RDF_TYPE = unicode(RDF.type)
 
