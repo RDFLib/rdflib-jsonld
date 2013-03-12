@@ -43,8 +43,7 @@ def read_manifest():
     for m in manifestdata.get('sequence'):
         if 'Rdf' in m:
             f = open(m.split('/')[-1], 'r')
-            fio = StringIO(f.read())
-            md = json.load(fio)
+            md = json.load(StringIO(f.read()) if PY3 else f)
             f.close()
             for test in md.get('sequence'):
                 category, testnum, direction = test.get(
@@ -178,13 +177,15 @@ def _to_json(tree):
 
 def jsonld_compare(expected, result):
     if isinstance(expected, str if PY3 else basestring):
-        expected = json.loads(StringIO(expected).read())
+        expected = json.loads(StringIO(expected).read() if PY3 else expected)
     else:
-        expected = json.loads(StringIO(expected.decode('utf-8')).read())
+        expected = json.loads(StringIO(expected.decode('utf-8')
+                    ).read() if PY3 else expected)
     if isinstance(result, str if PY3 else basestring):
-        result = json.loads(StringIO(result).read())
+        result = json.loads(StringIO(result).read() if PY3 else result)
     else:
-        result = json.loads(StringIO(result.decode('utf-8')).read())
+        result = json.loads(StringIO(result.decode('utf-8')
+                    ).read()if PY3 else result)
     expected = expected[0] if isinstance(expected, list) else expected
     result = result[0] if isinstance(result, list) else result
     return len(expected) == len(result)
