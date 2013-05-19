@@ -1,11 +1,14 @@
 from os import chdir, path as p
+from rdflib.py3compat import PY3
+if PY3:
+    from io import StringIO
+import logging
 try:
     import json
+    assert json
 except ImportError:
     import simplejson as json
-import logging
 from rdflib import ConjunctiveGraph
-from rdflib.namespace import NamespaceManager
 from rdflib.compare import isomorphic
 from rdflib_jsonld.jsonld_parser import to_rdf
 from rdflib_jsonld.jsonld_serializer import to_tree
@@ -45,7 +48,7 @@ def read_manifest():
     for m in manifestdata.get('sequence'):
         if 'Rdf' in m:
             f = open(m.split('/')[-1], 'r')
-            md = json.load(f)
+            md = json.load(StringIO(f.read()) if PY3 else f)
             f.close()
             for test in md.get('sequence'):
                 category, testnum, direction = test.get(
@@ -144,7 +147,8 @@ def _load_test_expectedpath(inputpath, expectedpath, context):
 def _load_test_inputpath(inputpath, expectedpath, context):
     if '.jsonld' in inputpath:
         f = open(inputpath, 'rb')
-        test_tree = json.load(f)
+        test_tree = json.load(
+            StringIO(f.read().decode('utf-8')) if PY3 else f)
         f.close()
     elif '.nq' in inputpath:
         test_tree = ConjunctiveGraph()
@@ -177,8 +181,16 @@ def _to_json(tree):
 
 
 def jsonld_compare(expected, result):
-    expected = json.loads(expected)
-    result = json.loads(result)
+    if isinstance(expected, str if PY3 else basestring):
+        expected = json.loads(StringIO(expected).read() if PY3 else expected)
+    else:
+        expected = json.loads(StringIO(expected.decode('utf-8')
+                    ).read() if PY3 else expected)
+    if isinstance(result, str if PY3 else basestring):
+        result = json.loads(StringIO(result).read() if PY3 else result)
+    else:
+        result = json.loads(StringIO(result.decode('utf-8')
+                    ).read()if PY3 else result)
     expected = expected[0] if isinstance(expected, list) else expected
     result = result[0] if isinstance(result, list) else result
     return len(expected) == len(result)

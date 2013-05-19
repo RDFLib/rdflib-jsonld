@@ -2,9 +2,10 @@
 import unittest
 try:
     import json
+    assert json
 except ImportError:
     import simplejson as json
-from rdflib import ConjunctiveGraph, Graph
+from rdflib import ConjunctiveGraph
 from rdflib.compare import isomorphic
 from rdflib_jsonld.jsonld_parser import to_rdf
 # from rdflib_jsonld.jsonld_serializer import to_tree
@@ -53,7 +54,6 @@ test03_in = """\
     "@language": "en"
   }
 }"""
-
 
 
 class CoreTest(unittest.TestCase):

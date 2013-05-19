@@ -11,10 +11,13 @@ Using the plug-in JSONLD serializer/parser with RDFLib
 -------------------------------------------------------
 
 The plugin parser and serializer are automatically registered if installed by
-setuptools, otherwise call ``rdflib_jsonld.registerplugins()`` after importing,
+setuptools, otherwise call ``rdfextras.registerplugins()`` after importing,
 as shown below:
 
-    >>> from rdflib import Graph
+    >>> from rdflib import Graph, plugin
+    >>> from rdflib.serializer import Serializer
+    >>> import rdfextras
+    >>> rdfextras.registerplugins() # if no setuptools
 
     >>> testrdf = '''
     ... @prefix dc: <http://purl.org/dc/terms/> .

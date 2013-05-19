@@ -27,7 +27,7 @@ Example usage::
         "@id": "http://example.org/about",
         "dc:title": {
             "@language": "en",
-            "@value": "Someone's Homepage"
+            "@literal": "Someone's Homepage"
         }
     }
 
@@ -36,7 +36,6 @@ Example usage::
 # NOTE: This code writes the entire JSON object into memory before serialising,
 # but we should consider streaming the output to deal with arbitrarily large
 # graphs.
-# NOTE: Don't use ternaries here (to support py24..)
 
 import warnings
 
@@ -44,13 +43,13 @@ from rdflib.serializer import Serializer
 from rdflib.term import URIRef, Literal, BNode
 from rdflib.namespace import RDF, XSD
 
-from ldcontext import Context, GRAPH_KEY, ID_KEY, LIST_KEY, SET_KEY
+from ldcontext import Context, ID_KEY, LIST_KEY, SET_KEY
 from ldcontext import json
 
 __all__ = ['JsonLDSerializer', 'to_tree']
 
 PLAIN_LITERAL_TYPES = set([XSD.integer, XSD.float, XSD.double, XSD.decimal,
-        XSD.boolean, XSD.string])
+                           XSD.boolean, XSD.string])
 
 
 class JsonLDSerializer(Serializer):
@@ -64,7 +63,7 @@ class JsonLDSerializer(Serializer):
         encoding = encoding or 'utf-8'
         if encoding not in ('utf-8', 'utf-16'):
             warnings.warn("JSON should be encoded as unicode. " +
-                    "Given encoding was: %s" % encoding)
+                          "Given encoding was: %s" % encoding)
 
         context_data = kwargs.get('context')
         generate_compact = kwargs.get('compact', True)
@@ -72,9 +71,9 @@ class JsonLDSerializer(Serializer):
         separators = (',', ': ')
         sort_keys = True
         tree = to_tree(self.store, context_data, base,
-                generate_compact=generate_compact)
+                       generate_compact=generate_compact)
         data = json.dumps(tree, indent=indent, separators=separators,
-                sort_keys=sort_keys)
+                          sort_keys=sort_keys)
 
         stream.write(data.encode(encoding, 'replace'))
 
@@ -90,13 +89,14 @@ def to_tree(graph, context_data=None, base=None, generate_compact=True):
     # incrementally. (Use rdflib features for this, e.g. RecursiveSerializer?)
     if not context_data:
         if generate_compact:
-            context_data = dict((pfx, unicode(ns))
-                    for (pfx, ns) in graph.namespaces() if pfx and
-                    unicode(ns) != u"http://www.w3.org/XML/1998/namespace")
+            context_data = dict(
+                (pfx, unicode(ns))
+                for (pfx, ns) in graph.namespaces() if pfx and
+                unicode(ns) != u"http://www.w3.org/XML/1998/namespace")
 
     if isinstance(context_data, Context):
-        context = context_data
-        context_data = context.to_dict()
+            context = context_data
+            context_data = context.to_dict()
     else:
         context = Context(context_data)
 
@@ -114,10 +114,6 @@ def to_tree(graph, context_data=None, base=None, generate_compact=True):
             current = _subject_to_node(state, s)
             nodes.append(current)
 
-    if not context_data:
-        if len(nodes) == 1:
-            return nodes[0]
-        return nodes
     if len(nodes) == 1:
         tree.update(nodes[0])
     else:
@@ -155,8 +151,9 @@ def _key_and_node(state, p, objs):
 def _handles_for_property(state, p, objs):
     (graph, context, base) = state
     repr_value = lambda o: _to_raw_value(state, o)
+    # context.shrink(o) if isinstance(o, URIRef) else o # py2.4 compat
     iri_to_id = (lambda o:
-            isinstance(o, URIRef) and context.shrink(o) or o)
+                 isinstance(o, URIRef) and context.shrink(o) or o)
     term = context.get_term(unicode(p))
     if term:
         p_key = term.key
@@ -168,11 +165,13 @@ def _handles_for_property(state, p, objs):
             if term.coercion == ID_KEY:
                 repr_value = iri_to_id
             else:
-                repr_value = (lambda o:
-                        (isinstance(o, Literal) and
-                            unicode(o.datatype) == term.coercion)
-                        and o
-                        or  _to_raw_value(state, o))
+                #o if unicode(o.datatype) == term.coercion
+                #        else _to_raw_value(state, o)
+                # for py24:
+                repr_value = (lambda o: (
+                    unicode(o.datatype) == term.coercion)
+                    and o
+                    or _to_raw_value(state, o))
     else:
         if not term and p == RDF.type:
             repr_value = iri_to_id
@@ -200,14 +199,14 @@ def _to_raw_value(state, o):
         v = o
         if o.language and o.language != context.lang:
             return {context.lang_key: o.language,
-                    context.value_key: v}
+                    context.literal_key: v}
         elif o.datatype:
              #https://github.com/RDFLib/rdflib-jsonld/issues/4
              #serialize data type regardless
              #if o.datatype in PLAIN_LITERAL_TYPES:
              #    return o.toPython()
             return {context.type_key: context.shrink(o.datatype),
-                    context.value_key: v}
+                    context.literal_key: v}
         else:
             return v
 
@@ -218,6 +217,6 @@ def _to_collection(state, subj):
         return {context.list_key: []}
     elif (subj, RDF.first, None) in graph:
         return {context.list_key: list(_to_raw_value(state, o)
-                                for o in graph.items(subj))}
+                                       for o in graph.items(subj))}
     else:
         return None

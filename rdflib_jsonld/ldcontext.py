@@ -11,12 +11,15 @@ definition of contexts. See:
 from urlparse import urljoin
 try:
     import json
+    assert json  # workaround for pyflakes issue #13
 except ImportError:
     import simplejson as json
 
 from rdflib.namespace import RDF, split_uri
 from rdflib.parser import create_input_source
-
+from rdflib.py3compat import PY3
+if PY3:
+    from io import StringIO
 
 RDF_TYPE = unicode(RDF.type)
 
@@ -24,15 +27,14 @@ CONTEXT_KEY = '@context'
 LANG_KEY = '@language'
 ID_KEY = '@id'
 TYPE_KEY = '@type'
-VALUE_KEY = '@value'
+LITERAL_KEY = '@value'
 LIST_KEY = '@list'
-CONTAINER_KEY = '@container'
-SET_KEY = '@set'
+CONTAINER_KEY = '@container'  # EXPERIMENTAL
+SET_KEY = '@set'  # EXPERIMENTAL
 REV_KEY = '@rev'  # EXPERIMENTAL
 GRAPH_KEY = '@graph'
-VOCAB_KEY = '@vocab'
 KEYS = set(
-    [LANG_KEY, ID_KEY, TYPE_KEY, VALUE_KEY, LIST_KEY, REV_KEY, GRAPH_KEY])
+    [LANG_KEY, ID_KEY, TYPE_KEY, LITERAL_KEY, LIST_KEY, REV_KEY, GRAPH_KEY])
 
 
 class Context(object):
@@ -42,7 +44,6 @@ class Context(object):
         self._iri_map = {}
         self._term_map = {}
         self.lang = None
-        self.vocab = None
         if source:
             self.load(source)
 
@@ -52,12 +53,13 @@ class Context(object):
     lang_key = property(lambda self: self._key_map.get(LANG_KEY, LANG_KEY))
     id_key = property(lambda self: self._key_map.get(ID_KEY, ID_KEY))
     type_key = property(lambda self: self._key_map.get(TYPE_KEY, TYPE_KEY))
-    value_key = property(lambda self: self._key_map.get(VALUE_KEY, VALUE_KEY))
+    literal_key = property(
+        lambda self: self._key_map.get(LITERAL_KEY, LITERAL_KEY))
     list_key = property(lambda self: self._key_map.get(LIST_KEY, LIST_KEY))
     container_key = CONTAINER_KEY
     set_key = SET_KEY
     rev_key = property(lambda self: self._key_map.get(REV_KEY, REV_KEY))
-    graph_key = property(lambda self: self._key_map.get(GRAPH_KEY, GRAPH_KEY))
+    graph_key = GRAPH_KEY
 
     def load(self, source, base=None, visited_urls=None):
         if CONTEXT_KEY in source:
@@ -66,67 +68,46 @@ class Context(object):
             sources = source
         else:
             sources = [source]
-        for data in sources:
-            if isinstance(data, basestring):
-                url = urljoin(base, data)
+        terms, simple_terms = [], []
+        for obj in sources:
+            if isinstance(obj, basestring):
+                url = urljoin(base, obj)
                 visited_urls = visited_urls or []
                 visited_urls.append(url)
                 sub_defs = source_to_json(url)
                 self.load(sub_defs, base, visited_urls)
                 continue
-            self.lang = data.get(LANG_KEY)
-            self.vocab = data.get(VOCAB_KEY)
-            for key, value in data.items():
-                if key in (LANG_KEY, VOCAB_KEY):
-                    continue
+            for key, value in obj.items():
+                if key == LANG_KEY:
+                    self.lang = value
                 elif isinstance(value, unicode) and value in KEYS:
                     self._key_map[value] = key
                 else:
-                    term = self._create_term(data, key, value)
-                    self.add_term(term)
+                    term = self._create_term(key, value)
+                    if term.coercion:
+                        terms.append(term)
+                    else:
+                        simple_terms.append(term)
+        for term in simple_terms + terms:
+            # TODO: expansion for these shoold be done by recursively looking
+            # up keys in source (would also avoid this use of simple_terms).
+            if term.iri:
+                term.iri = self.expand(term.iri)
+            if term.coercion:
+                term.coercion = self.expand(term.coercion)
+            self.add_term(term)
 
-    def _create_term(self, data, key, dfn):
+    def _create_term(self, key, dfn):
         if isinstance(dfn, dict):
-
-            if ID_KEY not in dfn and self.vocab:
-                iri = self.vocab + key
-            else:
-                iri = self._rec_expand(data, dfn.get(ID_KEY))
-
-            coerceval = dfn.get(TYPE_KEY)
-            if coerceval in (ID_KEY, TYPE_KEY):
-                coercion = coerceval
-            else:
-                coercion = self._rec_expand(data, coerceval)
-
+            iri = dfn.get(ID_KEY)
+            coercion = dfn.get(TYPE_KEY)
             container = dfn.get(CONTAINER_KEY)
             if not container and dfn.get(LIST_KEY) is True:
                 container = LIST_KEY
-
             return Term(iri, key, coercion, container)
-
         else:
-            iri = self._rec_expand(data, dfn)
+            iri = self.expand(dfn)
             return Term(iri, key)
-
-    def _rec_expand(self, data, expr, prev=None):
-        if expr == prev:
-            return expr
-        is_term, pfx, nxt = self._prep_expand(expr)
-        if is_term and self.vocab:
-            return self.vocab + expr
-        if pfx:
-            nxt = data.get(pfx) + nxt
-        return self._rec_expand(data, nxt, expr)
-
-    def _prep_expand(self, expr):
-        if ':' not in expr:
-            return True, None, expr
-        pfx, local = expr.split(':', 1)
-        if not local.startswith('//'):
-            return False, pfx, local
-        else:
-            return False, None, expr
 
     def add_term(self, term):
         self._iri_map[term.iri] = term
@@ -148,48 +129,43 @@ class Context(object):
             term = self._iri_map.get(ns)
             if term:
                 return ":".join((term.key, name))
-            elif ns == self.vocab:
-                return name
         except:
             pass
         return iri
 
     def expand(self, term_curie_or_iri):
         term_curie_or_iri = unicode(term_curie_or_iri)
-        is_term, pfx, local = self._prep_expand(term_curie_or_iri)
-        # TODO: is empty string pfx (test/tests/rdf-0009.jsonld) really ok?
-        #if pfx:
-        if pfx is not None:
+        if ':' in term_curie_or_iri:
+            pfx, term = term_curie_or_iri.split(':', 1)
             ns = self._term_map.get(pfx)
             if ns and ns.iri:
-                return ns.iri + local
+                return ns.iri + term
         else:
             term = self._term_map.get(term_curie_or_iri)
             if term:
                 return term.iri
-            elif self.vocab and ':' not in term_curie_or_iri:
-                return self.vocab + term_curie_or_iri
         return term_curie_or_iri
 
     def to_dict(self):
         data = {}
         if self.lang:
             data[LANG_KEY] = self.lang
-        if self.vocab:
-            data[VOCAB_KEY] = self.vocab
         for key, alias in self._key_map.items():
             if key != alias:
                 data[alias] = key
         for term in self.terms:
             obj = term.iri
             if term.coercion:
-                obj = {IRI_KEY: term.iri}
+                # obj = {IRI_KEY: term.iri}
+                obj = {ID_KEY: term.iri}
                 if term.coercion == REV_KEY:
                     obj = {REV_KEY: term.iri}
                 else:
                     obj[TYPE_KEY] = term.coercion
             if term.container:
                 obj[CONTAINER_KEY] = term.container
+                if term.container == LIST_KEY:
+                    obj[LIST_KEY] = True  # TODO: deprecated form?
             if obj:
                 data[term.key] = obj
         return data
@@ -209,8 +185,9 @@ def source_to_json(source):
 
     stream = source.getByteStream()
     try:
-        return json.load(stream)
+        if PY3:
+            return json.load(StringIO(stream.read().decode('utf-8')))
+        else:
+            return json.load(stream)
     finally:
         stream.close()
-
-
