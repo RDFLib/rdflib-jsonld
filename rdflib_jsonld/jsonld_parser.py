@@ -115,6 +115,8 @@ def _add_to_graph(state, node):
             continue
         else:
             pred_uri = context.expand(pred_key)
+            if not pred_uri:
+                continue
             pred = URIRef(pred_uri)
             term = context.get_term(pred_uri)
 
