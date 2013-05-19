@@ -31,7 +31,7 @@ VALUE_KEY = '@value'
 LIST_KEY = '@list'
 CONTAINER_KEY = '@container'
 SET_KEY = '@set'
-REV_KEY = '@rev'  # EXPERIMENTAL
+REV_KEY = '@reverse'
 GRAPH_KEY = '@graph'
 VOCAB_KEY = '@vocab'
 KEYS = set(
@@ -90,15 +90,20 @@ class Context(object):
 
     def _create_term(self, data, key, dfn):
         if isinstance(dfn, dict):
-            if ID_KEY not in dfn and self.vocab:
+            coercion = None
+            if REV_KEY in dfn:
+                iri = self._rec_expand(data, dfn.get(REV_KEY))
+                coercion = REV_KEY
+            elif ID_KEY not in dfn and self.vocab:
                 iri = self.vocab + key
             else:
                 iri = self._rec_expand(data, dfn.get(ID_KEY))
-            type_val = dfn.get(TYPE_KEY)
-            if type_val in (ID_KEY, TYPE_KEY):
-                coercion = type_val
-            else:
-                coercion = self._rec_expand(data, type_val)
+            if not coercion:
+                type_val = dfn.get(TYPE_KEY)
+                if type_val in (ID_KEY, TYPE_KEY):
+                    coercion = type_val
+                else:
+                    coercion = self._rec_expand(data, type_val)
             return Term(iri, key, coercion, dfn.get(CONTAINER_KEY))
         else:
             iri = self._rec_expand(data, dfn)
