@@ -27,14 +27,15 @@ CONTEXT_KEY = '@context'
 LANG_KEY = '@language'
 ID_KEY = '@id'
 TYPE_KEY = '@type'
-LITERAL_KEY = '@value'
+VALUE_KEY = '@value'
 LIST_KEY = '@list'
-CONTAINER_KEY = '@container'  # EXPERIMENTAL
-SET_KEY = '@set'  # EXPERIMENTAL
+CONTAINER_KEY = '@container'
+SET_KEY = '@set'
 REV_KEY = '@rev'  # EXPERIMENTAL
 GRAPH_KEY = '@graph'
+VOCAB_KEY = '@vocab'
 KEYS = set(
-    [LANG_KEY, ID_KEY, TYPE_KEY, LITERAL_KEY, LIST_KEY, REV_KEY, GRAPH_KEY])
+    [LANG_KEY, ID_KEY, TYPE_KEY, VALUE_KEY, LIST_KEY, REV_KEY, GRAPH_KEY])
 
 
 class Context(object):
@@ -44,6 +45,7 @@ class Context(object):
         self._iri_map = {}
         self._term_map = {}
         self.lang = None
+        self.vocab = None
         if source:
             self.load(source)
 
@@ -53,13 +55,12 @@ class Context(object):
     lang_key = property(lambda self: self._key_map.get(LANG_KEY, LANG_KEY))
     id_key = property(lambda self: self._key_map.get(ID_KEY, ID_KEY))
     type_key = property(lambda self: self._key_map.get(TYPE_KEY, TYPE_KEY))
-    literal_key = property(
-        lambda self: self._key_map.get(LITERAL_KEY, LITERAL_KEY))
+    value_key = property(lambda self: self._key_map.get(VALUE_KEY, VALUE_KEY))
     list_key = property(lambda self: self._key_map.get(LIST_KEY, LIST_KEY))
     container_key = CONTAINER_KEY
     set_key = SET_KEY
     rev_key = property(lambda self: self._key_map.get(REV_KEY, REV_KEY))
-    graph_key = GRAPH_KEY
+    graph_key = property(lambda self: self._key_map.get(GRAPH_KEY, GRAPH_KEY))
 
     def load(self, source, base=None, visited_urls=None):
         if CONTEXT_KEY in source:
@@ -156,7 +157,6 @@ class Context(object):
         for term in self.terms:
             obj = term.iri
             if term.coercion:
-                # obj = {IRI_KEY: term.iri}
                 obj = {ID_KEY: term.iri}
                 if term.coercion == REV_KEY:
                     obj = {REV_KEY: term.iri}
@@ -164,8 +164,6 @@ class Context(object):
                     obj[TYPE_KEY] = term.coercion
             if term.container:
                 obj[CONTAINER_KEY] = term.container
-                if term.container == LIST_KEY:
-                    obj[LIST_KEY] = True  # TODO: deprecated form?
             if obj:
                 data[term.key] = obj
         return data
