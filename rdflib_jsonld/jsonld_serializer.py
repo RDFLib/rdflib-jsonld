@@ -199,14 +199,14 @@ def _to_raw_value(state, o):
         v = o
         if o.language and o.language != context.lang:
             return {context.lang_key: o.language,
-                    context.literal_key: v}
+                    context.value_key: v}
         elif o.datatype:
              #https://github.com/RDFLib/rdflib-jsonld/issues/4
              #serialize data type regardless
              #if o.datatype in PLAIN_LITERAL_TYPES:
              #    return o.toPython()
             return {context.type_key: context.shrink(o.datatype),
-                    context.literal_key: v}
+                    context.value_key: v}
         else:
             return v
 

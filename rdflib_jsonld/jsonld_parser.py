@@ -163,12 +163,12 @@ def _to_object(state, term, node):
                 node = {context.id_key: context.expand(node)}
             else:
                 node = {context.type_key: term.coercion,
-                        context.literal_key: node}
+                        context.value_key: node}
 
     if context.lang_key in node:
-        return Literal(node[context.literal_key], lang=node[context.lang_key])
-    elif context.type_key and context.literal_key in node:
-        return Literal(node[context.literal_key],
+        return Literal(node[context.value_key], lang=node[context.lang_key])
+    elif context.type_key and context.value_key in node:
+        return Literal(node[context.value_key],
                        datatype=context.expand(node[context.type_key]))
     else:
         return _add_to_graph(state, node)
