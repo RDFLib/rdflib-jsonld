@@ -72,13 +72,15 @@ def to_rdf(tree, graph, base=None, context_data=None):
     @@ TODO: add docstring describing args and returned value type
     """
     context = Context()
-    context.load(context_data or tree.get(CONTEXT_KEY) or {}, base)
+    context.load(context_data or tree.get(CONTEXT_KEY) or {})
 
     id_obj = tree.get(context.id_key)
     resources = id_obj
     if not isinstance(id_obj, list):
         resources = [tree]
 
+    if context.vocab:
+        graph.bind(None, context.vocab)
     for term in context.terms:
         if term.iri and term.iri.endswith(('/', '#', ':')):
             graph.bind(term.key, term.iri)
@@ -102,6 +104,9 @@ def _add_to_graph(state, node):
         subj = BNode()
 
     for pred_key, obj_nodes in node.items():
+        if not isinstance(obj_nodes, list):
+            obj_nodes = [obj_nodes]
+
         if pred_key in (CONTEXT_KEY, context.id_key):
             continue
         if pred_key == context.type_key:
@@ -117,9 +122,6 @@ def _add_to_graph(state, node):
                 continue
             pred = URIRef(pred_uri)
             term = context.get_term(pred_uri)
-
-        if not isinstance(obj_nodes, list):
-            obj_nodes = [obj_nodes]
 
         if term and term.container == LIST_KEY:
             obj_nodes = [{context.list_key: obj_nodes}]
