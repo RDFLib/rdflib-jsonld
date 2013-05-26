@@ -130,15 +130,20 @@ class Context(object):
             return False, None, expr
 
     def add_term(self, term):
-        self._iri_map[term.iri] = term
+        self._iri_map.setdefault(term.iri, []).append(term)
         self._term_map[term.key] = term
 
     def get_term(self, iri):
-        return self._iri_map.get(iri)
+        # TODO: pick based on datatype/is_ref/is_list
+        candidates = self._iri_map.get(iri)
+        if candidates:
+            return candidates[0]
+        else:
+            return None
 
     def shrink(self, iri):
         iri = unicode(iri)
-        term = self._iri_map.get(iri)
+        term = self.get_term(iri)
         if term:
             return term.key
         if iri == RDF_TYPE:
@@ -146,7 +151,7 @@ class Context(object):
             return self.type_key
         try:
             ns, name = split_uri(iri)
-            term = self._iri_map.get(ns)
+            term = self.get_term(iri)
             if term:
                 return ":".join((term.key, name))
             elif ns == self.vocab:
@@ -158,8 +163,6 @@ class Context(object):
     def expand(self, term_curie_or_iri):
         term_curie_or_iri = unicode(term_curie_or_iri)
         is_term, pfx, local = self._prep_expand(term_curie_or_iri)
-        # TODO: is empty string pfx (test/tests/rdf-0009.jsonld) really ok?
-        #if pfx:
         if pfx is not None:
             ns = self._term_map.get(pfx)
             if ns and ns.iri:
@@ -183,8 +186,9 @@ class Context(object):
                 data[alias] = key
         for term in self.terms:
             obj = term.iri
-            if term.coercion:
+            if term.coercion or term.container:
                 obj = {ID_KEY: term.iri}
+            if term.coercion:
                 if term.coercion == REV_KEY:
                     obj = {REV_KEY: term.iri}
                 else:
