@@ -1,9 +1,0 @@
-{
-    "@context": {
-        "measure": "http://example/measure#"
-    },
-    "measure:cups": {
-        "@type": "http://www.w3.org/2001/XMLSchema#double",
-        "@value": "5.3"
-    }
-}
