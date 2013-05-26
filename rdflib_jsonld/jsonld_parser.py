@@ -39,7 +39,7 @@ from rdflib.parser import Parser
 from rdflib.namespace import RDF, XSD
 from rdflib.term import URIRef, BNode, Literal
 
-from ldcontext import Context, Term, CONTEXT_KEY, ID_KEY, LIST_KEY
+from ldcontext import Context, Term, CONTEXT_KEY, ID_KEY, REV_KEY, LIST_KEY
 from ldcontext import source_to_json
 
 __all__ = ['JsonLDParser', 'to_rdf']
@@ -98,7 +98,8 @@ bNodeIdRegexp = re.compile(r'^_:(.+)')
 def _add_to_graph(state, node):
     graph, context, base = state
     id_val = node.get(context.id_key)
-    if id_val and (not bNodeIdRegexp.match(id_val)):
+    # TODO: if node.get(CONTEXT_KEY): use as sub-context
+    if isinstance(id_val, unicode) and (not bNodeIdRegexp.match(id_val)):
         subj = URIRef(context.expand(id_val), base)
     else:
         subj = BNode()
@@ -121,14 +122,18 @@ def _add_to_graph(state, node):
             if not pred_uri:
                 continue
             pred = URIRef(pred_uri)
-            term = context.get_term(pred_uri)
+            # TODO: refactor context to get_term by key or iri
+            term = context._term_map.get(pred_key) or context.get_term(pred_uri)
 
         if term and term.container == LIST_KEY:
             obj_nodes = [{context.list_key: obj_nodes}]
 
         for obj_node in obj_nodes:
             obj = _to_object(state, term, obj_node)
-            graph.add((subj, pred, obj))
+            if term and term.coercion == REV_KEY:
+                graph.add((obj, pred, subj))
+            else:
+                graph.add((subj, pred, obj))
 
     return subj
 
