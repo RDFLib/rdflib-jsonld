@@ -97,8 +97,12 @@ bNodeIdRegexp = re.compile(r'^_:(.+)')
 
 def _add_to_graph(state, node):
     graph, context, base = state
+    l_ctx = node.get(CONTEXT_KEY)
+    if l_ctx:
+        context = Context(context.to_dict())
+        context.load(l_ctx)
+
     id_val = node.get(context.id_key)
-    # TODO: if node.get(CONTEXT_KEY): use as sub-context
     if isinstance(id_val, unicode) and (not bNodeIdRegexp.match(id_val)):
         subj = URIRef(context.expand(id_val), base)
     else:
