@@ -1,8 +1,4 @@
 from os import chdir, path as p
-from rdflib.py3compat import PY3
-if PY3:
-    from io import StringIO
-import logging
 try:
     import json
     assert json
@@ -13,16 +9,14 @@ from rdflib.compare import isomorphic
 from rdflib_jsonld.jsonld_parser import to_rdf
 from rdflib_jsonld.jsonld_serializer import to_tree
 
-log = logging.getLogger(__name__)
-
-## Skip all tests
 
 skiptests = (
     "compact",
     "expand",
     "frame",
-    # "fromRdf",
     "normalize",
+    # "fromRdf",
+    "fromRdf-0012-in", # TODO: circular list; fix graph.items circular loop bug
     # "toRdf",
     # "toRdf-0005-in",
     # "toRdf-0016-in",
@@ -37,7 +31,8 @@ skiptests = (
 
 test_dir = p.join(p.dirname(__file__), 'test-suite/tests')
 
-# 'base': 'http://json-ld.org/test-suite/tests/' + test['input']}
+
+TC_BASE = "http://json-ld.org/test-suite/tests/"
 
 
 def read_manifest():
@@ -48,7 +43,7 @@ def read_manifest():
     for m in manifestdata.get('sequence'):
         if 'Rdf' in m:
             f = open(m.split('/')[-1], 'r')
-            md = json.load(StringIO(f.read()) if PY3 else f)
+            md = json.load(f)
             f.close()
             for test in md.get('sequence'):
                 category, testnum, direction = test.get(
@@ -60,102 +55,55 @@ def read_manifest():
                     inputpath = test.get(u'input')
                     expectedpath = test.get(u'expect')
                     context = test.get(u'context', False)
-                    yield inputpath, expectedpath, context
+                    yield category, testnum, inputpath, expectedpath, context
 
 
 def test_suite():
     chdir(test_dir)
-    for inputpath, expectedpath, context in read_manifest():
-        yield _test_serializer, inputpath, expectedpath, context, "Serializer"
-        yield _test_parser, inputpath, expectedpath, context, "Parser"
+    for group, case, inputpath, expectedpath, context in read_manifest():
+        if inputpath.endswith(".jsonld"): # toRdf
+            func = _test_parser
+        else: # fromRdf
+            func = _test_serializer
+        #func.description = "%s-%s-%s" % (group, case)
+        yield func, inputpath, expectedpath, context
 
 
-def _test_parser(inputpath, expectedpath, context, serpar):
-    test_tree, test_graph = _load_test_data(inputpath, expectedpath, context)
-    if isinstance(test_tree, ConjunctiveGraph):
-        graph = test_tree
-    else:
-        g = ConjunctiveGraph()
-        result = to_rdf(test_tree, g, context_data=context)
-    if test_graph is not None:
-        assert isomorphic(result, test_graph), \
-            "Expected:\n%s\nGot:\n%s" % (
-                test_graph.serialize(format='n3'),
-                result.serialize(format='n3'))
-        # assert isomorphic(graph, test_graph), \
-        #         "Mismatch of expected graph vs result"
-    else:
-        graph_json = graph.serialize(format="json-ld", context=context)
-        expected_json = open(expectedpath, 'rb').read()
-        assert jsonld_compare(graph_json, expected_json) == True, \
-                "Expected JSON:\n%s\nGot:\n %s" % (expected_json, graph_json)
+def _test_parser(inputpath, expectedpath, context):
+    input_tree = _load_json(inputpath)
+    expected_graph = _load_nquads(expectedpath)
+    base = TC_BASE + inputpath
+    result_graph = to_rdf(input_tree, ConjunctiveGraph(), base=base, context_data=context)
+    assert isomorphic(result_graph, expected_graph), "Expected:\n%s\nGot:\n%s" % (
+            expected_graph.serialize(format='n3'),
+            result_graph.serialize(format='n3'))
 
 
-def _test_serializer(inputpath, expectedpath, context, serpar):
-    test_tree, test_graph = _load_test_data(inputpath, expectedpath, context)
+def _test_serializer(inputpath, expectedpath, context):
+    input_graph = _load_nquads(inputpath)
+    expected_json = open(expectedpath).read()
+    #if context is False:
+    #    context = test_tree.get('@context')
+    result_json = input_graph.serialize(format="json-ld", context=context)
+    _compare_json(expected_json, result_json)
 
-    if isinstance(test_tree, ConjunctiveGraph):
-        expected = test_tree.serialize(format="json-ld")
-    else:
-        expected = _to_json(_to_ordered(test_tree))
 
-    if test_graph is not None:
-        # toRdf, expected are nquads
-        result_tree = to_tree(test_graph, context_data=context)
-        result = _to_json(_to_ordered(result_tree))
-
-    elif inputpath.startswith('fromRdf'):
-        # fromRdf, expected in json-ld
-        g = ConjunctiveGraph()
-        data = open(p.join(test_dir, inputpath), 'rb').read()
-        g.parse(data=data, format="nquads", context=context)
-        result = g.serialize(format="json-ld", base=context)
-
-    else:
-        # json
-        f = open(p.join(test_dir, inputpath), 'rb')
-        result = json.load(f)[0]
+def _load_nquads(source):
+    try:
+        f = open(source)
+        graph = ConjunctiveGraph()
+        data = f.read().decode('utf-8').encode('latin-1') # FIXME: bug in rdflib
+        graph.parse(data=data, format='nquads')
+        return graph
+    finally:
         f.close()
 
-    if isinstance(result, ConjunctiveGraph):
-        assert isomorphic(result, expected), \
-            "Expected graph of %s:\n%s\nGot graph of %s:\n %s" % (
-                expected.serialize(format='n3'),
-                result.serialize(format='n3'))
-    else:
-        assert jsonld_compare(expected, result) == True, \
-                "Expected JSON:\n%s\nGot:\n%s" % (expected, result)
-
-
-def _load_test_data(inputpath, expectedpath, context):
-    test_tree = _load_test_inputpath(inputpath, expectedpath, context)
-    test_graph = _load_test_expectedpath(inputpath, expectedpath, context)
-    return test_tree, test_graph
-
-
-def _load_test_expectedpath(inputpath, expectedpath, context):
-    if '.jsonld' in expectedpath:
-        test_graph = None
-    elif '.nq' in expectedpath:
-        test_graph = ConjunctiveGraph()
-        test_graph.parse(expectedpath, format='nquads', publicId=context)
-    else:
-        raise Exception("expectedpath %s" % expectedpath)
-    return test_graph
-
-
-def _load_test_inputpath(inputpath, expectedpath, context):
-    if '.jsonld' in inputpath:
-        f = open(inputpath, 'rb')
-        test_tree = json.load(
-            StringIO(f.read().decode('utf-8')) if PY3 else f)
+def _load_json(source):
+    try:
+        f = open(source)
+        return json.load(f)
+    finally:
         f.close()
-    elif '.nq' in inputpath:
-        test_tree = ConjunctiveGraph()
-        test_tree.parse(inputpath, format='nquads')
-    else:
-        raise Exception("Unable to load test_data from %s" % inputpath)
-    return test_tree
 
 
 def _to_ordered(obj):
@@ -174,27 +122,16 @@ def _to_ordered(obj):
     return out
 
 
-def _to_json(tree):
+def _dump_json(tree):
     return json.dumps(tree,
             indent=4, separators=(',', ': '),
             sort_keys=True, check_circular=True)
 
 
-def jsonld_compare(expected, result):
-    if isinstance(expected, str if PY3 else basestring):
-        expected = json.loads(StringIO(expected).read() if PY3 else expected)
-    else:
-        expected = json.loads(StringIO(expected.decode('utf-8')
-                    ).read() if PY3 else expected)
-    if isinstance(result, str if PY3 else basestring):
-        result = json.loads(StringIO(result).read() if PY3 else result)
-    else:
-        result = json.loads(StringIO(result.decode('utf-8')
-                    ).read()if PY3 else result)
-    expected = expected[0] if isinstance(expected, list) else expected
-    result = result[0] if isinstance(result, list) else result
-    return len(expected) == len(result)
-
-
-if __name__ == "__main__":
-    test_suite()
+def _compare_json(expected, result):
+    expected = _to_ordered(json.loads(expected))
+    result = _to_ordered(json.loads(result))
+    if not isinstance(expected, list): expected = [expected]
+    if not isinstance(result, list): result = [result]
+    assert expected == result, "Expected JSON:\n%s\nGot:\n%s" % (
+            _dump_json(expected), _dump_json(result))
