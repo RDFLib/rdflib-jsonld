@@ -89,8 +89,8 @@ def _test_serializer(inputpath, expectedpath, context):
 
 
 def _load_nquads(source):
+    f = open(source)
     try:
-        f = open(source)
         graph = ConjunctiveGraph()
         data = f.read().decode('utf-8').encode('latin-1') # FIXME: bug in rdflib
         graph.parse(data=data, format='nquads')
@@ -99,27 +99,29 @@ def _load_nquads(source):
         f.close()
 
 def _load_json(source):
+    f = open(source)
     try:
-        f = open(source)
         return json.load(f)
     finally:
         f.close()
 
 
 def _to_ordered(obj):
+    if isinstance(obj, list):
+        # NOTE: use type in key to handle mixed
+        # lists of e.g. bool, int, float.
+        return sorted((_to_ordered(lv) for lv in obj),
+                key=lambda x: (_ord_key(x), type(x).__name__))
     if not isinstance(obj, dict):
         return obj
-    out = {}
-    for k, v in obj.items():
-        if isinstance(v, list):
-            # NOTE: use type in key to handle mixed
-            # lists of e.g. bool, int, float.
-            v = sorted((_to_ordered(lv) for lv in v),
-                    key=lambda x: (x, type(x).__name__))
-        else:
-            v = _to_ordered(v)
-        out[k] = v
-    return out
+    return dict((k, _to_ordered(v))
+            for k, v in obj.items())
+
+def _ord_key(x):
+    if isinstance(x, dict) and '@id' in x:
+        return x['@id']
+    else:
+        return x
 
 
 def _dump_json(tree):
