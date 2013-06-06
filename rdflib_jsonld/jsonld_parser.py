@@ -147,7 +147,12 @@ def _add_to_graph(state, node):
                 obj_nodes = [{context.list_key: obj_nodes}]
             elif isinstance(obj, dict):
                 if term.container == INDEX_KEY:
-                    obj_nodes = obj.values()
+                    obj_nodes = []
+                    for values in obj.values():
+                        if not isinstance(values, list):
+                            obj_nodes.append(values)
+                        else:
+                            obj_nodes += values
                 elif term.container == LANG_KEY:
                     obj_nodes = []
                     for lang, values in obj.items():
@@ -158,6 +163,8 @@ def _add_to_graph(state, node):
 
         for obj_node in obj_nodes:
             obj = _to_object(state, term, obj_node)
+            if obj is None:
+                continue
             if term and term.coercion == REV_KEY:
                 graph.add((obj, pred, subj))
             else:
@@ -169,8 +176,13 @@ def _add_to_graph(state, node):
 def _to_object(state, term, node):
     graph, context, base = state
 
+    if node is None:
+        return
+
     if isinstance(node, tuple):
         value, lang = node
+        if value is None:
+            return
         return Literal(value, lang=lang)
 
     if isinstance(node, dict) and context.list_key in node:
@@ -183,6 +195,8 @@ def _to_object(state, term, node):
                     graph.add((l_subj, RDF.rest, l_next))
                     l_subj = l_next
                 l_obj = _to_object(state, None, l_node)
+                if l_obj is None:
+                    continue
                 graph.add((l_subj, RDF.first, l_obj))
                 l_next = BNode()
             graph.add((l_subj, RDF.rest, RDF.nil))
@@ -205,12 +219,15 @@ def _to_object(state, term, node):
                         context.value_key: node}
 
     if context.value_key in node:
+        value = node[context.value_key]
+        if value is None:
+            return
         if context.lang_key in node:
-            return Literal(node[context.value_key], lang=node[context.lang_key])
+            return Literal(value, lang=node[context.lang_key])
         elif context.type_key and context.type_key in node:
-            return Literal(node[context.value_key],
+            return Literal(value,
                         datatype=context.expand(node[context.type_key]))
         else:
-            return Literal(node[context.value_key])
+            return Literal(value)
     else:
         return _add_to_graph(state, node)
