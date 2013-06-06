@@ -39,7 +39,7 @@ from rdflib.parser import Parser
 from rdflib.namespace import RDF, XSD
 from rdflib.term import URIRef, BNode, Literal
 
-from ldcontext import Context, Term, CONTEXT_KEY, ID_KEY, REV_KEY, LIST_KEY
+from ldcontext import Context, Term, CONTEXT_KEY, ID_KEY, REV_KEY, LIST_KEY, INDEX_KEY
 from ldcontext import source_to_json
 
 __all__ = ['JsonLDParser', 'to_rdf']
@@ -67,17 +67,22 @@ class JsonLDParser(Parser):
         to_rdf(tree, sink, base, context_data)
 
 
-def to_rdf(tree, graph, base=None, context_data=None):
+def to_rdf(data, graph, base=None, context_data=None):
     """
     @@ TODO: add docstring describing args and returned value type
     """
     context = Context()
-    context.load(context_data or tree.get(CONTEXT_KEY) or {})
 
-    id_obj = tree.get(context.id_key)
-    resources = id_obj
-    if not isinstance(id_obj, list):
-        resources = [tree]
+    if isinstance(data, list):
+        resources = data
+    elif isinstance(data, dict):
+        resources = data.get(context.graph_key, data)
+        if not isinstance(resources, list):
+            resources = [resources]
+        context_data = data.get(CONTEXT_KEY) or context_data
+
+    if context_data:
+        context.load(context_data)
 
     if context.vocab:
         graph.bind(None, context.vocab)
@@ -97,6 +102,9 @@ bNodeIdRegexp = re.compile(r'^_:(.+)')
 
 def _add_to_graph(state, node):
     graph, context, base = state
+    if not isinstance(node, dict) or context.value_key in node:
+        return
+
     l_ctx = node.get(CONTEXT_KEY)
     if l_ctx:
         context = Context(context.to_dict())
@@ -108,9 +116,12 @@ def _add_to_graph(state, node):
     else:
         subj = BNode()
 
-    for pred_key, obj_nodes in node.items():
-        if not isinstance(obj_nodes, list):
-            obj_nodes = [obj_nodes]
+    for pred_key, obj in node.items():
+
+        if not isinstance(obj, list):
+            obj_nodes = [obj]
+        else:
+            obj_nodes = obj
 
         if pred_key in (CONTEXT_KEY, context.id_key):
             continue
@@ -129,8 +140,11 @@ def _add_to_graph(state, node):
             # TODO: refactor context to get_term by key or iri
             term = context._term_map.get(pred_key) or context.get_term(pred_uri)
 
-        if term and term.container == LIST_KEY:
-            obj_nodes = [{context.list_key: obj_nodes}]
+        if term:
+            if term.container == LIST_KEY:
+                obj_nodes = [{context.list_key: obj_nodes}]
+            if isinstance(obj, dict) and term.container == INDEX_KEY:
+                obj_nodes = obj.values()
 
         for obj_node in obj_nodes:
             obj = _to_object(state, term, obj_node)
@@ -176,10 +190,13 @@ def _to_object(state, term, node):
                 node = {context.type_key: term.coercion,
                         context.value_key: node}
 
-    if context.lang_key in node:
-        return Literal(node[context.value_key], lang=node[context.lang_key])
-    elif context.type_key and context.value_key in node:
-        return Literal(node[context.value_key],
-                       datatype=context.expand(node[context.type_key]))
+    if context.value_key in node:
+        if context.lang_key in node:
+            return Literal(node[context.value_key], lang=node[context.lang_key])
+        elif context.type_key and context.type_key in node:
+            return Literal(node[context.value_key],
+                        datatype=context.expand(node[context.type_key]))
+        else:
+            return Literal(node[context.value_key])
     else:
         return _add_to_graph(state, node)

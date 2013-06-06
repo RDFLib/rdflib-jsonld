@@ -31,6 +31,7 @@ VALUE_KEY = '@value'
 LIST_KEY = '@list'
 CONTAINER_KEY = '@container'
 SET_KEY = '@set'
+INDEX_KEY = '@index'
 REV_KEY = '@reverse'
 GRAPH_KEY = '@graph'
 VOCAB_KEY = '@vocab'
@@ -46,6 +47,7 @@ class Context(object):
         self._term_map = {}
         self.lang = None
         self.vocab = None
+        self._loaded = False
         if source:
             self.load(source)
 
@@ -62,7 +64,11 @@ class Context(object):
     rev_key = property(lambda self: self._key_map.get(REV_KEY, REV_KEY))
     graph_key = property(lambda self: self._key_map.get(GRAPH_KEY, GRAPH_KEY))
 
+    def __nonzero__(self):
+        return self._loaded
+
     def load(self, source, base=None, visited_urls=None):
+        self._loaded = True
         if CONTEXT_KEY in source:
             source = source[CONTEXT_KEY]
         if isinstance(source, list):
@@ -80,7 +86,7 @@ class Context(object):
             self.lang = data.get(LANG_KEY, self.lang)
             self.vocab = data.get(VOCAB_KEY, self.vocab)
             for key, value in data.items():
-                if key in (LANG_KEY, VOCAB_KEY):
+                if key in (LANG_KEY, VOCAB_KEY, '_'):
                     continue
                 elif isinstance(value, unicode) and value in KEYS:
                     self._key_map[value] = key
