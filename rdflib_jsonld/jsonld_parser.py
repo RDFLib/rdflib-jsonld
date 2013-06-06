@@ -39,7 +39,8 @@ from rdflib.parser import Parser
 from rdflib.namespace import RDF, XSD
 from rdflib.term import URIRef, BNode, Literal
 
-from ldcontext import Context, Term, CONTEXT_KEY, ID_KEY, REV_KEY, LIST_KEY, INDEX_KEY
+from ldcontext import Context, Term, \
+        CONTEXT_KEY, ID_KEY, REV_KEY, LIST_KEY, INDEX_KEY, LANG_KEY
 from ldcontext import source_to_json
 
 __all__ = ['JsonLDParser', 'to_rdf']
@@ -117,6 +118,7 @@ def _add_to_graph(state, node):
         subj = BNode()
 
     for pred_key, obj in node.items():
+        term = None
 
         if not isinstance(obj, list):
             obj_nodes = [obj]
@@ -143,8 +145,16 @@ def _add_to_graph(state, node):
         if term:
             if term.container == LIST_KEY:
                 obj_nodes = [{context.list_key: obj_nodes}]
-            if isinstance(obj, dict) and term.container == INDEX_KEY:
-                obj_nodes = obj.values()
+            elif isinstance(obj, dict):
+                if term.container == INDEX_KEY:
+                    obj_nodes = obj.values()
+                elif term.container == LANG_KEY:
+                    obj_nodes = []
+                    for lang, values in obj.items():
+                        if not isinstance(values, list):
+                            values = [values]
+                        for v in values:
+                            obj_nodes.append((v, lang))
 
         for obj_node in obj_nodes:
             obj = _to_object(state, term, obj_node)
@@ -158,6 +168,10 @@ def _add_to_graph(state, node):
 
 def _to_object(state, term, node):
     graph, context, base = state
+
+    if isinstance(node, tuple):
+        value, lang = node
+        return Literal(value, lang=lang)
 
     if isinstance(node, dict) and context.list_key in node:
         node_list = node.get(context.list_key)
