@@ -8,7 +8,6 @@ except ImportError:
 
 from rdflib import Graph
 from rdflib.compare import isomorphic
-# from rdfextras.ldcontext import Context
 from rdflib_jsonld.jsonld_parser import to_rdf
 from rdflib_jsonld.jsonld_serializer import to_tree
 
