@@ -40,7 +40,7 @@ from rdflib.namespace import RDF, XSD
 from rdflib.term import URIRef, BNode, Literal
 
 from ldcontext import Context, Term, \
-        CONTEXT_KEY, ID_KEY, REV_KEY, LIST_KEY, INDEX_KEY, LANG_KEY
+        CONTEXT_KEY, ID_KEY, REV_KEY, LIST_KEY, INDEX_KEY, LANG_KEY, VOCAB_KEY
 from ldcontext import source_to_json
 
 __all__ = ['JsonLDParser', 'to_rdf']
@@ -113,7 +113,7 @@ def _add_to_graph(state, node):
 
     id_val = node.get(context.id_key)
     if isinstance(id_val, unicode) and (not bNodeIdRegexp.match(id_val)):
-        subj = URIRef(context.expand(id_val), base)
+        subj = URIRef(context.expand_ref(id_val), base)
     else:
         subj = BNode()
 
@@ -129,7 +129,7 @@ def _add_to_graph(state, node):
             continue
         if pred_key == context.type_key:
             pred = RDF.type
-            term = Term(None, None, context.id_key)
+            term = Term(None, None, VOCAB_KEY)
         elif pred_key == context.graph_key:
             for onode in obj_nodes:
                 _add_to_graph(state, onode)
@@ -213,6 +213,8 @@ def _to_object(state, term, node):
             return Literal(node, lang=context.lang)
         else:
             if term.coercion == ID_KEY:
+                node = {context.id_key: context.expand_ref(node)}
+            elif term.coercion == VOCAB_KEY:
                 node = {context.id_key: context.expand(node)}
             else:
                 node = {context.type_key: term.coercion,

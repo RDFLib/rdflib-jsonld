@@ -166,14 +166,17 @@ class Context(object):
             pass
         return iri
 
-    def expand(self, term_curie_or_iri):
+    def expand_ref(self, term_curie_or_iri):
+        return self.expand(term_curie_or_iri, False)
+
+    def expand(self, term_curie_or_iri, vocab=True):
         term_curie_or_iri = unicode(term_curie_or_iri)
         is_term, pfx, local = self._prep_expand(term_curie_or_iri)
         if pfx is not None:
             ns = self._term_map.get(pfx)
             if ns and ns.iri:
                 return ns.iri + local
-        else:
+        elif vocab:
             term = self._term_map.get(term_curie_or_iri)
             if term:
                 return term.iri
