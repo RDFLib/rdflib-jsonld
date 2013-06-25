@@ -151,9 +151,7 @@ def _key_and_node(state, p, objs):
 def _handles_for_property(state, p, objs):
     (graph, context, base) = state
     repr_value = lambda o: _to_raw_value(state, o)
-    # context.shrink(o) if isinstance(o, URIRef) else o # py2.4 compat
-    iri_to_id = (lambda o:
-                 isinstance(o, URIRef) and context.shrink(o) or o)
+    iri_to_id = (lambda o: context.shrink(o) if isinstance(o, URIRef) else o)
     term = context.get_term(unicode(p))
     if term:
         p_key = term.key
@@ -165,13 +163,9 @@ def _handles_for_property(state, p, objs):
             if term.coercion == ID_KEY:
                 repr_value = iri_to_id
             else:
-                #o if unicode(o.datatype) == term.coercion
-                #        else _to_raw_value(state, o)
-                # for py24:
-                repr_value = (lambda o: (
-                    unicode(o.datatype) == term.coercion)
-                    and o
-                    or _to_raw_value(state, o))
+                repr_value = (lambda o:
+                    o if unicode(o.datatype) == term.coercion
+                    else _to_raw_value(state, o))
     else:
         if not term and p == RDF.type:
             repr_value = iri_to_id
