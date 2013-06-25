@@ -39,3 +39,7 @@ If Sphinx is installed, Sphinx documentation can be generated with::
 
 The documentation will be created in ./build/sphinx.
 
+Continuous integration tests
+----------------------------
+
+[![Build Status](https://travis-ci.org/RDFLib/rdflib-jsonld.png?branch=master)](https://travis-ci.org/RDFLib/rdflib-jsonld)
