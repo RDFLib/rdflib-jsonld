@@ -6,8 +6,8 @@ except ImportError:
     import simplejson as json
 from rdflib import ConjunctiveGraph
 from rdflib.compare import isomorphic
+from rdflib.py3compat import PY3
 from rdflib_jsonld.jsonld_parser import to_rdf
-from rdflib_jsonld.jsonld_serializer import to_tree
 
 
 skiptests = (
@@ -16,7 +16,7 @@ skiptests = (
     "frame",
     "normalize",
     # "fromRdf",
-    "fromRdf-0012-in", # TODO: circular list; fix graph.items circular loop bug
+    "fromRdf-0012-in",  # TODO: circular list; fix graph.items loop bug
     # "toRdf",
     # "toRdf-0005-in",
     # "toRdf-0016-in",
@@ -61,9 +61,9 @@ def read_manifest():
 def test_suite():
     chdir(test_dir)
     for group, case, inputpath, expectedpath, context in read_manifest():
-        if inputpath.endswith(".jsonld"): # toRdf
+        if inputpath.endswith(".jsonld"):  # toRdf
             func = _test_parser
-        else: # fromRdf
+        else:  # fromRdf
             func = _test_serializer
         #func.description = "%s-%s-%s" % (group, case)
         yield func, inputpath, expectedpath, context
@@ -73,8 +73,11 @@ def _test_parser(inputpath, expectedpath, context):
     input_tree = _load_json(inputpath)
     expected_graph = _load_nquads(expectedpath)
     base = TC_BASE + inputpath
-    result_graph = to_rdf(input_tree, ConjunctiveGraph(), base=base, context_data=context)
-    assert isomorphic(result_graph, expected_graph), "Expected:\n%s\nGot:\n%s" % (
+    result_graph = to_rdf(
+        input_tree, ConjunctiveGraph(),
+        base=base, context_data=context)
+    assert isomorphic(
+        result_graph, expected_graph), "Expected:\n%s\nGot:\n%s" % (
             expected_graph.serialize(format='n3'),
             result_graph.serialize(format='n3'))
 
@@ -92,11 +95,16 @@ def _load_nquads(source):
     f = open(source)
     try:
         graph = ConjunctiveGraph()
-        data = f.read().decode('utf-8').encode('latin-1') # FIXME: bug in rdflib
+        if PY3:
+            data = f.read()
+        else:
+            data = f.read().decode('utf-8'
+                ).encode('latin-1')  # FIXME: bug in rdflib
         graph.parse(data=data, format='nquads')
         return graph
     finally:
         f.close()
+
 
 def _load_json(source):
     f = open(source)
@@ -117,6 +125,7 @@ def _to_ordered(obj):
     return dict((k, _to_ordered(v))
             for k, v in obj.items())
 
+
 def _ord_key(x):
     if isinstance(x, dict) and '@id' in x:
         return x['@id']
@@ -132,8 +141,11 @@ def _dump_json(tree):
 
 def _compare_json(expected, result):
     expected = _to_ordered(json.loads(expected))
-    result = _to_ordered(json.loads(result))
-    if not isinstance(expected, list): expected = [expected]
-    if not isinstance(result, list): result = [result]
+    result = _to_ordered(json.loads(
+        result.decode('utf-8') if PY3 else result))
+    if not isinstance(expected, list):
+        expected = [expected]
+    if not isinstance(result, list):
+        result = [result]
     assert expected == result, "Expected JSON:\n%s\nGot:\n%s" % (
             _dump_json(expected), _dump_json(result))
