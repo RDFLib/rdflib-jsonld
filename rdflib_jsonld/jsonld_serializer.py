@@ -17,17 +17,29 @@ Example usage::
 
     >>> g = Graph().parse(data=testrdf, format='n3')
 
-    >>> print(g.serialize(format='json-ld', indent=4, generate_compact=True))
+    >>> print(g.serialize(format='json-ld', indent=4, compact=True))
     {
         "@context": {
             "dc": "http://purl.org/dc/terms/",
             "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-            "rdfs": "http://www.w3.org/2000/01/rdf-schema#"
+            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+            "xsd": "http://www.w3.org/2001/XMLSchema#"
         },
         "@id": "http://example.org/about",
         "dc:title": {
             "@language": "en",
-            "@literal": "Someone's Homepage"
+            "@value": "Someone's Homepage"
+        }
+    }
+    
+    >>> # Note the difference between "compact=True" and "compact="False"
+
+    >>> print(g.serialize(format='json-ld', indent=4, compact=False))
+    {
+        "@id": "http://example.org/about",
+        "http://purl.org/dc/terms/title": {
+            "@language": "en",
+            "@value": "Someone's Homepage"
         }
     }
 

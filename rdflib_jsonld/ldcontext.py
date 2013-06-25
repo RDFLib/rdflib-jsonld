@@ -157,7 +157,7 @@ class Context(object):
             return self.type_key
         try:
             ns, name = split_uri(iri)
-            term = self.get_term(iri)
+            term = self.get_term(ns)
             if term:
                 return ":".join((term.key, name))
             elif ns == self.vocab:
