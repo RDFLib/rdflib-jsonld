@@ -17,30 +17,15 @@ Example usage::
 
     >>> g = Graph().parse(data=testrdf, format='n3')
 
-    >>> print(g.serialize(format='json-ld', indent=4, compact=True))
-    {
-        "@context": {
-            "dc": "http://purl.org/dc/terms/",
-            "rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
-            "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-            "xsd": "http://www.w3.org/2001/XMLSchema#"
-        },
-        "@id": "http://example.org/about",
-        "dc:title": {
-            "@language": "en",
-            "@value": "Someone's Homepage"
-        }
-    }
-    
-    >>> # Note the difference between "compact=True" and "compact="False"
-
-    >>> print(g.serialize(format='json-ld', indent=4, compact=False))
+    >>> print(g.serialize(format='json-ld', indent=4))
     {
         "@id": "http://example.org/about",
-        "http://purl.org/dc/terms/title": {
-            "@language": "en",
-            "@value": "Someone's Homepage"
-        }
+        "http://purl.org/dc/terms/title": [
+            {
+                "@language": "en",
+                "@value": "Someone's Homepage"
+            }
+        ]
     }
 
 """
@@ -78,33 +63,30 @@ class JsonLDSerializer(Serializer):
                           "Given encoding was: %s" % encoding)
 
         context_data = kwargs.get('context')
-        generate_compact = kwargs.get('compact', False)
+        auto_compact = kwargs.get('auto_compact', False)
         indent = kwargs.get('indent', 2)
         separators = (',', ': ')
         sort_keys = True
         tree = to_tree(self.store, context_data, base,
-                       generate_compact=generate_compact)
+                       auto_compact=auto_compact)
         data = json.dumps(tree, indent=indent, separators=separators,
                           sort_keys=sort_keys)
 
         stream.write(data.encode(encoding, 'replace'))
 
 
-def to_tree(graph, context_data=None, base=None, generate_compact=False):
+def to_tree(graph, context_data=None, base=None,
+        coerce_native=False, auto_compact=False):
     """
     @@ TODO: add docstring describing args and returned value type
     """
+    # TODO: framing/CBD-with-startnode?
 
-    tree = {}
-
-    # TODO: Check which prefixes are actually used when creating curies and add
-    # incrementally. (Use rdflib features for this, e.g. RecursiveSerializer?)
-    if not context_data:
-        if generate_compact:
-            context_data = dict(
-                (pfx, unicode(ns))
-                for (pfx, ns) in graph.namespaces() if pfx and
-                unicode(ns) != u"http://www.w3.org/XML/1998/namespace")
+    if not context_data and auto_compact:
+        context_data = dict(
+            (pfx, unicode(ns))
+            for (pfx, ns) in graph.namespaces() if pfx and
+            unicode(ns) != u"http://www.w3.org/XML/1998/namespace")
 
     if isinstance(context_data, Context):
             context = context_data
@@ -112,25 +94,23 @@ def to_tree(graph, context_data=None, base=None, generate_compact=False):
     else:
         context = Context(context_data)
 
+    state = (graph, context, base)
+    tree = {}
     if context_data:
         tree[context.context_key] = context_data
-
     nodes = []
+    subjects = set(graph.subjects())
 
-    state = (graph, context, base)
-
-    # TODO: framing/CBD-with-startnode...
-    for s in set(graph.subjects()):
+    for s in subjects:
         # only unreferenced.. TODO: not if more than one ref!
         if isinstance(s, URIRef) or not any(graph.subjects(None, s)):
             current = _subject_to_node(state, s)
             nodes.append(current)
-
     if len(nodes) == 1:
         tree.update(nodes[0])
     else:
-        tree[context.graph_key] = nodes
-
+        #tree[context.graph_key] = nodes
+        tree = nodes
     return tree
 
 
@@ -139,6 +119,8 @@ def _subject_to_node(state, s):
     current = {}
     if isinstance(s, URIRef):
         current[context.id_key] = context.shrink(s)
+    elif any(graph.subjects(None, s)) and isinstance(s, BNode):
+        current[context.id_key] = s.n3()
     p_objs = {}
     for p, o in graph.predicate_objects(s):
         objs = p_objs.setdefault(p, [])
@@ -182,7 +164,7 @@ def _handles_for_property(state, p, objs):
         if not term and p == RDF.type:
             repr_value = iri_to_id
         p_key = context.shrink(p)
-        many = not len(objs) == 1
+        many = not context or len(objs) != 1
 
     # TODO: working, but in need of refactoring...
     if term and term.container == LIST_KEY:
@@ -213,6 +195,8 @@ def _to_raw_value(state, o):
              #    return o.toPython()
             return {context.type_key: context.shrink(o.datatype),
                     context.value_key: v}
+        if not context:
+            return {context.value_key: v}
         else:
             return v
 
