@@ -2,8 +2,8 @@ The `test-suite` directory is a partial *copy* of the official test suite availa
 
 To update this copy, first obtain a local copy of the json-ld-tests test-suite. Then copy the relevants parts of that directory into this test directory.
 
-You can do so by first defining a `$JSONLD_TESTSUITE` environment variable set to the local copy of the test-suite, then run:
+You can do so by first defining a `$JSONLD_TESTSUITE` environment variable set to the local copy of the test-suite directory. Then run:
 
-    $ cp $JSONLD_TESTSUITE/*.jsonld ./test-suite/
-    $ cp $JSONLD_TESTSUITE/tests/{toRdf,fromRdf}-*.* ./test-suite/tests/
+    $ cp $JSONLD_TESTSUITE/*.jsonld test/test-suite/
+    $ cp $JSONLD_TESTSUITE/tests/{toRdf,fromRdf}-*.* test/test-suite/tests/
 
