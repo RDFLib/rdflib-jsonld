@@ -106,7 +106,7 @@ class Context(object):
                 iri = self._rec_expand(data, dfn.get(ID_KEY))
             if not coercion:
                 type_val = dfn.get(TYPE_KEY)
-                if type_val in (ID_KEY, TYPE_KEY):
+                if type_val in (ID_KEY, TYPE_KEY, VOCAB_KEY):
                     coercion = type_val
                 else:
                     coercion = self._rec_expand(data, type_val)
