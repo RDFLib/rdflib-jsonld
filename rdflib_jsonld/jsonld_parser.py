@@ -97,9 +97,6 @@ def to_rdf(data, graph, base=None, context_data=None):
 
     return graph
 
-import re
-bNodeIdRegexp = re.compile(r'^_:(.+)')
-
 
 def _add_to_graph(state, node):
     graph, context, base = state
@@ -112,8 +109,12 @@ def _add_to_graph(state, node):
         context.load(l_ctx)
 
     id_val = node.get(context.id_key)
-    if isinstance(id_val, unicode) and (not bNodeIdRegexp.match(id_val)):
-        subj = URIRef(context.expand_ref(id_val), base)
+    if isinstance(id_val, unicode):
+        bid = _get_bnodeid(id_val)
+        if bid:
+            subj = BNode(bid)
+        else:
+            subj = URIRef(context.expand_ref(id_val), base)
     else:
         subj = BNode()
 
@@ -233,3 +234,10 @@ def _to_object(state, term, node):
             return Literal(value)
     else:
         return _add_to_graph(state, node)
+
+
+def _get_bnodeid(ref):
+    if not ref.startswith('_:'):
+        return
+    bid = ref.split('_:', 1)[-1]
+    return bid or None
