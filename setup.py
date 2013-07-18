@@ -93,10 +93,10 @@ config = dict(
     install_requires = ["rdflib>=4.0"],
     entry_points = {
         'rdf.plugins.parser': [
-            'json-ld = rdflib_jsonld.jsonld_parser:JsonLDParser',
+            'json-ld = rdflib_jsonld.parser:JsonLDParser',
         ],
         'rdf.plugins.serializer': [
-            'json-ld = rdflib_jsonld.jsonld_serializer:JsonLDSerializer',
+            'json-ld = rdflib_jsonld.serializer:JsonLDSerializer',
         ],
     }
 )

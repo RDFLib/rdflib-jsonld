@@ -40,10 +40,12 @@ from rdflib.serializer import Serializer
 from rdflib.term import URIRef, Literal, BNode
 from rdflib.namespace import RDF, XSD
 
-from ldcontext import Context, ID_KEY, LIST_KEY, SET_KEY
-from ldcontext import json
+from .context import Context
+from .util import json
+from .keys import *
 
-__all__ = ['JsonLDSerializer', 'to_tree']
+__all__ = ['JsonLDSerializer', 'from_rdf']
+
 
 PLAIN_LITERAL_TYPES = set([XSD.integer, XSD.float, XSD.double, XSD.decimal,
                            XSD.boolean, XSD.string])
@@ -54,9 +56,7 @@ class JsonLDSerializer(Serializer):
         super(JsonLDSerializer, self).__init__(store)
 
     def serialize(self, stream, base=None, encoding=None, **kwargs):
-        """
-        @@ TODO: add docstring describing args and returned value type
-        """
+        # TODO: docstring w. args and return value
         encoding = encoding or 'utf-8'
         if encoding not in ('utf-8', 'utf-16'):
             warnings.warn("JSON should be encoded as unicode. " +
@@ -67,20 +67,18 @@ class JsonLDSerializer(Serializer):
         indent = kwargs.get('indent', 2)
         separators = (',', ': ')
         sort_keys = True
-        tree = to_tree(self.store, context_data, base,
+        obj = from_rdf(self.store, context_data, base,
                        auto_compact=auto_compact)
-        data = json.dumps(tree, indent=indent, separators=separators,
+        data = json.dumps(obj, indent=indent, separators=separators,
                           sort_keys=sort_keys)
 
         stream.write(data.encode(encoding, 'replace'))
 
 
-def to_tree(graph, context_data=None, base=None,
-        coerce_native=False, auto_compact=False):
-    """
-    @@ TODO: add docstring describing args and returned value type
-    """
-    # TODO: framing/CBD-with-startnode?
+def from_rdf(graph, context_data=None, base=None,
+        use_native_types=False, auto_compact=False, startnode=None, index=False):
+    # TODO: docstring w. args and return value
+    # TODO: support for index and startnode
 
     if not context_data and auto_compact:
         context_data = dict(
@@ -89,33 +87,32 @@ def to_tree(graph, context_data=None, base=None,
             unicode(ns) != u"http://www.w3.org/XML/1998/namespace")
 
     if isinstance(context_data, Context):
-            context = context_data
-            context_data = context.to_dict()
+        context = context_data
+        context_data = context.to_dict()
     else:
-        context = Context(context_data)
+        context = Context(context_data, base=base)
 
-    state = (graph, context, base)
-    tree = {}
+    # TODO: support multiple graphs
+    obj = {}
     if context_data:
-        tree[context.context_key] = context_data
+        obj[CONTEXT] = context_data
     nodes = []
     subjects = set(graph.subjects())
 
     for s in subjects:
         # only unreferenced.. TODO: not if more than one ref!
         if isinstance(s, URIRef) or not any(graph.subjects(None, s)):
-            current = _subject_to_node(state, s)
+            current = _subject_to_node(graph, context, s)
             nodes.append(current)
     if len(nodes) == 1:
-        tree.update(nodes[0])
+        obj.update(nodes[0])
     else:
-        #tree[context.graph_key] = nodes
-        tree = nodes
-    return tree
+        #obj[context.graph_key] = nodes
+        obj = nodes
+    return obj
 
 
-def _subject_to_node(state, s):
-    (graph, context, base) = state
+def _subject_to_node(graph, context, s):
     current = {}
     if isinstance(s, URIRef):
         current[context.id_key] = context.shrink(s)
@@ -126,14 +123,14 @@ def _subject_to_node(state, s):
         objs = p_objs.setdefault(p, [])
         objs.append(o)
     for p, objs in p_objs.items():
-        p_key, node = _key_and_node(state, p, objs)
+        p_key, node = _key_and_node(graph, context, p, objs)
         current[p_key] = node
 
     return current
 
 
-def _key_and_node(state, p, objs):
-    p_key, many, repr_value = _handles_for_property(state, p, objs)
+def _key_and_node(graph, context, p, objs):
+    p_key, many, repr_value = _handles_for_property(graph, context, p, objs)
     node = None
     if not many:
         node = repr_value(objs[0])
@@ -142,50 +139,60 @@ def _key_and_node(state, p, objs):
     return p_key, node
 
 
-def _handles_for_property(state, p, objs):
-    (graph, context, base) = state
-    repr_value = lambda o: _to_raw_value(state, o)
-    iri_to_id = (lambda o: context.shrink(o) if isinstance(o, URIRef) else o)
-    term = context.get_term(unicode(p))
+def _handles_for_property(graph, context, p, objs):
+    repr_value = lambda o: _to_raw_value(graph, context, o)
+    iri_to_id = (lambda o:
+                 context.shrink(o) if isinstance(o, URIRef) else o)
+
+    if isinstance(objs[0], Literal):
+        datatype = unicode(objs[0].datatype)
+        for other in objs[1:]:
+            if not isinstance(other, Literal) or other.datatype != datatype:
+                datatype = None
+                break
+    else:
+        datatype = None
+
+    term = context.find_term(unicode(p), datatype)
     if term:
-        p_key = term.key
-        if term.container == SET_KEY:
+        p_key = term.name
+        if term.container == SET:
             many = True
         else:
             many = not len(objs) == 1
-        if term.coercion:
-            if term.coercion == ID_KEY:
+        if term.type:
+            if term.type == ID:
                 repr_value = iri_to_id
             else:
                 repr_value = (lambda o:
-                    o if unicode(o.datatype) == term.coercion
-                    else _to_raw_value(state, o))
+                    o if unicode(o.datatype) == term.type
+                    else _to_raw_value(graph, context, o))
     else:
+        p_key = context.shrink(p)
         if not term and p == RDF.type:
             repr_value = iri_to_id
-        p_key = context.shrink(p)
+            p_key = context.type_key
         many = not context or len(objs) != 1
 
     # TODO: working, but in need of refactoring...
-    if term and term.container == LIST_KEY:
+    if term and term.container == LIST:
         wrapped_repr = repr_value
         repr_value = lambda o: wrapped_repr(o)[context.list_key]
 
     return p_key, many, repr_value
 
 
-def _to_raw_value(state, o):
-    (graph, context, base) = state
-    coll = _to_collection(state, o)
+def _to_raw_value(graph, context, o):
+    coll = _to_collection(graph, context, o)
     if coll is not None:
         return coll
     elif isinstance(o, BNode):
-        return _subject_to_node(state, o)
+        return _subject_to_node(graph, context, o)
     elif isinstance(o, URIRef):
         return {context.id_key: context.shrink(o)}
     elif isinstance(o, Literal):
         v = o
-        if o.language and o.language != context.lang:
+        if o.language and o.language != context.language:
             return {context.lang_key: o.language,
                     context.value_key: v}
         elif o.datatype:
@@ -201,12 +208,11 @@ def _to_raw_value(state, o):
             return v
 
 
-def _to_collection(state, subj):
-    (graph, context, base) = state
+def _to_collection(graph, context, subj):
     if subj == RDF.nil:
         return {context.list_key: []}
     elif (subj, RDF.first, None) in graph:
-        return {context.list_key: list(_to_raw_value(state, o)
+        return {context.list_key: list(_to_raw_value(graph, context, o)
                                        for o in graph.items(subj))}
     else:
         return None
