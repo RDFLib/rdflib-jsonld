@@ -26,8 +26,8 @@ class Context(object):
         self.vocab = None
         self.base = base
         self.doc_base = base
-        self.alias = {}
         self.terms = {}
+        self._alias = {}
         self._lookup = {}
         self._prefixes = {}
         self._loaded = False
@@ -57,7 +57,7 @@ class Context(object):
         ctx.vocab = self.vocab
         ctx.base = self.base
         ctx.doc_base = self.doc_base
-        ctx.alias = self.alias.copy()
+        ctx._alias = self._alias.copy()
         ctx.terms = self.terms.copy()
         ctx._lookup = self._lookup.copy()
         ctx._prefixes = self._prefixes.copy()
@@ -89,10 +89,10 @@ class Context(object):
         return self._get(obj, REV)
 
     def _get(self, obj, key):
-        return obj.get(self.alias.get(key)) or obj.get(key)
+        return obj.get(self._alias.get(key)) or obj.get(key)
 
     def get_key(self, key):
-        return self.alias.get(key, key)
+        return self._alias.get(key, key)
 
     lang_key = property(lambda self: self.get_key(LANG))
     id_key = property(lambda self: self.get_key(ID))
@@ -172,8 +172,6 @@ class Context(object):
                     self.base = self.doc_base
                 else:
                     self.base = value
-            elif isinstance(value, basestring) and value in NODE_KEYS:
-                self.alias[value] = key
             else:
                 self._read_term(source, key, value)
 
@@ -198,6 +196,8 @@ class Context(object):
         else:
             idref = self._rec_expand(source, dfn)
             self.add_term(name, idref)
+        if idref in NODE_KEYS:
+            self._alias[idref] = name
 
     def _rec_expand(self, source, expr, prev=None):
         if expr == prev:

@@ -116,9 +116,9 @@ def _add_to_graph(graph, context, node, rootgraph=None):
         subj = BNode()
 
     for key, obj in node.items():
-        if key in (CONTEXT, ID, context.alias.get(ID)):
+        if key in (CONTEXT, ID, context.get_key(ID)):
             continue
-        if key in (REV, context.alias.get(REV)):
+        if key in (REV, context.get_key(REV)):
             for rkey, robj in obj.items():
                 _key_to_graph(graph, context, subj, rkey, robj, rootgraph, True)
         else:
@@ -134,29 +134,9 @@ def _key_to_graph(graph, context, subj, key, obj, rootgraph, reverse=False):
     else:
         obj_nodes = [obj]
 
-    term = None
-    if key in (TYPE, context.alias.get(TYPE)):
-        term = TYPE_TERM
-    elif key in (GRAPH, context.alias.get(GRAPH)):
-        if graph is rootgraph:
-            #assert graph.context_aware
-            subgraph = rootgraph.get_context(subj)
-        else:
-            subgraph = graph
-        for onode in obj_nodes:
-            _add_to_graph(subgraph, context, onode, rootgraph)
-        return
-    elif key in (SET, context.alias.get(SET)):
-        for onode in obj_nodes:
-            _add_to_graph(graph, context, onode, rootgraph)
-        return
-    else:
-        term = context.terms.get(key)
-
-    if not term:
-        pred_uri = context.expand(key)
-    else:
-        pred_uri = term.id
+    term = context.terms.get(key)
+    if term:
+        term_id = term.id
         if term.container == LIST:
             obj_nodes = [{LIST: obj_nodes}]
         elif isinstance(obj, dict):
@@ -174,6 +154,26 @@ def _key_to_graph(graph, context, subj, key, obj, rootgraph, reverse=False):
                         values = [values]
                     for v in values:
                         obj_nodes.append((v, lang))
+    else:
+        term_id = None
+
+    if TYPE in (key, term_id):
+        term = TYPE_TERM
+    elif GRAPH in (key, term_id):
+        if graph is rootgraph:
+            #assert graph.context_aware
+            subgraph = rootgraph.get_context(subj)
+        else:
+            subgraph = graph
+        for onode in obj_nodes:
+            _add_to_graph(subgraph, context, onode, rootgraph)
+        return
+    elif SET in (key, term_id):
+        for onode in obj_nodes:
+            _add_to_graph(graph, context, onode, rootgraph)
+        return
+
+    pred_uri = term.id if term else context.expand(key)
 
     flattened = []
     for obj in obj_nodes:
@@ -243,7 +243,7 @@ def _to_object(graph, context, term, node, inlist=False):
                         VALUE: node}
 
     lang = context.get_language(node)
-    if lang or context.alias.get(VALUE) in node or VALUE in node:
+    if lang or context.get_key(VALUE) in node or VALUE in node:
         value = context.get_value(node)
         if value is None:
             return None
