@@ -35,6 +35,17 @@ setuptools.
         ]
     }
 
+    >>> context = {"@vocab": "http://purl.org/dc/terms/", "@language": "en"}
+    >>> print(g.serialize(format='json-ld', context=context, indent=4))
+    {
+        "@context": {
+            "@language": "en",
+            "@vocab": "http://purl.org/dc/terms/"
+        },
+        "@id": "http://example.org/about",
+        "title": "Someone's Homepage"
+    }
+
 
 Building the Sphinx documentation
 ---------------------------------
