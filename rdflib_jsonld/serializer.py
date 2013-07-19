@@ -37,6 +37,7 @@ Example usage::
 import warnings
 
 from rdflib.serializer import Serializer
+from rdflib.graph import Graph
 from rdflib.term import URIRef, Literal, BNode
 from rdflib.namespace import RDF, XSD
 
@@ -78,7 +79,7 @@ class JsonLDSerializer(Serializer):
 def from_rdf(graph, context_data=None, base=None,
         use_native_types=False, auto_compact=False, startnode=None, index=False):
     # TODO: docstring w. args and return value
-    # TODO: support for index and startnode
+    # TODO: support for use_native_types, index and startnode
 
     if not context_data and auto_compact:
         context_data = dict(
@@ -92,24 +93,64 @@ def from_rdf(graph, context_data=None, base=None,
     else:
         context = Context(context_data, base=base)
 
-    # TODO: support multiple graphs
-    obj = {}
-    if context_data:
-        obj[CONTEXT] = context_data
+    # TODO: bug in rdflib? plain triples end up in separate unnamed graphs
+    if graph.context_aware:
+        default_graph = Graph()
+        graphs = [default_graph]
+        for g in graph.contexts():
+            if isinstance(g.identifier, URIRef):
+                graphs.append(g)
+            else:
+                default_graph += g
+    else:
+        graphs = [graph]
+
+    use_expanded = not context
+
+    objs = []
+    for g in graphs:
+        obj = {}
+        graphname = None
+        if isinstance(g.identifier, URIRef):
+            graphname = context.shrink(g.identifier)
+            obj[context.id_key] = graphname
+        if context_data: # TODO: add on outer obj
+            obj[CONTEXT] = context_data
+        nodes = _from_graph(g, context)
+        if not graphname and len(nodes) == 1:
+            obj.update(nodes[0])
+        elif use_expanded:
+            if not nodes:
+                continue
+            obj[context.graph_key] = nodes
+        if objs and objs[0].get(context.get_key(ID)) == graphname:
+            objs[0].update(obj)
+        else:
+            objs.append(obj)
+    if len(objs) == 1 and not use_expanded or len(graphs) == 1:
+        objs = objs[0]
+        items = objs.get(context.graph_key)
+        if len(objs) == 1 and items:
+            objs = items
+    return objs
+
+
+def _from_graph(graph, context):
     nodes = []
     subjects = set(graph.subjects())
 
     for s in subjects:
-        # only unreferenced.. TODO: not if more than one ref!
-        if isinstance(s, URIRef) or not any(graph.subjects(None, s)):
+        ## only unreferenced.. TODO: not if more than one ref!
+        #if isinstance(s, URIRef) or not any(graph.subjects(None, s)):
+        if isinstance(s, URIRef) or (isinstance(s, BNode)
+                and not any(graph.objects(s, RDF.first))
+                #or all(p in (RDF.first, RDF.rest)
+                #    for p in graph.predicates(s))
+                ):
             current = _subject_to_node(graph, context, s)
             nodes.append(current)
-    if len(nodes) == 1:
-        obj.update(nodes[0])
-    else:
-        #obj[context.graph_key] = nodes
-        obj = nodes
-    return obj
+
+    return nodes
 
 
 def _subject_to_node(graph, context, s):
@@ -187,8 +228,11 @@ def _to_raw_value(graph, context, o):
     if coll is not None:
         return coll
     elif isinstance(o, BNode):
-        return _subject_to_node(graph, context, o)
+        # TODO: embed if auto_compact or using startnode and only one ref
+        #return _subject_to_node(graph, context, o)
+        return {context.id_key: o.n3()}
     elif isinstance(o, URIRef):
+        # TODO: embed if o != startnode (else reverse)
         return {context.id_key: context.shrink(o)}
     elif isinstance(o, Literal):
         v = o
