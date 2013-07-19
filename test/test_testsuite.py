@@ -1,3 +1,4 @@
+from __future__ import with_statement
 from os import environ, chdir, path as p
 try:
     import json
@@ -107,26 +108,20 @@ def _test_serializer(inputpath, expectedpath, context):
 
 
 def _load_nquads(source):
-    f = open(source)
-    try:
-        graph = ConjunctiveGraph()
+    graph = ConjunctiveGraph()
+    with open(source) as f:
         if PY3:
             data = f.read()
         else:
             data = f.read().decode('utf-8'
                 ).encode('latin-1')  # FIXME: bug in rdflib
-        graph.parse(data=data, format='nquads')
-        return graph
-    finally:
-        f.close()
+    graph.parse(data=data, format='nquads')
+    return graph
 
 
 def _load_json(source):
-    f = open(source)
-    try:
+    with open(source) as f:
         return json.load(f)
-    finally:
-        f.close()
 
 
 def _to_ordered(obj):
