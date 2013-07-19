@@ -11,6 +11,15 @@ from rdflib_jsonld.parser import to_rdf
 from rdflib_jsonld.serializer import from_rdf
 
 
+# monkey-patch NTriplesParser to keep source bnode id:s
+from rdflib.plugins.parsers.ntriples import NTriplesParser, r_nodeid, b, bNode
+def nodeid(self):
+    if not self.peek(b('_')):
+        return False
+    return bNode(self.eat(r_nodeid).group(1).decode())
+NTriplesParser.nodeid = nodeid
+
+
 skiptests = (
     "compact",
     "expand",
