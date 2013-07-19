@@ -43,7 +43,7 @@ from rdflib.namespace import RDF, XSD
 
 from .context import Context
 from .util import json
-from .keys import *
+from .keys import CONTEXT, ID, LIST, SET
 
 __all__ = ['JsonLDSerializer', 'from_rdf']
 

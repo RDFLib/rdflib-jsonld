@@ -41,7 +41,7 @@ from rdflib.term import URIRef, BNode, Literal
 
 from .context import Context, Term, UNDEF
 from . import util
-from .keys import *
+from .keys import CONTEXT, GRAPH, ID, INDEX, LANG, LIST, REV, SET, TYPE, VALUE, VOCAB
 
 __all__ = ['JsonLDParser', 'to_rdf']
 
