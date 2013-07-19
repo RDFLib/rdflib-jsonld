@@ -22,27 +22,25 @@ NTriplesParser.nodeid = nodeid
 
 
 skiptests = (
-    "compact",
-    "expand",
-    "frame",
-    "normalize",
-    "fromRdf-0012-in", # TODO: circular list; fix graph.items circular loop bug
-    # TODO: check use_native_types for integer and double reprs
-    "toRdf-0035-in",
-    "toRdf-0101-in",
-    # TODO: test needs update
-    "toRdf-0089-in", # .. subject strings not auto-coerced to @id
-    # invalid nquads (bnode as graph name)
-    "toRdf-0060-in",
-    "toRdf-0061-in",
-    # invalid nquads (bnode as predicate)
-    "toRdf-0078-in",
-    "toRdf-0108-in",
-    # TODO: contentious?
-    "toRdf-0065-in", # "_" as term, curie as raw term..
-    "toRdf-0091-in", # very indirected terms..
-    "toRdf-0102-in", # /.././useless/../../
-    )
+        "compact",
+        "expand",
+        "frame",
+        "normalize",
+        # TODO: native values in tests in spite of expanded form?
+        "fromRdf-0002-in", "fromRdf-0007-in",
+        # TODO: integer and double reprs, what's correct?
+        "toRdf-0035-in", "toRdf-0101-in",
+        # TODO: test needs update
+        "toRdf-0089-in", # .. subject strings not auto-coerced to @id
+        # invalid nquads (bnode as graph name)
+        "toRdf-0060-in", "toRdf-0061-in",
+        # invalid nquads (bnode as predicate)
+        "toRdf-0078-in", "toRdf-0108-in",
+        # TODO: contentious?
+        "toRdf-0065-in", # "_" as term, curie as raw term..
+        "toRdf-0091-in", # very indirected terms..
+        "toRdf-0102-in", # /.././useless/../../
+        )
 
 
 TC_BASE = "http://json-ld.org/test-suite/tests/"

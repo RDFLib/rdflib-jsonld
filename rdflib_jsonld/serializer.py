@@ -137,9 +137,8 @@ def from_rdf(graph, context_data=None, base=None,
 
 def _from_graph(graph, context):
     nodes = []
-    subjects = set(graph.subjects())
 
-    for s in subjects:
+    for s in set(graph.subjects()):
         ## only unreferenced.. TODO: not if more than one ref!
         #if isinstance(s, URIRef) or not any(graph.subjects(None, s)):
         if isinstance(s, URIRef) or (isinstance(s, BNode)
@@ -226,7 +225,7 @@ def _handles_for_property(graph, context, p, objs):
 def _to_raw_value(graph, context, o):
     coll = _to_collection(graph, context, o)
     if coll is not None:
-        return coll
+        return {context.list_key: coll}
     elif isinstance(o, BNode):
         # TODO: embed if auto_compact or using startnode and only one ref
         #return _subject_to_node(graph, context, o)
@@ -254,9 +253,12 @@ def _to_raw_value(graph, context, o):
 
 def _to_collection(graph, context, subj):
     if subj == RDF.nil:
-        return {context.list_key: []}
+        return []
     elif (subj, RDF.first, None) in graph:
-        return {context.list_key: list(_to_raw_value(graph, context, o)
-                                       for o in graph.items(subj))}
+        try:
+            return list(_to_raw_value(graph, context, o)
+                    for o in graph.items(subj))
+        except ValueError:
+            return None
     else:
         return None
