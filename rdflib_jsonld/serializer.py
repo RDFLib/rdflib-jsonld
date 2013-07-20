@@ -111,22 +111,27 @@ def from_rdf(graph, context_data=None, base=None,
     for g in graphs:
         obj = {}
         graphname = None
+
         if isinstance(g.identifier, URIRef):
             graphname = context.shrink(g.identifier)
             obj[context.id_key] = graphname
         if context_data: # TODO: add on outer obj
             obj[CONTEXT] = context_data
+
         nodes = _from_graph(g, context)
+
         if not graphname and len(nodes) == 1:
             obj.update(nodes[0])
-        elif use_expanded:
+        else:
             if not nodes:
                 continue
             obj[context.graph_key] = nodes
+
         if objs and objs[0].get(context.get_key(ID)) == graphname:
             objs[0].update(obj)
         else:
             objs.append(obj)
+
     if len(objs) == 1 and not use_expanded or len(graphs) == 1:
         objs = objs[0]
         items = objs.get(context.graph_key)
