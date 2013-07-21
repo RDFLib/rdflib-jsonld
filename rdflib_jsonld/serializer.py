@@ -141,62 +141,51 @@ def from_rdf(graph, context_data=None, base=None,
 
 
 def _from_graph(graph, context):
-    nodes = []
+    nodemap = {}
 
     for s in set(graph.subjects()):
-        ## only unreferenced.. TODO: not if more than one ref!
-        #if isinstance(s, URIRef) or not any(graph.subjects(None, s)):
+        ## only iri:s and unreferenced (rest will be promoted to top if needed)
         if isinstance(s, URIRef) or (isinstance(s, BNode)
-                and not any(graph.objects(s, RDF.first))
-                #or all(p in (RDF.first, RDF.rest)
-                #    for p in graph.predicates(s))
-                ):
-            current = _subject_to_node(graph, context, s)
-            nodes.append(current)
+                and not any(graph.subjects(None, s))):
+            _process_subject(graph, context, s, nodemap)
 
-    return nodes
+    return nodemap.values()
 
 
-def _subject_to_node(graph, context, s):
-    current = {}
+def _process_subject(graph, context, s, nodemap):
+    node, node_id = {}, None
     if isinstance(s, URIRef):
-        current[context.id_key] = context.shrink(s)
+        node_id = context.shrink(s)
     elif any(graph.subjects(None, s)) and isinstance(s, BNode):
-        current[context.id_key] = s.n3()
+        node_id = s.n3()
+    if node_id in nodemap:
+        return None
+    node[context.id_key] = node_id
+    nodemap[node_id] = node
     p_objs = {}
     for p, o in graph.predicate_objects(s):
         objs = p_objs.setdefault(p, [])
         objs.append(o)
     for p, objs in p_objs.items():
-        p_key, node = _key_and_node(graph, context, p, objs)
-        current[p_key] = node
+        p_key, onode = _get_key_and_result(graph, context, s, p, objs, nodemap)
+        node[p_key] = onode
 
-    return current
-
-
-def _key_and_node(graph, context, p, objs):
-    p_key, many, repr_value = _handles_for_property(graph, context, p, objs)
-    node = None
-    if not many:
-        node = repr_value(objs[0])
-    else:
-        node = [repr_value(o) for o in objs]
-    return p_key, node
+    return node
 
 
-def _handles_for_property(graph, context, p, objs):
-    repr_value = lambda o: _to_raw_value(graph, context, o)
+def _get_key_and_result(graph, context, s, p, objs, nodemap):
+
+    repr_value = lambda o: _to_raw_value(graph, context, s, o, nodemap)
     iri_to_id = (lambda o:
                  context.shrink(o) if isinstance(o, URIRef) else o)
 
+    datatype = None
     if isinstance(objs[0], Literal):
         datatype = unicode(objs[0].datatype)
         for other in objs[1:]:
             if not isinstance(other, Literal) or other.datatype != datatype:
                 datatype = None
                 break
-    else:
-        datatype = None
 
     term = context.find_term(unicode(p), datatype)
     if term:
@@ -211,7 +200,7 @@ def _handles_for_property(graph, context, p, objs):
             else:
                 repr_value = (lambda o:
                     o if unicode(o.datatype) == term.type
-                    else _to_raw_value(graph, context, o))
+                    else _to_raw_value(graph, context, s, o, nodemap))
     else:
         p_key = context.shrink(p)
         if not term and p == RDF.type:
@@ -224,16 +213,25 @@ def _handles_for_property(graph, context, p, objs):
         wrapped_repr = repr_value
         repr_value = lambda o: wrapped_repr(o)[context.list_key]
 
-    return p_key, many, repr_value
+    nodes = [repr_value(o) for o in objs]
+    if not many:
+        nodes = nodes[0]
+
+    return p_key, nodes
 
 
-def _to_raw_value(graph, context, o):
-    coll = _to_collection(graph, context, o)
+def _to_raw_value(graph, context, s, o, nodemap):
+    coll = _to_collection(graph, context, s, o, nodemap)
     if coll is not None:
         return {context.list_key: coll}
     elif isinstance(o, BNode):
-        # TODO: embed if auto_compact or using startnode and only one ref
-        #return _subject_to_node(graph, context, o)
+        embed = False # TODO: auto_compact or using startnode and only one ref
+        onode = _process_subject(graph, context, o, nodemap)
+        if onode:
+            if embed and not any(s2 for s2 in graph.subjects(None, o) if s2 != s):
+                return onode
+            else:
+                nodemap[onode[context.id_key]] = onode
         return {context.id_key: o.n3()}
     elif isinstance(o, URIRef):
         # TODO: embed if o != startnode (else reverse)
@@ -256,14 +254,22 @@ def _to_raw_value(graph, context, o):
             return v
 
 
-def _to_collection(graph, context, subj):
-    if subj == RDF.nil:
-        return []
-    elif (subj, RDF.first, None) in graph:
-        try:
-            return list(_to_raw_value(graph, context, o)
-                    for o in graph.items(subj))
-        except ValueError:
-            return None
-    else:
+def _to_collection(graph, context, s, l, nodemap):
+    if l != RDF.nil and not graph.value(l, RDF.first):
         return None
+    list_nodes = []
+    chain = set([l])
+    while l:
+        if l == RDF.nil:
+            return list_nodes
+        if isinstance(l, URIRef):
+            return None
+        if len(list(graph.predicate_objects(l))) != 2:
+            return None
+        o = graph.value(l, RDF.first)
+        lnode = _to_raw_value(graph, context, s, o, nodemap)
+        list_nodes.append(lnode)
+        l = graph.value(l, RDF.rest)
+        if l in chain:
+            return None
+        chain.add(l)
