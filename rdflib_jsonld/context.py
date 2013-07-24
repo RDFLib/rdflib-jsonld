@@ -39,15 +39,22 @@ class Context(object):
 
     def load(self, source, base=None):
         self._loaded = True
-        sources = not isinstance(source, list) and [source] or source
-        for source in sources:
+        inputs = not isinstance(source, list) and [source] or source
+        sources = []
+        for source in inputs:
             if isinstance(source, basestring):
                 url = urljoin(base, source)
                 #if url in visited_urls: continue
                 #visited_urls.append(url)
                 source = util.source_to_json(url)
-            if CONTEXT in source:
-                source = source[CONTEXT]
+            if isinstance(source, dict):
+                if CONTEXT in source:
+                    source = source[CONTEXT]
+            if isinstance(source, list):
+                sources.extend(source)
+            else:
+                sources.append(source)
+        for source in sources:
             self._read_source(source)
 
     def subcontext(self, source):
