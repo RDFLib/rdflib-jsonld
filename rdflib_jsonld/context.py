@@ -6,9 +6,9 @@ Implementation of the JSON-LD Context structure. See:
 
 """
 from urlparse import urljoin
-from rdflib.namespace import RDF, split_uri
+from rdflib.namespace import RDF
 
-from . import util
+from .util import source_to_json, split_iri
 from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANG, LIST,
         REV, SET, TYPE, VALUE, VOCAB)
 
@@ -46,7 +46,7 @@ class Context(object):
                 url = urljoin(base, source)
                 #if url in visited_urls: continue
                 #visited_urls.append(url)
-                source = util.source_to_json(url)
+                source = source_to_json(url)
             if isinstance(source, dict):
                 if CONTEXT in source:
                     source = source[CONTEXT]
@@ -157,13 +157,24 @@ class Context(object):
             return None
         return self.resolve_iri(term_curie_or_iri)
 
-    def shrink(self, iri):
-        ns, name = split_uri(unicode(iri))
+    def shrink_iri(self, iri):
+        ns, name = split_iri(unicode(iri))
         pfx = self._prefixes.get(ns)
         if pfx:
             return u":".join((pfx, name))
-        elif ns == self.vocab:
+        return iri
+
+    def to_symbol(self, iri):
+        iri = unicode(iri)
+        term = self.find_term(iri)
+        if term:
+            return term.name
+        ns, name = split_iri(iri)
+        if ns == self.vocab:
             return name
+        pfx = self._prefixes.get(ns)
+        if pfx:
+            return u":".join((pfx, name))
         return iri
 
     def _read_source(self, source):
@@ -207,7 +218,7 @@ class Context(object):
             self._alias[idref] = name
 
     def _rec_expand(self, source, expr, prev=None):
-        if expr == prev:
+        if expr == prev or expr in NODE_KEYS:
             return expr
         is_term, pfx, nxt = self._prep_expand(expr)
         #nxt = source.get(nxt) or prev_source.get(nxt) or nxt

@@ -40,7 +40,7 @@ from rdflib.namespace import RDF, XSD
 from rdflib.term import URIRef, BNode, Literal
 
 from .context import Context, Term, UNDEF
-from . import util
+from .util import source_to_json, VOCAB_DELIMS
 from .keys import CONTEXT, GRAPH, ID, INDEX, LANG, LIST, REV, SET, TYPE, VALUE, VOCAB
 
 __all__ = ['JsonLDParser', 'to_rdf']
@@ -62,7 +62,7 @@ class JsonLDParser(Parser):
         base = kwargs.get('base') or sink.absolutize(
             source.getPublicId() or source.getSystemId() or "")
         context_data = kwargs.get('context')
-        data = util.source_to_json(source)
+        data = source_to_json(source)
         to_rdf(data, ConjunctiveGraph(store=sink.store), base, context_data)
 
 
@@ -86,7 +86,7 @@ def to_rdf(data, graph, base=None, context_data=None):
     if context.vocab:
         graph.bind(None, context.vocab)
     for name, term in context.terms.items():
-        if term.id and term.id.endswith(('/', '#', ':')):
+        if term.id and term.id.endswith(VOCAB_DELIMS):
             graph.bind(name, term.id)
 
     for node in resources:

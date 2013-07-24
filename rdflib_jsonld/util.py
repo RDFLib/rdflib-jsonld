@@ -21,3 +21,13 @@ def source_to_json(source):
             return json.load(stream)
     finally:
         stream.close()
+
+
+VOCAB_DELIMS = ('#', '/', ':')
+
+def split_iri(iri):
+    for delim in VOCAB_DELIMS:
+        at = iri.rfind(delim)
+        if at > -1:
+            return iri[:at+1], iri[at+1:]
+    return iri, None

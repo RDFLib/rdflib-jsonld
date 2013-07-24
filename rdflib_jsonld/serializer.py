@@ -113,7 +113,7 @@ def from_rdf(graph, context_data=None, base=None,
         graphname = None
 
         if isinstance(g.identifier, URIRef):
-            graphname = context.shrink(g.identifier)
+            graphname = context.shrink_iri(g.identifier)
             obj[context.id_key] = graphname
         if context_data: # TODO: add on outer obj
             obj[CONTEXT] = context_data
@@ -155,7 +155,7 @@ def _from_graph(graph, context):
 def _process_subject(graph, context, s, nodemap):
     node, node_id = {}, None
     if isinstance(s, URIRef):
-        node_id = context.shrink(s)
+        node_id = context.shrink_iri(s)
     elif any(graph.subjects(None, s)) and isinstance(s, BNode):
         node_id = s.n3()
     if node_id in nodemap:
@@ -177,7 +177,9 @@ def _get_key_and_result(graph, context, s, p, objs, nodemap):
 
     repr_value = lambda o: _to_raw_value(graph, context, s, o, nodemap)
     iri_to_id = (lambda o:
-                 context.shrink(o) if isinstance(o, URIRef) else o)
+                 context.shrink_iri(o) if isinstance(o, URIRef) else o)
+    iri_to_symbol = (lambda o:
+                 context.to_symbol(o) if isinstance(o, URIRef) else o)
 
     datatype = None
     if isinstance(objs[0], Literal):
@@ -197,14 +199,16 @@ def _get_key_and_result(graph, context, s, p, objs, nodemap):
         if term.type:
             if term.type == ID:
                 repr_value = iri_to_id
+            if term.type == VOCAB:
+                repr_value = iri_to_symbol
             else:
                 repr_value = (lambda o:
                     o if unicode(o.datatype) == term.type
                     else _to_raw_value(graph, context, s, o, nodemap))
     else:
-        p_key = context.shrink(p)
+        p_key = context.to_symbol(p)
         if not term and p == RDF.type:
-            repr_value = iri_to_id
+            repr_value = iri_to_symbol
             p_key = context.type_key
         many = not context or len(objs) != 1
 
@@ -235,7 +239,7 @@ def _to_raw_value(graph, context, s, o, nodemap):
         return {context.id_key: o.n3()}
     elif isinstance(o, URIRef):
         # TODO: embed if o != startnode (else reverse)
-        return {context.id_key: context.shrink(o)}
+        return {context.id_key: context.shrink_iri(o)}
     elif isinstance(o, Literal):
         v = o
         if o.language and o.language != context.language:
@@ -246,7 +250,7 @@ def _to_raw_value(graph, context, s, o, nodemap):
              #serialize data type regardless
              #if o.datatype in PLAIN_LITERAL_TYPES:
              #    return o.toPython()
-            return {context.type_key: context.shrink(o.datatype),
+            return {context.type_key: context.to_symbol(o.datatype),
                     context.value_key: v}
         if not context:
             return {context.value_key: v}

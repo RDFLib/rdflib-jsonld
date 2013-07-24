@@ -69,8 +69,11 @@ Expanding terms:
 
 Shrinking IRIs:
 
-    >>> ctx.shrink(u'http://example.org/ns/term')
+    >>> ctx.shrink_iri(u'http://example.org/ns/term')
     u'x:term'
+
+    >>> ctx.to_symbol(u'http://example.org/ns/term')
+    u'term'
 
 Resolving IRIs:
 
@@ -96,6 +99,14 @@ Standard keywords still work:
 
     >>> ctx.get_id({u'@id': u'urn:x:1'})
     u'urn:x:1'
+
+Representing keywords by alias:
+
+    >>> ctx.id_key
+    u'iri'
+
+    >>> ctx.lang_key
+    u'lang'
 
 Creating a subcontext:
 
