@@ -268,12 +268,17 @@ def _to_collection(graph, context, s, l, nodemap):
             return list_nodes
         if isinstance(l, URIRef):
             return None
-        if len(list(graph.predicate_objects(l))) != 2:
-            return None
-        o = graph.value(l, RDF.first)
-        lnode = _to_raw_value(graph, context, s, o, nodemap)
+        first, rest = None, None
+        for p, o in graph.predicate_objects(l):
+            if not first and p == RDF.first:
+                first = o
+            elif not rest and p == RDF.rest:
+                rest = o
+            elif p != RDF.type or o != RDF.List:
+                return None
+        lnode = _to_raw_value(graph, context, s, first, nodemap)
         list_nodes.append(lnode)
-        l = graph.value(l, RDF.rest)
+        l = rest
         if l in chain:
             return None
         chain.add(l)
