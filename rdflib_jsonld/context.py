@@ -5,10 +5,9 @@ Implementation of the JSON-LD Context structure. See:
     http://json-ld.org/
 
 """
-from urlparse import urljoin
 from rdflib.namespace import RDF
 
-from .util import source_to_json, split_iri
+from .util import source_to_json, urljoin, split_iri
 from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANG, LIST,
         REV, SET, TYPE, VALUE, VOCAB)
 

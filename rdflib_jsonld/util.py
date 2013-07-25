@@ -8,6 +8,10 @@ from rdflib.py3compat import PY3
 if PY3:
     from io import StringIO
 
+if PY3:
+    from urllib.parse import urljoin
+else:
+    from urlparse import urljoin
 
 def source_to_json(source):
     # TODO: conneg for JSON (fix support in rdflib's URLInputSource!)
