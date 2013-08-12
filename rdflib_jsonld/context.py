@@ -147,12 +147,11 @@ class Context(object):
             if ns and ns.id:
                 return ns.id + local
         elif is_term and use_vocab:
-            if self.vocab:
+            term = self.terms.get(term_curie_or_iri)
+            if term:
+                return term.id
+            elif use_vocab and self.vocab:
                 return self.vocab + term_curie_or_iri
-            else:
-                term = self.terms.get(term_curie_or_iri)
-                if term:
-                    return term.id
             return None
         return self.resolve_iri(term_curie_or_iri)
 
