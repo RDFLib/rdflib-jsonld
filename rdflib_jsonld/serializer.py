@@ -43,7 +43,7 @@ from rdflib.namespace import RDF, XSD
 
 from .context import Context
 from .util import json
-from .keys import CONTEXT, ID, LIST, SET
+from .keys import CONTEXT, GRAPH, ID, LIST, SET
 
 __all__ = ['JsonLDSerializer', 'from_rdf']
 
@@ -105,7 +105,7 @@ def from_rdf(graph, context_data=None, base=None,
     else:
         graphs = [graph]
 
-    use_expanded = not context
+    use_compact = bool(context)
 
     objs = []
     for g in graphs:
@@ -115,8 +115,6 @@ def from_rdf(graph, context_data=None, base=None,
         if isinstance(g.identifier, URIRef):
             graphname = context.shrink_iri(g.identifier)
             obj[context.id_key] = graphname
-        if context_data: # TODO: add on outer obj
-            obj[CONTEXT] = context_data
 
         nodes = _from_graph(g, context)
 
@@ -132,11 +130,19 @@ def from_rdf(graph, context_data=None, base=None,
         else:
             objs.append(obj)
 
-    if len(objs) == 1 and not use_expanded or len(graphs) == 1:
-        objs = objs[0]
-        items = objs.get(context.graph_key)
-        if len(objs) == 1 and items:
+    if len(graphs) == 1 and len(objs) == 1 and not context_data:
+        default = objs[0]
+        items = default.get(context.graph_key)
+        if len(default) == 1 and items:
             objs = items
+    elif len(objs) == 1 and use_compact:
+        objs = objs[0]
+
+    if context_data:
+        if isinstance(objs, list):
+            objs = {context.get_key(GRAPH): objs}
+        objs[CONTEXT] = context_data
+
     return objs
 
 

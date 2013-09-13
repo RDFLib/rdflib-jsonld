@@ -150,9 +150,5 @@ def _dump_json(obj):
 def _compare_json(expected, result):
     expected = _to_ordered(json.loads(_dump_json(expected)))
     result = _to_ordered(json.loads(_dump_json(result)))
-    if not isinstance(expected, list):
-        expected = [expected]
-    if not isinstance(result, list):
-        result = [result]
     assert expected == result, "Expected JSON:\n%s\nGot:\n%s" % (
             _dump_json(expected), _dump_json(result))
