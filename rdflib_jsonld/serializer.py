@@ -248,17 +248,17 @@ def _to_raw_value(graph, context, s, o, nodemap):
         return {context.id_key: context.shrink_iri(o)}
     elif isinstance(o, Literal):
         v = o
-        if o.language and o.language != context.language:
-            return {context.lang_key: o.language,
-                    context.value_key: v}
-        elif o.datatype:
-             #https://github.com/RDFLib/rdflib-jsonld/issues/4
-             #serialize data type regardless
-             #if o.datatype in PLAIN_LITERAL_TYPES:
-             #    return o.toPython()
+        if o.datatype:
+            #https://github.com/RDFLib/rdflib-jsonld/issues/4
+            #serialize data type regardless
+            #if context and o.datatype in PLAIN_LITERAL_TYPES:
+            #    return o.toPython()
             return {context.type_key: context.to_symbol(o.datatype),
                     context.value_key: v}
-        if not context:
+        elif o.language and o.language != context.language:
+            return {context.lang_key: o.language,
+                    context.value_key: v}
+        elif not context or context.language and not o.language:
             return {context.value_key: v}
         else:
             return v
