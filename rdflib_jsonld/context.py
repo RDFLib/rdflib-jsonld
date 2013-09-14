@@ -112,10 +112,10 @@ class Context(object):
             language=UNDEF, reverse=False):
         term = Term(idref, name, coercion, container, language, reverse)
         self.terms[name] = term
-        self._lookup[(idref, coercion or language, container, reverse)] = term
+        self._lookup[(idref, coercion or language, SET, reverse)] = term
         self._prefixes[idref] = name
 
-    def find_term(self, idref, coercion=None, container=None,
+    def find_term(self, idref, coercion=None, container=SET,
             language=None, reverse=False):
         lu = self._lookup
         coercion = coercion or language
