@@ -63,7 +63,9 @@ class JsonLDParser(Parser):
             source.getPublicId() or source.getSystemId() or "")
         context_data = kwargs.get('context')
         data = source_to_json(source)
-        to_rdf(data, ConjunctiveGraph(store=sink.store), base, context_data)
+        conj_sink = ConjunctiveGraph(
+            store=sink.store, identifier=sink.identifier)
+        to_rdf(data, conj_sink, base, context_data)
 
 
 def to_rdf(data, graph, base=None, context_data=None):
