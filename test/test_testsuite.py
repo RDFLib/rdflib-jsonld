@@ -111,8 +111,8 @@ def _load_nquads(source):
         if PY3:
             data = f.read()
         else:
-            data = f.read().decode('utf-8'
-                ).encode('latin-1')  # FIXME: bug in rdflib
+            data = f.read().decode('utf-8')
+        data = data.encode('latin-1') # FIXME: workaround for bug in rdflib
     graph.parse(data=data, format='nquads')
     return graph
 
@@ -130,7 +130,7 @@ def _to_ordered(obj):
                 key=lambda x: (_ord_key(x), type(x).__name__))
     if not isinstance(obj, dict):
         return obj
-    return dict((k, _to_ordered(v))
+    return sorted((k, _to_ordered(v))
             for k, v in obj.items())
 
 
