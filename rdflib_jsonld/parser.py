@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
-from rdflib.py3compat import format_doctest_out as uformat
-uformat("""
+"""
 This parser will interpret a JSON-LD document as an RDF Graph. See:
 
     http://json-ld.org/
 
 Example usage::
+
+    >>> from rdflib.plugin import register, Parser
+    >>> register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
 
     >>> from rdflib import Graph, URIRef, Literal
     >>> test_json = '''
@@ -18,18 +20,17 @@ Example usage::
     ...     "@id": "http://example.org/about",
     ...     "dc:title": {
     ...         "@language": "en",
-    ...         "@literal": "Someone's Homepage"
+    ...         "@value": "Someone's Homepage"
     ...     }
     ... }
     ... '''
     >>> g = Graph().parse(data=test_json, format='json-ld')
     >>> list(g) == [(URIRef('http://example.org/about'),
     ...     URIRef('http://purl.org/dc/terms/title'),
-    ...     Literal(%(u)s"Someone's Homepage", lang=%(u)s'en'))]
+    ...     Literal("Someone's Homepage", lang='en'))]
     True
 
 """
-        )
 # NOTE: This code reads the entire JSON object into memory before parsing, but
 # we should consider streaming the input to deal with arbitrarily large graphs.
 
