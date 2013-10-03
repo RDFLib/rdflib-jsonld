@@ -113,7 +113,7 @@ def _add_to_graph(graph, context, node, rootgraph=None):
             context = Context(base=context.doc_base)
 
     id_val = context.get_id(node)
-    if isinstance(id_val, unicode):
+    if isinstance(id_val, basestring):
         subj = _to_rdf_id(context, id_val)
     else:
         subj = BNode()
