@@ -42,6 +42,10 @@ skiptests = (
         "toRdf-0102-in", # /.././useless/../../
         )
 
+import sys
+if sys.version_info[:2] < (2, 6):
+    # Fails on bug in older urlparse.urljoin; ignoring..
+    skiptests += ('toRdf-0069-in',)
 
 TC_BASE = "http://json-ld.org/test-suite/tests/"
 
