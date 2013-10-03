@@ -1,3 +1,7 @@
+from rdflib.plugin import register, Parser, Serializer
+register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
+register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
+
 from rdflib import Graph, Literal, URIRef
 
 def test_parse():
