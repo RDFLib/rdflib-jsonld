@@ -93,17 +93,14 @@ def to_rdf(data, graph, base=None, context_data=None):
             graph.bind(name, term.id)
 
     for node in resources:
-        _add_to_graph(graph, context, node)
+        _add_to_graph(graph, graph, context, node)
 
     return graph
 
 
-def _add_to_graph(graph, context, node, rootgraph=None):
+def _add_to_graph(dataset, graph, context, node):
     if not isinstance(node, dict) or context.get_value(node):
         return
-
-    if rootgraph is None:
-        rootgraph = graph
 
     if CONTEXT in node:
         l_ctx = node.get(CONTEXT)
@@ -123,14 +120,14 @@ def _add_to_graph(graph, context, node, rootgraph=None):
             continue
         if key in (REV, context.get_key(REV)):
             for rkey, robj in obj.items():
-                _key_to_graph(graph, context, subj, rkey, robj, rootgraph, True)
+                _key_to_graph(dataset, graph, context, subj, rkey, robj, True)
         else:
-            _key_to_graph(graph, context, subj, key, obj, rootgraph)
+            _key_to_graph(dataset, graph, context, subj, key, obj)
 
     return subj
 
 
-def _key_to_graph(graph, context, subj, key, obj, rootgraph, reverse=False):
+def _key_to_graph(dataset, graph, context, subj, key, obj, reverse=False):
 
     if isinstance(obj, list):
         obj_nodes = obj
@@ -163,17 +160,14 @@ def _key_to_graph(graph, context, subj, key, obj, rootgraph, reverse=False):
     if TYPE in (key, term_id):
         term = TYPE_TERM
     elif GRAPH in (key, term_id):
-        if graph is rootgraph:
-            #assert graph.context_aware
-            subgraph = rootgraph.get_context(subj)
-        else:
-            subgraph = graph
+        #assert graph.context_aware
+        subgraph = dataset.get_context(subj)
         for onode in obj_nodes:
-            _add_to_graph(subgraph, context, onode, rootgraph)
+            _add_to_graph(dataset, subgraph, context, onode)
         return
     elif SET in (key, term_id):
         for onode in obj_nodes:
-            _add_to_graph(graph, context, onode, rootgraph)
+            _add_to_graph(dataset, graph, context, onode)
         return
 
     pred_uri = term.id if term else context.expand(key)
@@ -198,7 +192,7 @@ def _key_to_graph(graph, context, subj, key, obj, rootgraph, reverse=False):
 
     pred = URIRef(pred_uri)
     for obj_node in obj_nodes:
-        obj = _to_object(graph, context, term, obj_node)
+        obj = _to_object(dataset, graph, context, term, obj_node)
         if obj is None:
             continue
         if reverse:
@@ -207,7 +201,7 @@ def _key_to_graph(graph, context, subj, key, obj, rootgraph, reverse=False):
             graph.add((subj, pred, obj))
 
 
-def _to_object(graph, context, term, node, inlist=False):
+def _to_object(dataset, graph, context, term, node, inlist=False):
 
     if node is None:
         return
@@ -223,7 +217,7 @@ def _to_object(graph, context, term, node, inlist=False):
         if node_list is not None:
             if inlist: # TODO: and NO_LISTS_OF_LISTS
                 return
-            listref = _add_list(graph, context, term, node_list)
+            listref = _add_list(dataset, graph, context, term, node_list)
             if listref:
                 return listref
 
@@ -258,7 +252,7 @@ def _to_object(graph, context, term, node, inlist=False):
         else:
             return Literal(value)
     else:
-        return _add_to_graph(graph, context, node)
+        return _add_to_graph(dataset, graph, context, node)
 
 
 def _to_rdf_id(context, id_val):
@@ -276,7 +270,7 @@ def _get_bnodeid(ref):
     return bid or None
 
 
-def _add_list(graph, context, term, node_list):
+def _add_list(dataset, graph, context, term, node_list):
     if not isinstance(node_list, list):
         node_list = [node_list]
     first_subj = BNode()
@@ -287,7 +281,7 @@ def _add_list(graph, context, term, node_list):
         if rest:
             graph.add((subj, RDF.rest, rest))
             subj = rest
-        obj = _to_object(graph, context, term, node, inlist=True)
+        obj = _to_object(dataset, graph, context, term, node, inlist=True)
         if obj is None:
             continue
         graph.add((subj, RDF.first, obj))
