@@ -60,17 +60,23 @@ class JsonLDParser(Parser):
         if encoding not in ('utf-8', 'utf-16'):
             warnings.warn("JSON should be encoded as unicode. " +
                           "Given encoding was: %s" % encoding)
+
         base = kwargs.get('base') or sink.absolutize(
             source.getPublicId() or source.getSystemId() or "")
         context_data = kwargs.get('context')
+        produce_generalized_rdf = kwargs.get('produce_generalized_rdf', False)
+
         data = source_to_json(source)
         conj_sink = ConjunctiveGraph(
             store=sink.store, identifier=sink.identifier)
         to_rdf(data, conj_sink, base, context_data)
 
 
-def to_rdf(data, graph, base=None, context_data=None):
+generalized_rdf = False
+def to_rdf(data, graph, base=None, context_data=None, produce_generalized_rdf=False):
     # TODO: docstring w. args and return value
+    global generalized_rdf # FIXME: not thread-safe and error-prone
+    generalized_rdf = produce_generalized_rdf
     context = Context(base=base)
 
     if context_data:
@@ -193,7 +199,13 @@ def _key_to_graph(dataset, graph, context, subj, key, obj, reverse=False):
     if term and term.reverse:
         reverse = not reverse
 
-    pred = URIRef(pred_uri)
+    bid = _get_bnodeid(pred_uri)
+    if bid:
+        if not generalized_rdf:
+            return
+        pred = BNode(bid)
+    else:
+        pred = URIRef(pred_uri)
     for obj_node in obj_nodes:
         obj = _to_object(dataset, graph, context, term, obj_node)
         if obj is None:
