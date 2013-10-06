@@ -132,6 +132,8 @@ class Context(object):
 
     def resolve(self, curie_or_iri):
         iri = self.expand(curie_or_iri, False)
+        if iri.startswith('_:'):
+            return iri
         return self.resolve_iri(iri)
 
     def resolve_iri(self, iri):
@@ -141,16 +143,19 @@ class Context(object):
             return iri
 
     def expand(self, term_curie_or_iri, use_vocab=True):
+        if use_vocab:
+            term = self.terms.get(term_curie_or_iri)
+            if term:
+                return term.id
         is_term, pfx, local = self._prep_expand(term_curie_or_iri)
+        if pfx == '_':
+            return term_curie_or_iri
         if pfx is not None:
             ns = self.terms.get(pfx)
             if ns and ns.id:
                 return ns.id + local
         elif is_term and use_vocab:
-            term = self.terms.get(term_curie_or_iri)
-            if term:
-                return term.id
-            elif use_vocab and self.vocab:
+            if self.vocab:
                 return self.vocab + term_curie_or_iri
             return None
         return self.resolve_iri(term_curie_or_iri)
@@ -177,8 +182,6 @@ class Context(object):
 
     def _read_source(self, source):
         for key, value in source.items():
-            if key  == '_':
-                continue
             if key == LANG:
                 self.language = value
             elif key == VOCAB:
@@ -219,14 +222,16 @@ class Context(object):
         if expr == prev or expr in NODE_KEYS:
             return expr
         is_term, pfx, nxt = self._prep_expand(expr)
-        #nxt = source.get(nxt) or prev_source.get(nxt) or nxt
         if is_term and self.vocab:
             return self.vocab + expr
         if pfx:
-            iri = source.get(pfx) or self.expand(pfx)
-            if isinstance(iri, dict):
-                iri = iri.get(ID)
-            nxt = iri + nxt
+            iri = self._get_source_id(source, pfx) or self.expand(pfx)
+            if iri is None:
+                nxt = expr
+            else:
+                nxt = iri + nxt
+        else:
+            nxt = self._get_source_id(source, nxt) or nxt
         return self._rec_expand(source, nxt, expr)
 
     def _prep_expand(self, expr):
@@ -237,6 +242,16 @@ class Context(object):
             return False, pfx, local
         else:
             return False, None, expr
+
+    def _get_source_id(self, source, key):
+        term = source.get(key)
+        if term is None:
+            dfn = self.terms.get(key)
+            if dfn:
+                term = dfn.id
+        elif isinstance(term, dict):
+            term = term.get(ID)
+        return term
 
 
 class Term(object):
