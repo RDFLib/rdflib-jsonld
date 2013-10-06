@@ -76,12 +76,15 @@ def to_rdf(data, graph, base=None, context_data=None):
     if context_data:
         context.load(context_data)
 
+    topcontext = False
+
     if isinstance(data, list):
         resources = data
     elif isinstance(data, dict):
         l_ctx = data.get(CONTEXT)
         if l_ctx:
             context.load(l_ctx)
+            topcontext = True
         resources = data
         if not isinstance(resources, list):
             resources = [resources]
@@ -93,16 +96,16 @@ def to_rdf(data, graph, base=None, context_data=None):
             graph.bind(name, term.id)
 
     for node in resources:
-        _add_to_graph(graph, graph, context, node)
+        _add_to_graph(graph, graph, context, node, topcontext)
 
     return graph
 
 
-def _add_to_graph(dataset, graph, context, node):
+def _add_to_graph(dataset, graph, context, node, topcontext=False):
     if not isinstance(node, dict) or context.get_value(node):
         return
 
-    if CONTEXT in node:
+    if CONTEXT in node and not topcontext:
         l_ctx = node.get(CONTEXT)
         if l_ctx:
             context = context.subcontext(l_ctx)

@@ -181,11 +181,12 @@ class Context(object):
         return iri
 
     def _read_source(self, source):
+        self.vocab = source.get(VOCAB, self.vocab)
         for key, value in source.items():
             if key == LANG:
                 self.language = value
             elif key == VOCAB:
-                self.vocab = value
+                continue
             elif key == BASE:
                 if value is None:
                     self.base = self.doc_base
