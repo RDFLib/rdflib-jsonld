@@ -188,10 +188,11 @@ class Context(object):
             elif key == VOCAB:
                 continue
             elif key == BASE:
-                if value is None:
-                    self.base = self.doc_base
-                else:
-                    self.base = value
+                # TODO: only base to None if source is embedded
+                #if value is None and remote:
+                #    self.base = self.doc_base
+                #else:
+                self.base = value
             else:
                 self._read_term(source, key, value)
 
