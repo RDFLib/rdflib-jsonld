@@ -12,34 +12,34 @@ from rdflib_jsonld.parser import to_rdf
 from rdflib_jsonld.serializer import from_rdf
 
 
-# monkey-patch NTriplesParser to keep source bnode id:s
+# monkey-patch NTriplesParser to keep source bnode id:s and accept bnodes everywhere
 from rdflib.plugins.parsers.ntriples import NTriplesParser, r_nodeid, b, bNode
-def nodeid(self):
+def _preserving_nodeid(self):
     if not self.peek(b('_')):
         return False
     return bNode(self.eat(r_nodeid).group(1).decode())
-NTriplesParser.nodeid = nodeid
+NTriplesParser.nodeid = _preserving_nodeid
+_uriref = NTriplesParser.uriref
+def _uriref_or_nodeid(self):
+    return _uriref(self) or self.nodeid()
+NTriplesParser.uriref = _uriref_or_nodeid
 
 
-skiptests = (
-        "compact",
-        "expand",
-        "frame",
-        "normalize",
-        # TODO: native values in tests in spite of expanded form?
-        "fromRdf-0002-in", "fromRdf-0007-in", "fromRdf-0017-in",
-        # TODO: debatable to disallow lists-of-lists
-        "fromRdf-0008-in",
-        # TODO: integer and double reprs, what's correct?
-        "toRdf-0035-in", "toRdf-0101-in",
-        # invalid nquads (bnode as graph name)
-        "toRdf-0060-in", "toRdf-0061-in",
+unsupported_tests = ("frame", "normalize")
+unsupported_tests += ("compact", "expand")
+
+known_bugs = (
         # invalid nquads (bnode as predicate)
-        "toRdf-0078-in", "toRdf-0108-in",
-        # TODO: contentious?
-        "toRdf-0065-in", # "_" as term, curie as raw term..
-        "toRdf-0091-in", # very indirected terms..
+        #"toRdf-0078-in", "toRdf-0108-in",
+        # TODO: Literal doesn't preserve representations
+        "fromRdf-0002-in", "toRdf-0035-in", "toRdf-0101-in",
+        # TODO: urljoin seems to handle "http:///" wrong
+        "toRdf-0116-in", "toRdf-0117-in", 
+        # TODO: debatable?
+        "toRdf-0100-in", # .. to drop hard-relative iri:s
         "toRdf-0102-in", # /.././useless/../../
+        "fromRdf-0008-in", # .. to disallow lists-of-lists
+        #"toRdf-0091-in", # TODO: multiple aliases version?
         )
 
 import sys
@@ -56,7 +56,7 @@ test_dir = p.join(testsuite_dir, "tests")
 manifest_path = "test-suite/manifest.jsonld"
 
 
-def read_manifest():
+def read_manifest(skiptests):
     f = open(p.join(p.dirname(__file__), manifest_path), 'r')
     manifestdata = json.load(f)
     f.close()
@@ -76,36 +76,43 @@ def read_manifest():
                     inputpath = test.get(u'input')
                     expectedpath = test.get(u'expect')
                     context = test.get(u'context', False)
-                    yield category, testnum, inputpath, expectedpath, context
+                    options = test.get(u'option') or {}
+                    yield category, testnum, inputpath, expectedpath, context, options
 
 
-def test_suite():
+def test_suite(skip_known_bugs=True):
     chdir(test_dir)
-    for group, case, inputpath, expectedpath, context in read_manifest():
+    skiptests = unsupported_tests
+    if skip_known_bugs:
+        skiptests += known_bugs
+    for group, case, inputpath, expectedpath, context, options in read_manifest(skiptests):
         if inputpath.endswith(".jsonld"):  # toRdf
             func = _test_parser
         else:  # fromRdf
             func = _test_serializer
         #func.description = "%s-%s-%s" % (group, case)
-        yield func, inputpath, expectedpath, context
+        yield func, inputpath, expectedpath, context, options
 
 
-def _test_parser(inputpath, expectedpath, context):
+def _test_parser(inputpath, expectedpath, context, options):
     input_obj = _load_json(inputpath)
     expected_graph = _load_nquads(expectedpath)
     base = TC_BASE + inputpath
     result_graph = ConjunctiveGraph()
-    to_rdf(input_obj, result_graph, base=base, context_data=context)
+    to_rdf(input_obj, result_graph, base=base, context_data=context,
+            produce_generalized_rdf = options.get('produceGeneralizedRdf', False))
     assert isomorphic(
             result_graph, expected_graph), "Expected:\n%s\nGot:\n%s" % (
             expected_graph.serialize(format='turtle'),
             result_graph.serialize(format='turtle'))
 
 
-def _test_serializer(inputpath, expectedpath, context):
+def _test_serializer(inputpath, expectedpath, context, options):
     input_graph = _load_nquads(inputpath)
     expected_json = _load_json(expectedpath)
-    result_json = from_rdf(input_graph, context, base=TC_BASE + inputpath)
+    result_json = from_rdf(input_graph, context, base=TC_BASE + inputpath,
+            use_native_types=options.get('useNativeTypes', False),
+            use_rdf_type=options.get('useRdfType', False))
     _compare_json(expected_json, result_json)
 
 
@@ -152,7 +159,8 @@ def _dump_json(obj):
 
 
 def _compare_json(expected, result):
-    expected = _to_ordered(json.loads(_dump_json(expected)))
-    result = _to_ordered(json.loads(_dump_json(result)))
-    assert expected == result, "Expected JSON:\n%s\nGot:\n%s" % (
-            _dump_json(expected), _dump_json(result))
+    expected = json.loads(_dump_json(expected))
+    result = json.loads(_dump_json(result))
+    assert _to_ordered(expected) == _to_ordered(result), \
+            "Expected JSON:\n%s\nGot:\n%s" % (
+                    _dump_json(expected), _dump_json(result))
