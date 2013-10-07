@@ -29,15 +29,12 @@ class Context(object):
         self._alias = {}
         self._lookup = {}
         self._prefixes = {}
-        self._loaded = False
+        self.active = False
         if source:
             self.load(source)
 
-    def __nonzero__(self):
-        return self._loaded
-
     def load(self, source, base=None):
-        self._loaded = True
+        self.active = True
         inputs = not isinstance(source, list) and [source] or source
         sources = []
         for source in inputs:

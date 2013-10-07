@@ -76,6 +76,7 @@ class JsonLDSerializer(Serializer):
         obj = from_rdf(self.store, context_data, base,
                 use_native_types, use_rdf_type,
                 auto_compact=auto_compact)
+
         data = json.dumps(obj, indent=indent, separators=separators,
                           sort_keys=sort_keys)
 
@@ -101,15 +102,21 @@ def from_rdf(graph, context_data=None, base=None,
         context = Context(context_data, base=base)
 
     converter = Converter(context, use_native_types, use_rdf_type)
+    result = converter.convert(graph)
 
-    return converter.convert(graph)
+    if converter.context.active:
+        if isinstance(result, list):
+            result = {context.get_key(GRAPH): result}
+        result[CONTEXT] = context_data
+
+    return result
 
 
 class Converter(object):
 
     def __init__(self, context, use_native_types, use_rdf_type):
         self.context = context
-        self.use_native_types = use_native_types
+        self.use_native_types = context.active or use_native_types
         self.use_rdf_type = use_rdf_type
 
     def convert(self, graph):
@@ -126,8 +133,6 @@ class Converter(object):
             graphs = [graph]
 
         context = self.context
-
-        active_context = bool(context)
 
         objs = []
         for g in graphs:
@@ -152,18 +157,13 @@ class Converter(object):
             else:
                 objs.append(obj)
 
-        if len(graphs) == 1 and len(objs) == 1 and not active_context:
+        if len(graphs) == 1 and len(objs) == 1 and not self.context.active:
             default = objs[0]
             items = default.get(context.graph_key)
             if len(default) == 1 and items:
                 objs = items
-        elif len(objs) == 1 and active_context:
+        elif len(objs) == 1 and self.context.active:
             objs = objs[0]
-
-        if active_context:
-            if isinstance(objs, list):
-                objs = {context.get_key(GRAPH): objs}
-            objs[CONTEXT] = context
 
         return objs
 
@@ -225,7 +225,7 @@ class Converter(object):
             if term.type:
                 if term.type == ID:
                     repr_value = iri_to_id
-                if term.type == VOCAB:
+                elif term.type == VOCAB:
                     repr_value = iri_to_symbol
                 else:
                     repr_value = (lambda o:
@@ -236,7 +236,7 @@ class Converter(object):
             if not term and p == RDF.type and not self.use_rdf_type:
                 repr_value = iri_to_symbol
                 p_key = context.type_key
-            many = not context or len(objs) != 1
+            many = not context.active or len(objs) != 1
 
         # TODO: working, but in need of refactoring...
         if term and term.container == LIST:
@@ -274,7 +274,7 @@ class Converter(object):
                 v = o.toPython()
             if o.datatype:
                 if native:
-                    if self.context:
+                    if self.context.active:
                         return v
                     else:
                         return {context.value_key: v}
@@ -283,7 +283,7 @@ class Converter(object):
             elif o.language and o.language != context.language:
                 return {context.lang_key: o.language,
                         context.value_key: v}
-            elif not context or context.language and not o.language:
+            elif not context.active or context.language and not o.language:
                 return {context.value_key: v}
             else:
                 return v
