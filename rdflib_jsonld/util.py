@@ -3,15 +3,20 @@ try:
     assert json  # workaround for pyflakes issue #13
 except ImportError:
     import simplejson as json
-from rdflib.parser import create_input_source
+
 from rdflib.py3compat import PY3
+
+from os import sep
+from os.path import normpath
+if PY3:
+    from urllib.parse import urljoin, urlsplit, urlunsplit
+else:
+    from urlparse import urljoin, urlsplit, urlunsplit
+
+from rdflib.parser import create_input_source
 if PY3:
     from io import StringIO
 
-if PY3:
-    from urllib.parse import urljoin
-else:
-    from urlparse import urljoin
 
 def source_to_json(source):
     # TODO: conneg for JSON (fix support in rdflib's URLInputSource!)
@@ -35,3 +40,13 @@ def split_iri(iri):
         if at > -1:
             return iri[:at+1], iri[at+1:]
     return iri, None
+
+def norm_url(base, url):
+    url = urljoin(base, url)
+    parts = urlsplit(url)
+    path = normpath(parts[2])
+    if sep != '/':
+        path = '/'.join(path.split(sep))
+    if parts[2].endswith('/') and not path.endswith('/'):
+        path += '/'
+    return urlunsplit(parts[0:2] + (path,) + parts[3:])

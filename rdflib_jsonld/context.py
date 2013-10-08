@@ -7,7 +7,7 @@ Implementation of the JSON-LD Context structure. See:
 """
 from rdflib.namespace import RDF
 
-from .util import source_to_json, urljoin, split_iri
+from .util import source_to_json, urljoin, split_iri, norm_url
 from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANG, LIST,
         REV, SET, TYPE, VALUE, VOCAB)
 
@@ -134,10 +134,7 @@ class Context(object):
         return self.resolve_iri(iri)
 
     def resolve_iri(self, iri):
-        if self.base:
-            return urljoin(self.base, iri).replace('../', '')
-        else:
-            return iri
+        return norm_url(self.base, iri)
 
     def expand(self, term_curie_or_iri, use_vocab=True):
         if use_vocab:
