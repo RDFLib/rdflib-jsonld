@@ -3,6 +3,6 @@
     { "id": "@id" },
     { "url": "id" }
   ],
-  "@id": "/issue/1",
+  "url": "/issue/1",
   "http://example.com/property": "ok"
 }
