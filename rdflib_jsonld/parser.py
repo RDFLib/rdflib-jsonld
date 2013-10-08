@@ -124,6 +124,9 @@ def _add_to_graph(dataset, graph, context, node, topcontext=False):
     else:
         subj = BNode()
 
+    if subj is None:
+        return None
+
     for key, obj in node.items():
         if key in (CONTEXT, ID, context.get_key(ID)):
             continue
@@ -275,7 +278,10 @@ def _to_rdf_id(context, id_val):
     if bid:
         return BNode(bid)
     else:
-        return URIRef(context.resolve(id_val))
+        uri = context.resolve(id_val)
+        if not generalized_rdf and ':' not in uri:
+            return None
+        return URIRef(uri)
 
 
 def _get_bnodeid(ref):
