@@ -192,19 +192,24 @@ if __name__ == '__main__':
     import sys
     from rdflib import *
     from datetime import datetime
-    graph = Graph()
+
     EARL = Namespace("http://www.w3.org/ns/earl#")
     DC = Namespace("http://purl.org/dc/terms/")
+    FOAF = Namespace("http://xmlns.com/foaf/0.1/")
+
     rdflib_jsonld_page = "https://github.com/RDFLib/rdflib-jsonld"
     rdflib_jsonld = URIRef(rdflib_jsonld_page + "#it")
-    asserter = URIRef(sys.argv[1]) if len(sys.argv) > 1 else None
+
+    args = sys.argv[1:]
+    asserter = URIRef(args.pop(0)) if args else None
+    asserter_name = Literal(args.pop(0)) if args else None
 
     graph = Graph()
 
     graph.parse(data="""
         @prefix earl: <{EARL}> .
         @prefix dc: <{DC}> .
-        @prefix foaf: <http://xmlns.com/foaf/0.1/> .
+        @prefix foaf: <{FOAF}> .
         @prefix doap: <http://usefulinc.com/ns/doap#> .
 
         <{rdflib_jsonld}> a doap:Project, earl:TestSubject, earl:Software ;
@@ -213,6 +218,10 @@ if __name__ == '__main__':
             doap:programming-language "Python" ;
             doap:title "RDFLib plugin for JSON-LD " .
     """.format(**vars()), format='turtle')
+
+    if asserter_name:
+        graph.add((asserter, RDF.type, FOAF.Person))
+        graph.add((asserter, FOAF.name, asserter_name))
 
     for args in test_suite(skip_known_bugs=False):
         try:
@@ -225,12 +234,13 @@ if __name__ == '__main__':
         assertion.add(EARL.mode, EARL.automatic)
         if asserter:
             assertion.add(EARL.assertedBy, asserter)
+        assertion.add(EARL.subject, rdflib_jsonld)
+        assertion.add(EARL.test, URIRef(
+            "http://json-ld.org/test-suite/tests/{1}-manifest.jsonld#t{2}".format(*args)))
         result = graph.resource(BNode())
         assertion.add(EARL.result, result)
+        result.add(RDF.type, EARL.TestResult)
         result.add(DC.date, Literal(datetime.utcnow()))
         result.add(EARL.outcome, EARL.passed if success else EARL.failed)
-        result.add(EARL.subject, rdflib_jsonld)
-        result.add(EARL.test, URIRef(
-            "http://json-ld.org/test-suite/tests/{1}-manifest.jsonld#t{2}".format(*args)))
 
     graph.serialize(sys.stdout, format='turtle')
