@@ -182,8 +182,9 @@ class Converter(object):
         node, node_id = {}, None
         if isinstance(s, URIRef):
             node_id = self.context.shrink_iri(s)
-        elif any(graph.subjects(None, s)) and isinstance(s, BNode):
+        elif isinstance(s, BNode):
             node_id = s.n3()
+        #used_as_object = any(graph.subjects(None, s))
         if node_id in nodemap:
             return None
         node[self.context.id_key] = node_id
