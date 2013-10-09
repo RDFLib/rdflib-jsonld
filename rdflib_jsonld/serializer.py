@@ -207,8 +207,10 @@ class Converter(object):
         iri_to_symbol = (lambda o:
                     context.to_symbol(o) if isinstance(o, URIRef) else o)
 
+        is_literal = False
         datatype = None
         if isinstance(objs[0], Literal):
+            is_literal = True
             datatype = unicode(objs[0].datatype)
             for other in objs[1:]:
                 if not isinstance(other, Literal) or other.datatype != datatype:
@@ -216,6 +218,10 @@ class Converter(object):
                     break
 
         term = context.find_term(unicode(p), datatype)
+        # TODO: too clumsy; fix find_term..
+        if not term and not is_literal:
+            term = context.find_term(unicode(p), ID) or context.find_term(unicode(p), VOCAB)
+
         if term:
             p_key = term.name
             if term.container == SET:
@@ -233,6 +239,10 @@ class Converter(object):
                         else self.to_raw_value(graph, s, o, nodemap))
         else:
             p_key = context.to_symbol(p)
+            # TODO: for coercing curies - quite clumsy; unify to_symbol and find_term?
+            key_term = context.terms.get(p_key)
+            if key_term and (key_term.type or key_term.container):
+                p_key = p
             if not term and p == RDF.type and not self.use_rdf_type:
                 repr_value = iri_to_symbol
                 p_key = context.type_key
@@ -255,7 +265,7 @@ class Converter(object):
         if coll is not None:
             return {context.list_key: coll}
         elif isinstance(o, BNode):
-            embed = False # TODO: auto_compact or using startnode and only one ref
+            embed = False # TODO: self.context.active or using startnode and only one ref
             onode = self.process_subject(graph, o, nodemap)
             if onode:
                 if embed and not any(s2 for s2 in graph.subjects(None, o) if s2 != s):
