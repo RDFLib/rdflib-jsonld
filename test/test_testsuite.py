@@ -196,6 +196,7 @@ if __name__ == '__main__':
     EARL = Namespace("http://www.w3.org/ns/earl#")
     DC = Namespace("http://purl.org/dc/terms/")
     FOAF = Namespace("http://xmlns.com/foaf/0.1/")
+    DOAP = Namespace("http://usefulinc.com/ns/doap#")
 
     rdflib_jsonld_page = "https://github.com/RDFLib/rdflib-jsonld"
     rdflib_jsonld = URIRef(rdflib_jsonld_page + "#it")
@@ -210,7 +211,7 @@ if __name__ == '__main__':
         @prefix earl: <{EARL}> .
         @prefix dc: <{DC}> .
         @prefix foaf: <{FOAF}> .
-        @prefix doap: <http://usefulinc.com/ns/doap#> .
+        @prefix doap: <{DOAP}> .
 
         <{rdflib_jsonld}> a doap:Project, earl:TestSubject, earl:Software ;
             doap:homepage <{rdflib_jsonld_page}> ;
@@ -222,6 +223,7 @@ if __name__ == '__main__':
     if asserter_name:
         graph.add((asserter, RDF.type, FOAF.Person))
         graph.add((asserter, FOAF.name, asserter_name))
+        graph.add((rdflib_jsonld, DOAP.developer, asserter))
 
     for args in test_suite(skip_known_bugs=False):
         try:
