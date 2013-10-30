@@ -47,7 +47,7 @@ from rdflib.namespace import RDF, XSD
 
 from .context import Context
 from .util import json
-from .keys import CONTEXT, GRAPH, ID, VOCAB, LIST, SET
+from .keys import CONTEXT, GRAPH, ID, VOCAB, LIST, SET, LANG
 
 __all__ = ['JsonLDSerializer', 'from_rdf']
 
@@ -209,20 +209,23 @@ class Converter(object):
                     context.to_symbol(o) if isinstance(o, URIRef) else o)
 
         is_literal = False
-        datatype = None
+        datatype = language = None
         if isinstance(objs[0], Literal):
+            obj = objs[0]
             is_literal = True
-            datatype = unicode(objs[0].datatype)
+            datatype = unicode(obj.datatype) if obj.datatype else None
+            language = obj.language
             for other in objs[1:]:
                 if not isinstance(other, Literal) or other.datatype != datatype:
-                    datatype = None
+                    datatype = language = None
                     break
 
-        term = context.find_term(unicode(p), datatype)
+        term = context.find_term(unicode(p), datatype, None, language)
         # TODO: too clumsy; fix find_term..
         if not term and not is_literal:
             term = context.find_term(unicode(p), ID) or context.find_term(unicode(p), VOCAB)
 
+        _repr_value = repr_value
         if term:
             p_key = term.name
             if term.container == SET:
@@ -237,7 +240,15 @@ class Converter(object):
                 else:
                     repr_value = (lambda o:
                         o if unicode(o.datatype) == term.type
-                        else self.to_raw_value(graph, s, o, nodemap))
+                        else _repr_value)
+            elif term.language:
+                repr_value = (lambda o:
+                    unicode(o) if o.language == term.language
+                    else _repr_value)
+            elif context.language and term.language is None:
+                repr_value = (lambda o:
+                    unicode(o) if o.language is None
+                    else _repr_value)
         else:
             p_key = context.to_symbol(p)
             # TODO: for coercing curies - quite clumsy; unify to_symbol and find_term?
@@ -279,10 +290,11 @@ class Converter(object):
             return {context.id_key: context.shrink_iri(o)}
         elif isinstance(o, Literal):
                 # TODO: if compact
-            v = o
             native = self.use_native_types and o.datatype in PLAIN_LITERAL_TYPES
             if native:
                 v = o.toPython()
+            else:
+                v = unicode(o)
             if o.datatype:
                 if native:
                     if self.context.active:

@@ -109,17 +109,17 @@ class Context(object):
             language=UNDEF, reverse=False):
         term = Term(idref, name, coercion, container, language, reverse)
         self.terms[name] = term
-        self._lookup[(idref, coercion or language, SET, reverse)] = term
+        self._lookup[(idref, coercion or language, container, reverse)] = term
         self._prefixes[idref] = name
 
-    def find_term(self, idref, coercion=None, container=SET,
+    def find_term(self, idref, coercion=None, container=UNDEF,
             language=None, reverse=False):
         lu = self._lookup
         coercion = coercion or language
-        if coercion and container:
+        if coercion is not UNDEF and container:
             found = lu.get((idref, coercion, container, reverse))
             if found: return found
-        if coercion:
+        if coercion is not UNDEF:
             found = lu.get((idref, coercion, UNDEF, reverse))
             if found: return found
         if container:
