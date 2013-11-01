@@ -240,15 +240,15 @@ class Converter(object):
                 else:
                     repr_value = (lambda o:
                         o if unicode(o.datatype) == term.type
-                        else _repr_value)
+                        else _repr_value(o))
             elif term.language:
                 repr_value = (lambda o:
                     unicode(o) if o.language == term.language
-                    else _repr_value)
+                    else _repr_value(o))
             elif context.language and term.language is None:
                 repr_value = (lambda o:
                     unicode(o) if o.language is None
-                    else _repr_value)
+                    else _repr_value(o))
         else:
             p_key = context.to_symbol(p)
             # TODO: for coercing curies - quite clumsy; unify to_symbol and find_term?
