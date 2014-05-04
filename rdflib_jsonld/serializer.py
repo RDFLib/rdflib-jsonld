@@ -245,6 +245,8 @@ class Converter(object):
                 values = value.get(language)
                 node = unicode(o)
                 if values:
+                    if not isinstance(values, list):
+                        value[language] = values = [values]
                     values.append(node)
                 else:
                     value[language] = node
