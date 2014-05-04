@@ -179,76 +179,77 @@ class Converter(object):
         return nodemap.values()
 
     def process_subject(self, graph, s, nodemap):
-        node, node_id = {}, None
         if isinstance(s, URIRef):
             node_id = self.context.shrink_iri(s)
         elif isinstance(s, BNode):
             node_id = s.n3()
+        else:
+            node_id = None
+
         #used_as_object = any(graph.subjects(None, s))
         if node_id in nodemap:
             return None
+
+        node = {}
         node[self.context.id_key] = node_id
         nodemap[node_id] = node
-        p_objs = {}
+
         for p, o in graph.predicate_objects(s):
-            objs = p_objs.setdefault(p, [])
-            objs.append(o)
-        for p, objs in p_objs.items():
-            p_key, onode = self.get_key_and_result(graph, s, p, objs, nodemap)
-            node[p_key] = onode
+            self.add_to_node(graph, s, p, o, node, nodemap)
 
         return node
 
-    def get_key_and_result(self, graph, s, p, objs, nodemap):
+    def add_to_node(self, graph, s, p, o, s_node, nodemap):
         context = self.context
 
-        repr_value = lambda o: self.to_raw_value(graph, s, o, nodemap)
-        iri_to_id = (lambda o:
-                    context.shrink_iri(o) if isinstance(o, URIRef) else o)
-        iri_to_symbol = (lambda o:
-                    context.to_symbol(o) if isinstance(o, URIRef) else o)
-
-        is_literal = False
-        datatype = language = None
-        if isinstance(objs[0], Literal):
-            obj = objs[0]
+        if isinstance(o, Literal):
             is_literal = True
-            datatype = unicode(obj.datatype) if obj.datatype else None
-            language = obj.language
-            for other in objs[1:]:
-                if not isinstance(other, Literal) or other.datatype != datatype:
-                    datatype = language = None
-                    break
+            datatype = unicode(o.datatype) if o.datatype else None
+            language = o.language
+        else:
+            is_literal, datatype, language = False, None, None
 
-        term = context.find_term(unicode(p), datatype, None, language)
+        term = context.find_term(unicode(p), datatype, language=language)
         # TODO: too clumsy; fix find_term..
-        if not term and not is_literal:
-            term = context.find_term(unicode(p), ID) or context.find_term(unicode(p), VOCAB)
+        if not term:
+            if language:
+                term = context.find_term(unicode(p), None, LANG, language)
+            elif not is_literal:
+                term = context.find_term(unicode(p), ID) or context.find_term(unicode(p), VOCAB)
 
-        _repr_value = repr_value
+        node = None
+        use_set = not context.active
+
         if term:
             p_key = term.name
-            if term.container == SET:
-                many = True
-            else:
-                many = not len(objs) == 1
+
             if term.type:
                 if term.type == ID:
-                    repr_value = iri_to_id
-                elif term.type == VOCAB:
-                    repr_value = iri_to_symbol
+                    node = context.shrink_iri(o) if isinstance(o, URIRef) else o
+                elif term.type == VOCAB and isinstance(o, URIRef):
+                    node = context.to_symbol(o)
+                elif unicode(o.datatype) == term.type:
+                        node = o
+            elif term.language and o.language == term.language:
+                node = unicode(o)
+            elif context.language and (
+                    term.language is None and o.language is None):
+                node = unicode(o)
+
+            if term.container == SET:
+                use_set = True
+            elif term.container == LIST:
+                node = node[context.list_key]
+            elif term.container == LANG and language:
+                value = s_node.setdefault(p_key, {})
+                values = value.get(language)
+                node = unicode(o)
+                if values:
+                    values.append(node)
                 else:
-                    repr_value = (lambda o:
-                        o if unicode(o.datatype) == term.type
-                        else _repr_value(o))
-            elif term.language:
-                repr_value = (lambda o:
-                    unicode(o) if o.language == term.language
-                    else _repr_value(o))
-            elif context.language and term.language is None:
-                repr_value = (lambda o:
-                    unicode(o) if o.language is None
-                    else _repr_value(o))
+                    value[language] = node
+                return
+
         else:
             p_key = context.to_symbol(p)
             # TODO: for coercing curies - quite clumsy; unify to_symbol and find_term?
@@ -256,20 +257,23 @@ class Converter(object):
             if key_term and (key_term.type or key_term.container):
                 p_key = p
             if not term and p == RDF.type and not self.use_rdf_type:
-                repr_value = iri_to_symbol
+                if isinstance(o, URIRef):
+                    node = context.to_symbol(o)
                 p_key = context.type_key
-            many = not context.active or len(objs) != 1
 
-        # TODO: working, but in need of refactoring...
-        if term and term.container == LIST:
-            wrapped_repr = repr_value
-            repr_value = lambda o: wrapped_repr(o)[context.list_key]
+        if node is None:
+            node = self.to_raw_value(graph, s, o, nodemap)
 
-        nodes = [repr_value(o) for o in objs]
-        if not many:
-            nodes = nodes[0]
-
-        return p_key, nodes
+        value = s_node.get(p_key)
+        if value:
+            if not isinstance(value, list):
+                value = [value]
+            value.append(node)
+        elif use_set:
+            value = [node]
+        else:
+            value = node
+        s_node[p_key] = value
 
     def to_raw_value(self, graph, s, o, nodemap):
         context = self.context
