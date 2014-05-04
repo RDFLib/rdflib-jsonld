@@ -13,13 +13,14 @@ from rdflib_jsonld.serializer import from_rdf
 from rdflib_jsonld.keys import CONTEXT, GRAPH
 
 
-# monkey-patch NTriplesParser to keep source bnode id:s and accept bnodes everywhere
-from rdflib.plugins.parsers.ntriples import NTriplesParser, r_nodeid, b, bNode
+# monkey-patch NTriplesParser to keep source bnode id:s ..
+from rdflib.plugins.parsers.ntriples import NTriplesParser, r_nodeid, cast_bytes, bNode
 def _preserving_nodeid(self):
-    if not self.peek(b('_')):
+    if not self.peek(cast_bytes('_')):
         return False
     return bNode(self.eat(r_nodeid).group(1).decode())
 NTriplesParser.nodeid = _preserving_nodeid
+# .. and accept bnodes everywhere
 _uriref = NTriplesParser.uriref
 def _uriref_or_nodeid(self):
     return _uriref(self) or self.nodeid()
@@ -98,10 +99,12 @@ def _test_json(cat, num, inputpath, expectedpath, context, options):
     base = TC_BASE + inputpath
     input_obj = _load_json(inputpath)
     input_graph = ConjunctiveGraph()
-    to_rdf(input_obj, input_graph, base=base, context_data=context)
+    to_rdf(input_obj, input_graph, base=base, context_data=context,
+            produce_generalized_rdf=True)
     expected_json = _load_json(expectedpath)
+    use_native_types = True # CONTEXT in input_obj
     result_json = from_rdf(input_graph, context, base=TC_BASE + inputpath,
-            use_native_types=options.get('useNativeTypes', False),
+            use_native_types=options.get('useNativeTypes', use_native_types),
             use_rdf_type=options.get('useRdfType', False))
 
     def _prune_json(data):
@@ -109,6 +112,7 @@ def _test_json(cat, num, inputpath, expectedpath, context, options):
             data.pop(CONTEXT)
         if GRAPH in data:
             data = data[GRAPH]
+        #def _remove_empty_sets(obj):
         return data
 
     expected_json = _prune_json(expected_json)
@@ -146,7 +150,6 @@ def _load_nquads(source):
             data = f.read()
         else:
             data = f.read().decode('utf-8')
-        data = data.encode('latin-1') # FIXME: workaround for bug in rdflib
     graph.parse(data=data, format='nquads')
     return graph
 
