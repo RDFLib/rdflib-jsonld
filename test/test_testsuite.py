@@ -14,11 +14,11 @@ from rdflib_jsonld.keys import CONTEXT, GRAPH
 
 
 # monkey-patch NTriplesParser to keep source bnode id:s ..
-from rdflib.plugins.parsers.ntriples import NTriplesParser, r_nodeid, cast_bytes, bNode
+from rdflib.plugins.parsers.ntriples import NTriplesParser, r_nodeid, bNode
 def _preserving_nodeid(self):
-    if not self.peek(cast_bytes('_')):
+    if not self.peek('_'):
         return False
-    return bNode(self.eat(r_nodeid).group(1).decode())
+    return bNode(self.eat(r_nodeid).group(1))
 NTriplesParser.nodeid = _preserving_nodeid
 # .. and accept bnodes everywhere
 _uriref = NTriplesParser.uriref
