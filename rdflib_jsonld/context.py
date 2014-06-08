@@ -125,6 +125,9 @@ class Context(object):
         if container:
             found = lu.get((idref, UNDEF, container, reverse))
             if found: return found
+        else:
+            found = lu.get((idref, UNDEF, SET, reverse))
+            if found: return found
         return lu.get((idref, UNDEF, UNDEF, reverse))
 
     def resolve(self, curie_or_iri):
