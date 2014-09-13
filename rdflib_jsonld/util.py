@@ -20,7 +20,7 @@ if PY3:
 
 def source_to_json(source):
     # TODO: conneg for JSON (fix support in rdflib's URLInputSource!)
-    source = create_input_source(source)
+    source = create_input_source(source, format='json-ld')
 
     stream = source.getByteStream()
     try:
