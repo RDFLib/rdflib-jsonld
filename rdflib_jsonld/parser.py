@@ -89,7 +89,7 @@ def to_rdf(data, graph, base=None, context_data=None, produce_generalized_rdf=Fa
     elif isinstance(data, dict):
         l_ctx = data.get(CONTEXT)
         if l_ctx:
-            context.load(l_ctx)
+            context.load(l_ctx, base)
             topcontext = True
         resources = data
         if not isinstance(resources, list):
