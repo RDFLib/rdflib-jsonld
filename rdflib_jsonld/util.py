@@ -50,3 +50,16 @@ def norm_url(base, url):
     if parts[2].endswith('/') and not path.endswith('/'):
         path += '/'
     return urlunsplit(parts[0:2] + (path,) + parts[3:])
+
+def context_from_urlinputsource(source):
+    if source.content_type == 'application/json':
+        # response_info was added in rdflib 4.2-dev
+        try:
+            links = source.response_info.getallmatchingheaders('Link')
+        except AttributeError:
+            return
+        for link in links:
+            if ' rel="http://www.w3.org/ns/json-ld#context"' in link:
+                i, j = link.index('<'), link.index('>')
+                if i > -1 and j > -1:
+                    return urljoin(source.url, link[i+1:j])
