@@ -120,7 +120,8 @@ class Converter(object):
         self.use_rdf_type = use_rdf_type
 
     def convert(self, graph):
-        # TODO: bug in rdflib? plain triples end up in separate unnamed graphs
+        # TODO: bug in rdflib dataset parsing (nquads et al):
+        # plain triples end up in separate unnamed graphs (rdflib issue #436)
         if graph.context_aware:
             default_graph = Graph()
             graphs = [default_graph]
