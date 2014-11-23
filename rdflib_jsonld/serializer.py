@@ -226,7 +226,12 @@ class Converter(object):
 
             if term.type:
                 if term.type == ID:
-                    node = context.shrink_iri(o) if isinstance(o, URIRef) else o
+                    if isinstance(o, URIRef):
+                        node = context.shrink_iri(o)
+                    elif isinstance(o, BNode):
+                        node = o.n3()
+                    else:
+                        node = o
                 elif term.type == VOCAB and isinstance(o, URIRef):
                     node = context.to_symbol(o)
                 elif unicode(o.datatype) == term.type:
