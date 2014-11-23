@@ -1,7 +1,9 @@
 RDFLib plugin providing JSON-LD parsing and serialization
 =========================================================
 
-This parser/serializer will:
+This is an implementation of [JSON-LD](http://www.w3.org/TR/json-ld/) for [RDFLib](https://github.com/RDFLib/rdflib). For more information about this technology, see the [JSON-LD website](http://json-ld.org/).
+
+This implementation will:
 
 * read in an JSON-LD formatted document and create an RDF graph
 * serialize an RDF graph to JSON-LD formatted output

@@ -120,7 +120,8 @@ class Converter(object):
         self.use_rdf_type = use_rdf_type
 
     def convert(self, graph):
-        # TODO: bug in rdflib? plain triples end up in separate unnamed graphs
+        # TODO: bug in rdflib dataset parsing (nquads et al):
+        # plain triples end up in separate unnamed graphs (rdflib issue #436)
         if graph.context_aware:
             default_graph = Graph()
             graphs = [default_graph]
@@ -203,19 +204,14 @@ class Converter(object):
         context = self.context
 
         if isinstance(o, Literal):
-            is_literal = True
             datatype = unicode(o.datatype) if o.datatype else None
             language = o.language
+            term = context.find_term(unicode(p), datatype, language=language)
         else:
-            is_literal, datatype, language = False, None, None
-
-        term = context.find_term(unicode(p), datatype, language=language)
-        # TODO: too clumsy; fix find_term..
-        if not term:
-            if language:
-                term = context.find_term(unicode(p), None, LANG, language)
-            elif not is_literal:
-                term = context.find_term(unicode(p), ID) or context.find_term(unicode(p), VOCAB)
+            for coercion in (ID, VOCAB, None):
+                term = context.find_term(unicode(p), coercion)
+                if term:
+                    break
 
         node = None
         use_set = not context.active
@@ -225,7 +221,12 @@ class Converter(object):
 
             if term.type:
                 if term.type == ID:
-                    node = context.shrink_iri(o) if isinstance(o, URIRef) else o
+                    if isinstance(o, URIRef):
+                        node = context.shrink_iri(o)
+                    elif isinstance(o, BNode):
+                        node = o.n3()
+                    else:
+                        node = o
                 elif term.type == VOCAB and isinstance(o, URIRef):
                     node = context.to_symbol(o)
                 elif unicode(o.datatype) == term.type:
