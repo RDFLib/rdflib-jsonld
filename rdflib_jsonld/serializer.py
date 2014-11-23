@@ -204,19 +204,14 @@ class Converter(object):
         context = self.context
 
         if isinstance(o, Literal):
-            is_literal = True
             datatype = unicode(o.datatype) if o.datatype else None
             language = o.language
+            term = context.find_term(unicode(p), datatype, language=language)
         else:
-            is_literal, datatype, language = False, None, None
-
-        term = context.find_term(unicode(p), datatype, language=language)
-        # TODO: too clumsy; fix find_term..
-        if not term:
-            if language:
-                term = context.find_term(unicode(p), None, LANG, language)
-            elif not is_literal:
-                term = context.find_term(unicode(p), ID) or context.find_term(unicode(p), VOCAB)
+            for coercion in (ID, VOCAB, None):
+                term = context.find_term(unicode(p), coercion)
+                if term:
+                    break
 
         node = None
         use_set = not context.active

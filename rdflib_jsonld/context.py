@@ -123,10 +123,13 @@ class Context(object):
             found = lu.get((idref, coercion, UNDEF, reverse))
             if found: return found
         if container:
-            found = lu.get((idref, UNDEF, container, reverse))
+            found = lu.get((idref, coercion, container, reverse))
+            if found: return found
+        elif language:
+            found = lu.get((idref, UNDEF, LANG, reverse))
             if found: return found
         else:
-            found = lu.get((idref, UNDEF, SET, reverse))
+            found = lu.get((idref, coercion or UNDEF, SET, reverse))
             if found: return found
         return lu.get((idref, UNDEF, UNDEF, reverse))
 
