@@ -70,15 +70,18 @@ class JsonLDSerializer(Serializer):
         use_native_types = kwargs.get('use_native_types', False),
         use_rdf_type = kwargs.get('use_rdf_type', False)
         auto_compact = kwargs.get('auto_compact', False)
+
         indent = kwargs.get('indent', 2)
-        separators = (',', ': ')
-        sort_keys = True
+        separators = kwargs.get('separators', (',', ': '))
+        sort_keys = kwargs.get('sort_keys', True)
+        ensure_ascii = kwargs.get('ensure_ascii', False)
+
         obj = from_rdf(self.store, context_data, base,
                 use_native_types, use_rdf_type,
                 auto_compact=auto_compact)
 
         data = json.dumps(obj, indent=indent, separators=separators,
-                          sort_keys=sort_keys)
+                          sort_keys=sort_keys, ensure_ascii=ensure_ascii)
 
         stream.write(data.encode(encoding, 'replace'))
 
