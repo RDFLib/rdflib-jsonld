@@ -115,7 +115,8 @@ class Context(object):
     def find_term(self, idref, coercion=None, container=UNDEF,
             language=None, reverse=False):
         lu = self._lookup
-        coercion = coercion or language
+        if coercion is None:
+            coercion = language
         if coercion is not UNDEF and container:
             found = lu.get((idref, coercion, container, reverse))
             if found: return found

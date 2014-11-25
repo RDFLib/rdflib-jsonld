@@ -45,7 +45,7 @@ from rdflib.graph import Graph
 from rdflib.term import URIRef, Literal, BNode
 from rdflib.namespace import RDF, XSD
 
-from .context import Context
+from .context import Context, UNDEF
 from .util import json
 from .keys import CONTEXT, GRAPH, ID, VOCAB, LIST, SET, LANG
 
@@ -211,8 +211,12 @@ class Converter(object):
             language = o.language
             term = context.find_term(unicode(p), datatype, language=language)
         else:
-            for coercion in (ID, VOCAB, None):
-                term = context.find_term(unicode(p), coercion)
+            containers = [LIST, None] if graph.value(o, RDF.first) else [None]
+            for container in containers:
+                for coercion in (ID, VOCAB, UNDEF):
+                    term = context.find_term(unicode(p), coercion, container)
+                    if term:
+                        break
                 if term:
                     break
 
@@ -243,7 +247,11 @@ class Converter(object):
             if term.container == SET:
                 use_set = True
             elif term.container == LIST:
-                node = node[context.list_key]
+                # TODO: list-coerced items need to be treated like in
+                # add_to_node, since coercion applies to each member, not to
+                # the list itself...
+                node = [self.to_raw_value(graph, s, v, nodemap)
+                        for v in graph.items(o)]
             elif term.container == LANG and language:
                 value = s_node.setdefault(p_key, {})
                 values = value.get(language)
