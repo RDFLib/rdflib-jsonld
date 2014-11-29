@@ -227,17 +227,7 @@ class Converter(object):
             p_key = term.name
 
             if term.type:
-                if term.type == ID:
-                    if isinstance(o, URIRef):
-                        node = context.shrink_iri(o)
-                    elif isinstance(o, BNode):
-                        node = o.n3()
-                    else:
-                        node = o
-                elif term.type == VOCAB and isinstance(o, URIRef):
-                    node = context.to_symbol(o)
-                elif unicode(o.datatype) == term.type:
-                        node = o
+                node = self.type_coerce(o, term.type)
             elif term.language and o.language == term.language:
                 node = unicode(o)
             elif context.language and (
@@ -247,11 +237,8 @@ class Converter(object):
             if term.container == SET:
                 use_set = True
             elif term.container == LIST:
-                # TODO: list-coerced items need to be treated like in
-                # add_to_node, since coercion applies to each member, not to
-                # the list itself...
-                node = [self.to_raw_value(graph, s, v, nodemap)
-                        for v in graph.items(o)]
+                node = [self.type_coerce(v, term.type) or self.to_raw_value(graph, s, v, nodemap)
+                        for v in self.to_collection(graph, o)]
             elif term.container == LANG and language:
                 value = s_node.setdefault(p_key, {})
                 values = value.get(language)
@@ -289,10 +276,27 @@ class Converter(object):
             value = node
         s_node[p_key] = value
 
+    def type_coerce(self, o, coerce_type):
+        if coerce_type == ID:
+            if isinstance(o, URIRef):
+                return self.context.shrink_iri(o)
+            elif isinstance(o, BNode):
+                return o.n3()
+            else:
+                return o
+        elif coerce_type == VOCAB and isinstance(o, URIRef):
+            return self.context.to_symbol(o)
+        elif isinstance(o, Literal) and unicode(o.datatype) == coerce_type:
+            return o
+        else:
+            return None
+
     def to_raw_value(self, graph, s, o, nodemap):
         context = self.context
-        coll = self.to_collection(graph, s, o, nodemap)
+        coll = self.to_collection(graph, o)
         if coll is not None:
+            coll = [self.to_raw_value(graph, s, lo, nodemap)
+                    for lo in self.to_collection(graph, o)]
             return {context.list_key: coll}
         elif isinstance(o, BNode):
             embed = False # TODO: self.context.active or using startnode and only one ref
@@ -307,7 +311,7 @@ class Converter(object):
             # TODO: embed if o != startnode (else reverse)
             return {context.id_key: context.shrink_iri(o)}
         elif isinstance(o, Literal):
-                # TODO: if compact
+            # TODO: if compact
             native = self.use_native_types and o.datatype in PLAIN_LITERAL_TYPES
             if native:
                 v = o.toPython()
@@ -329,7 +333,7 @@ class Converter(object):
             else:
                 return v
 
-    def to_collection(self, graph, s, l, nodemap):
+    def to_collection(self, graph, l):
         if l != RDF.nil and not graph.value(l, RDF.first):
             return None
         list_nodes = []
@@ -347,8 +351,7 @@ class Converter(object):
                     rest = o
                 elif p != RDF.type or o != RDF.List:
                     return None
-            lnode = self.to_raw_value(graph, s, first, nodemap)
-            list_nodes.append(lnode)
+            list_nodes.append(first)
             l = rest
             if l in chain:
                 return None

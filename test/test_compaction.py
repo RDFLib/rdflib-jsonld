@@ -1,3 +1,4 @@
+# -*- coding: UTF-8 -*-
 from rdflib import Graph, plugin
 from rdflib.serializer import Serializer
 
@@ -52,6 +53,24 @@ case("""@prefix dc: <http://purl.org/dc/terms/> .
 """)
 
 
+#    dc:title "Homepage"@en, "Home Page"@en, "Hemsida"@sv .
+#    dc:title "Homepage"@en, "Home Page"@en-GB, "Hemsida"@sv .
+
+
+case("""@prefix dc: <http://purl.org/dc/terms/> .
+<http://example.org/easter_island>
+    dc:title "Påskön"@sv .
+""",
+{"@vocab": "http://purl.org/dc/terms/", "@language": "sv"},
+"""
+{
+    "@context": "/context.jsonld",
+    "@id": "http://example.org/easter_island",
+    "title": "Påskön"
+}
+""")
+
+
 case("""
 @prefix : <http://example.org/ns#> .
 <http://example.org/> :has _:b1 .
@@ -62,6 +81,25 @@ case("""
     "@context": "/context.jsonld",
     "@id": "http://example.org",
     "has": "_:b1"
+}
+""")
+
+
+case("""
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <http://example.org/ns#> .
+:Something rdfs:subClassOf :Thing .
+""",
+{
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "v": "http://example.org/ns#",
+    "rdfs:subClassOf": {"@container": "@set"}
+},
+"""
+{
+    "@context": "/context.jsonld",
+    "@id": "v:Something",
+    "rdfs:subClassOf": [{"@id": "v:Thing"}]
 }
 """)
 
@@ -92,6 +130,43 @@ case("""
 """,
 {
     "owl": "http://www.w3.org/2002/07/owl#",
+    "v": "http://example.org/ns#"
+},
+"""
+{
+    "@context": "/context.jsonld",
+    "@id": "v:World",
+    "owl:unionOf": {"@list": [{"@id": "v:Everyhing"}, {"@id": "v:Nothing"}]}
+}
+""")
+
+
+case("""
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix : <http://example.org/ns#> .
+:World owl:unionOf (:Everyhing :Nothing) .
+""",
+{
+    "owl": "http://www.w3.org/2002/07/owl#",
+    "v": "http://example.org/ns#",
+    "unionOf": {"@id": "owl:unionOf", "@container": "@list"}
+},
+"""
+{
+    "@context": "/context.jsonld",
+    "@id": "v:World",
+    "unionOf": [{"@id": "v:Everyhing"}, {"@id": "v:Nothing"}]
+}
+""")
+
+
+case("""
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix : <http://example.org/ns#> .
+:World owl:unionOf (:Everyhing :Nothing) .
+""",
+{
+    "owl": "http://www.w3.org/2002/07/owl#",
     "v": "http://example.org/ns#",
     "unionOf": {"@id": "owl:unionOf", "@type": "@id", "@container": "@list"}
 },
@@ -102,11 +177,6 @@ case("""
     "unionOf": ["v:Everyhing", "v:Nothing"]
 }
 """)
-
-
-#    dc:title "Homepage"@en, "Home Page"@en, "Hemsida"@sv .
-
-#    dc:title "Homepage"@en, "Home Page"@en-GB, "Hemsida"@sv .
 
 
 #def test_cases():
