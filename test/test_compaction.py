@@ -1,5 +1,9 @@
 # -*- coding: UTF-8 -*-
-from rdflib import Graph, plugin
+from __future__ import unicode_literals
+import re
+import json
+import itertools
+from rdflib import Graph
 from rdflib.serializer import Serializer
 
 
@@ -7,82 +11,88 @@ cases = []
 def case(*args): cases.append(args)
 
 
-case("""@prefix dc: <http://purl.org/dc/terms/> .
+case("""
+@prefix dc: <http://purl.org/dc/terms/> .
 <http://example.org/>
     dc:title "Homepage"@en .
 """,
-{"@vocab": "http://purl.org/dc/terms/", "@language": "en"},
-"""
 {
-    "@context": "/context.jsonld",
+    "@context": {"@vocab": "http://purl.org/dc/terms/", "@language": "en"},
     "@id": "http://example.org/",
     "title": "Homepage"
 }
-""")
+)
 
 
-case("""@prefix dc: <http://purl.org/dc/terms/> .
+case("""
+@prefix dc: <http://purl.org/dc/terms/> .
 <http://example.org/>
     dc:title "Homepage"@en, "Hemsida"@sv .
 """,
-{"@vocab": "http://purl.org/dc/terms/", "title": {"@container": "@language"}},
-"""
 {
-    "@context": "/context.jsonld",
+    "@context": {"@vocab": "http://purl.org/dc/terms/", "title": {"@container": "@language"}},
     "@id": "http://example.org/",
-    "title": {
-        "en": "Homepage",
-        "sv": "Hemsida"
-    }
+    "title": {"en": "Homepage", "sv": "Hemsida"}
 }
-""")
+)
 
 
-case("""@prefix dc: <http://purl.org/dc/terms/> .
+case("""
+@prefix dc: <http://purl.org/dc/terms/> .
 <http://example.org/>
     dc:title "Homepage"@en, "Hemsida"@sv .
 """,
-{"@vocab": "http://purl.org/dc/terms/", "@language": "sv", "title_en": {"@id": "title", "@language": "en"}},
-"""
 {
-    "@context": "/context.jsonld",
+    "@context": {
+        "@vocab": "http://purl.org/dc/terms/",
+        "@language": "sv",
+        "title_en": {"@id": "title", "@language": "en"}
+    },
     "@id": "http://example.org/",
     "title_en": "Homepage",
     "title": "Hemsida"
 }
-""")
+)
 
 
-#    dc:title "Homepage"@en, "Home Page"@en, "Hemsida"@sv .
-#    dc:title "Homepage"@en, "Home Page"@en-GB, "Hemsida"@sv .
+# .. Requires set values to be sorted to be predicatble
+#case("""
+#@prefix dc: <http://purl.org/dc/terms/> .
+#<http://example.org/>
+#    dc:title "Homepage"@en, "Home Page"@en, "Home Page"@en-GB, "Hemsida"@sv .
+#""",
+#{
+#    "@context": "-||-",
+#    "@id": "http://example.org/",
+#    "title_en": ["Homepage", "Home Page"],
+#    "title": [{"@language": "en-GB", "@value": "Home Page"}, "Hemsida"]
+#}
+#)
 
 
-case("""@prefix dc: <http://purl.org/dc/terms/> .
+case("""
+@prefix dc: <http://purl.org/dc/terms/> .
 <http://example.org/easter_island>
     dc:title "Påskön"@sv .
 """,
-{"@vocab": "http://purl.org/dc/terms/", "@language": "sv"},
-"""
 {
-    "@context": "/context.jsonld",
+    "@context": {"@vocab": "http://purl.org/dc/terms/", "@language": "sv"},
     "@id": "http://example.org/easter_island",
     "title": "Påskön"
 }
-""")
+)
 
 
 case("""
 @prefix : <http://example.org/ns#> .
-<http://example.org/> :has _:b1 .
+<http://example.org/> :has _:blank-1 .
 """,
-{"has": {"@type": "@id", "@id": "http://example.org/ns#has"}},
-"""
 {
-    "@context": "/context.jsonld",
-    "@id": "http://example.org",
-    "has": "_:b1"
+    "@context": {"has": {"@type": "@id", "@id": "http://example.org/ns#has"}},
+    "@id": "http://example.org/",
+    "has": "_:blank-1"
 }
-""")
+)
 
 
 case("""
@@ -91,17 +101,15 @@ case("""
 :Something rdfs:subClassOf :Thing .
 """,
 {
-    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-    "v": "http://example.org/ns#",
-    "rdfs:subClassOf": {"@container": "@set"}
-},
-"""
-{
-    "@context": "/context.jsonld",
+    "@context": {
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "v": "http://example.org/ns#",
+        "rdfs:subClassOf": {"@container": "@set"}
+    },
     "@id": "v:Something",
     "rdfs:subClassOf": [{"@id": "v:Thing"}]
 }
-""")
+)
 
 
 case("""
@@ -110,17 +118,15 @@ case("""
 :Something rdfs:subClassOf :Thing .
 """,
 {
-    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
-    "v": "http://example.org/ns#",
-    "subClassOf": {"@id": "rdfs:subClassOf", "@type": "@id", "@container": "@set"}
-},
-"""
-{
-    "@context": "/context.jsonld",
+    "@context": {
+        "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+        "v": "http://example.org/ns#",
+        "subClassOf": {"@id": "rdfs:subClassOf", "@type": "@id", "@container": "@set"}
+    },
     "@id": "v:Something",
     "subClassOf": ["v:Thing"]
 }
-""")
+)
 
 
 case("""
@@ -129,16 +135,14 @@ case("""
 :World owl:unionOf (:Everyhing :Nothing) .
 """,
 {
-    "owl": "http://www.w3.org/2002/07/owl#",
-    "v": "http://example.org/ns#"
-},
-"""
-{
-    "@context": "/context.jsonld",
+    "@context": {
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "v": "http://example.org/ns#"
+    },
     "@id": "v:World",
     "owl:unionOf": {"@list": [{"@id": "v:Everyhing"}, {"@id": "v:Nothing"}]}
 }
-""")
+)
 
 
 case("""
@@ -147,17 +151,15 @@ case("""
 :World owl:unionOf (:Everyhing :Nothing) .
 """,
 {
-    "owl": "http://www.w3.org/2002/07/owl#",
-    "v": "http://example.org/ns#",
-    "unionOf": {"@id": "owl:unionOf", "@container": "@list"}
-},
-"""
-{
-    "@context": "/context.jsonld",
+    "@context": {
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "v": "http://example.org/ns#",
+        "unionOf": {"@id": "owl:unionOf", "@container": "@list"}
+    },
     "@id": "v:World",
     "unionOf": [{"@id": "v:Everyhing"}, {"@id": "v:Nothing"}]
 }
-""")
+)
 
 
 case("""
@@ -166,22 +168,29 @@ case("""
 :World owl:unionOf (:Everyhing :Nothing) .
 """,
 {
-    "owl": "http://www.w3.org/2002/07/owl#",
-    "v": "http://example.org/ns#",
-    "unionOf": {"@id": "owl:unionOf", "@type": "@id", "@container": "@list"}
-},
-"""
-{
-    "@context": "/context.jsonld",
+    "@context": {
+        "owl": "http://www.w3.org/2002/07/owl#",
+        "v": "http://example.org/ns#",
+        "unionOf": {"@id": "owl:unionOf", "@type": "@id", "@container": "@list"}
+    },
     "@id": "v:World",
     "unionOf": ["v:Everyhing", "v:Nothing"]
 }
-""")
+)
 
 
-#def test_cases():
-#        yield run, data, context, output
-if __name__ == '__main__':
-    for data, context, output in cases:
-        g = Graph().parse(data=data, format='n3')
-        print(g.serialize(format='json-ld', context=context, indent=4))
+json_kwargs = dict(indent=2, separators=(',', ': '), sort_keys=True, ensure_ascii=False)
+
+def run(data, expected):
+    context = expected['@context']
+    g = Graph().parse(data=data, format='turtle')
+    result = g.serialize(format='json-ld', context=context, **json_kwargs)
+    incr = itertools.count(1)
+    result = re.sub(r'"_:[^"]+"', lambda m: '"_:blank-%s"' % incr.next(), result)
+    expected = json.dumps(expected, **json_kwargs).encode('utf-8')
+    assert result == expected
+
+
+def test_cases():
+    for data, expected in cases:
+        yield run, data, expected
