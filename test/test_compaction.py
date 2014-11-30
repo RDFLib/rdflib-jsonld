@@ -184,10 +184,10 @@ json_kwargs = dict(indent=2, separators=(',', ': '), sort_keys=True, ensure_asci
 def run(data, expected):
     context = expected['@context']
     g = Graph().parse(data=data, format='turtle')
-    result = g.serialize(format='json-ld', context=context, **json_kwargs)
+    result = g.serialize(format='json-ld', context=context, **json_kwargs).decode('utf-8')
     incr = itertools.count(1)
     result = re.sub(r'"_:[^"]+"', lambda m: '"_:blank-%s"' % incr.next(), result)
-    expected = json.dumps(expected, **json_kwargs).encode('utf-8')
+    expected = json.dumps(expected, **json_kwargs)
     assert result == expected
 
 
