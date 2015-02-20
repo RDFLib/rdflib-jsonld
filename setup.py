@@ -93,7 +93,7 @@ config = dict(
                    ],
     packages = ["rdflib_jsonld"],
     test_suite = "test",
-    install_requires = ["rdflib>=4.2-dev"],
+    install_requires = ["rdflib>=4.2"],
     entry_points = {
         'rdf.plugins.parser': [
             'json-ld = rdflib_jsonld.parser:JsonLDParser',

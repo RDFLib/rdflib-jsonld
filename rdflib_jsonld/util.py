@@ -53,7 +53,7 @@ def norm_url(base, url):
 
 def context_from_urlinputsource(source):
     if source.content_type == 'application/json':
-        # response_info was added in rdflib 4.2-dev
+        # response_info was added to InputSource in rdflib 4.2
         try:
             links = source.response_info.getallmatchingheaders('Link')
         except AttributeError:
