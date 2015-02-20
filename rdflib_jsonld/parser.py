@@ -36,12 +36,12 @@ Example usage::
 
 import warnings
 from rdflib.graph import ConjunctiveGraph
-from rdflib.parser import Parser
+from rdflib.parser import Parser, URLInputSource
 from rdflib.namespace import RDF, XSD
 from rdflib.term import URIRef, BNode, Literal
 
 from .context import Context, Term, UNDEF
-from .util import source_to_json, VOCAB_DELIMS
+from .util import source_to_json, VOCAB_DELIMS, context_from_urlinputsource
 from .keys import CONTEXT, GRAPH, ID, INDEX, LANG, LIST, REV, SET, TYPE, VALUE, VOCAB
 
 __all__ = ['JsonLDParser', 'to_rdf']
@@ -64,6 +64,8 @@ class JsonLDParser(Parser):
         base = kwargs.get('base') or sink.absolutize(
             source.getPublicId() or source.getSystemId() or "")
         context_data = kwargs.get('context')
+        if not context_data and isinstance(source, URLInputSource):
+            context_data = context_from_urlinputsource(source)
         produce_generalized_rdf = kwargs.get('produce_generalized_rdf', False)
 
         data = source_to_json(source)
