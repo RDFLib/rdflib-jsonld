@@ -49,7 +49,10 @@ def norm_url(base, url):
         path = '/'.join(path.split(sep))
     if parts[2].endswith('/') and not path.endswith('/'):
         path += '/'
-    return urlunsplit(parts[0:2] + (path,) + parts[3:])
+    result = urlunsplit(parts[0:2] + (path,) + parts[3:])
+    if url.endswith('#') and not result.endswith('#'):
+        result += '#'
+    return result
 
 def context_from_urlinputsource(source):
     if source.content_type == 'application/json':
