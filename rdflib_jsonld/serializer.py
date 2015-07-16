@@ -70,6 +70,7 @@ class JsonLDSerializer(Serializer):
         use_native_types = kwargs.get('use_native_types', False),
         use_rdf_type = kwargs.get('use_rdf_type', False)
         auto_compact = kwargs.get('auto_compact', False)
+        auto_frame = kwargs.get('auto_frame', None)
 
         indent = kwargs.get('indent', 2)
         separators = kwargs.get('separators', (',', ': '))
@@ -78,7 +79,7 @@ class JsonLDSerializer(Serializer):
 
         obj = from_rdf(self.store, context_data, base,
                 use_native_types, use_rdf_type,
-                auto_compact=auto_compact)
+                auto_compact=auto_compact, auto_frame=auto_frame)
 
         data = json.dumps(obj, indent=indent, separators=separators,
                           sort_keys=sort_keys, ensure_ascii=ensure_ascii)
@@ -88,9 +89,9 @@ class JsonLDSerializer(Serializer):
 
 def from_rdf(graph, context_data=None, base=None,
         use_native_types=False, use_rdf_type=False,
-        auto_compact=False, startnode=None, index=False):
+        auto_compact=False, auto_frame=None, index=False):
     # TODO: docstring w. args and return value
-    # TODO: support for index and startnode
+    # TODO: support for index and auto_frame
 
     if not context_data and auto_compact:
         context_data = dict(
@@ -111,6 +112,10 @@ def from_rdf(graph, context_data=None, base=None,
         if isinstance(result, list):
             result = {context.get_key(GRAPH): result}
         result[CONTEXT] = context_data
+
+    if auto_frame:
+        from .autoframe import AutoFrame
+        result = AutoFrame(result).run(URIRef(auto_frame)) or result
 
     return result
 
@@ -299,7 +304,7 @@ class Converter(object):
                     for lo in self.to_collection(graph, o)]
             return {context.list_key: coll}
         elif isinstance(o, BNode):
-            embed = False # TODO: self.context.active or using startnode and only one ref
+            embed = False # TODO: self.context.active or using auto_frame and only one ref
             onode = self.process_subject(graph, o, nodemap)
             if onode:
                 if embed and not any(s2 for s2 in graph.subjects(None, o) if s2 != s):
@@ -308,7 +313,7 @@ class Converter(object):
                     nodemap[onode[context.id_key]] = onode
             return {context.id_key: o.n3()}
         elif isinstance(o, URIRef):
-            # TODO: embed if o != startnode (else reverse)
+            # TODO: embed if o != auto_frame (else reverse)
             return {context.id_key: context.shrink_iri(o)}
         elif isinstance(o, Literal):
             # TODO: if compact
