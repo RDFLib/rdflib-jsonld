@@ -8,10 +8,13 @@ except ImportError:
 from rdflib import ConjunctiveGraph, Graph, Literal, URIRef
 from rdflib.compare import isomorphic
 from rdflib.py3compat import PY3
+import rdflib_jsonld.parser
 from rdflib_jsonld.parser import to_rdf
 from rdflib_jsonld.serializer import from_rdf
 from rdflib_jsonld.keys import CONTEXT, GRAPH
 
+
+rdflib_jsonld.parser.ALLOW_LISTS_OF_LISTS = False
 
 # monkey-patch NTriplesParser to keep source bnode id:s ..
 from rdflib.plugins.parsers.ntriples import NTriplesParser, r_nodeid, bNode
