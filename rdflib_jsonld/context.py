@@ -7,7 +7,7 @@ Implementation of the JSON-LD Context structure. See:
 """
 from rdflib.namespace import RDF
 
-from .util import source_to_json, urljoin, split_iri, norm_url
+from .util import source_to_json, urljoin, urlsplit, split_iri, norm_url
 from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANG, LIST,
         REV, SET, TYPE, VALUE, VOCAB)
 
@@ -32,6 +32,19 @@ class Context(object):
         self.active = False
         if source:
             self.load(source)
+
+    @property
+    def base(self):
+        return self._base
+
+    @base.setter
+    def base(self, base):
+        if base:
+            hash_index = base.find('#')
+            if hash_index > -1:
+                base = base[0:hash_index]
+        self._base = base
+        self._basedomain = '%s://%s' % urlsplit(base)[0:2] if base else None
 
     def load(self, source, base=None):
         self.active = True
@@ -136,12 +149,15 @@ class Context(object):
 
     def resolve(self, curie_or_iri):
         iri = self.expand(curie_or_iri, False)
-        if iri.startswith('_:'):
+        if self.isblank(iri):
             return iri
         return self.resolve_iri(iri)
 
     def resolve_iri(self, iri):
-        return norm_url(self.base, iri)
+        return norm_url(self._base, iri)
+
+    def isblank(self, ref):
+        return ref.startswith('_:')
 
     def expand(self, term_curie_or_iri, use_vocab=True):
         if use_vocab:
@@ -166,6 +182,11 @@ class Context(object):
         pfx = self._prefixes.get(ns)
         if pfx:
             return u":".join((pfx, name))
+        elif self._base:
+            if unicode(iri) == self._base:
+                return ""
+            elif iri.startswith(self._basedomain):
+                    return iri[len(self._basedomain):]
         return iri
 
     def to_symbol(self, iri):
