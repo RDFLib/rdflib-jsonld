@@ -9,6 +9,18 @@ This implementation will:
 * serialize an RDF graph to JSON-LD formatted output
 
 
+Installation
+------------
+
+The easiest way to install the RDFLib JSON-LD plugin is directly from PyPi using pip by running the command below:
+
+    pip install rdflib-jsonld
+
+Otherwise you can download the source and install it directly by running:
+
+    python setup.py install
+
+
 Using the plug-in JSONLD serializer/parser with RDFLib
 ------------------------------------------------------
 
