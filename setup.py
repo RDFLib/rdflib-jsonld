@@ -19,7 +19,7 @@ def setup_python3():
     from os.path import join
 
     tmp_src = join("build", "src")
-    log.set_verbosity(1)
+    # log.set_verbosity(1)
     fl = FileList()
     for line in open("MANIFEST.in"):
         if not line.strip():
