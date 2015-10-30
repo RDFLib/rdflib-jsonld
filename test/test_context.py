@@ -39,7 +39,7 @@ def test_getting_keyword_values_from_nodes():
     assert ctx.get_language({'@language': 'en'}) == 'en'
 
 
-def parsing_a_context_expands_prefixes():
+def test_parsing_a_context_expands_prefixes():
     ctx = Context({
         '@vocab': 'http://example.org/ns/',
         'x': 'http://example.org/ns/',
@@ -54,20 +54,16 @@ def parsing_a_context_expands_prefixes():
     assert term.id == 'http://example.org/ns/updated'
     assert term.type == 'http://example.org/ns/date'
 
-
-def expanding_terms():
-    ctx = Context()
+    # test_expanding_terms():
     assert ctx.expand('term') == 'http://example.org/ns/term'
     assert ctx.expand('x:term') == 'http://example.org/ns/term'
 
-
-def shrinking_iris():
-    ctx = Context()
+    # test_shrinking_iris():
     assert ctx.shrink_iri('http://example.org/ns/term') == 'x:term'
     assert ctx.to_symbol('http://example.org/ns/term') == 'term'
 
 
-def resolving_iris():
+def test_resolving_iris():
     ctx = Context({'@base': 'http://example.org/path/leaf'})
     assert ctx.resolve('/') == 'http://example.org/'
     assert ctx.resolve('/trail') == 'http://example.org/trail'
@@ -75,23 +71,20 @@ def resolving_iris():
     assert ctx.resolve('../../') == 'http://example.org/'
 
 
-def accessing_keyword_values_by_alias():
+def test_accessing_keyword_values_by_alias():
     ctx = Context({'iri': '@id', 'lang': '@language'})
     assert ctx.get_id({'iri': 'urn:x:1'}) == 'urn:x:1'
     assert ctx.get_language({'lang': 'en'}) == 'en'
 
-
-def standard_keywords_still_work():
-    ctx = Context()
+    # test_standard_keywords_still_work():
     assert ctx.get_id({'@id': 'urn:x:1'}) == 'urn:x:1'
 
-
-def representing_keywords_by_alias():
-    ctx = Context()
+    # test_representing_keywords_by_alias():
     assert ctx.id_key == 'iri'
     assert ctx.lang_key == 'lang'
 
 
-def creating_a_subcontext():
+def test_creating_a_subcontext():
+    ctx = Context()
     ctx4 = ctx.subcontext({'lang': '@language'})
     assert ctx4.get_language({'lang': 'en'}) == 'en'
