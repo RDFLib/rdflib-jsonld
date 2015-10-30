@@ -6,6 +6,24 @@ from rdflib_jsonld.context import Context, Term
 from rdflib_jsonld import errors
 
 
+# exception utility (see also nose.tools.raises)
+from functools import wraps
+def _expect_exception(expected_error):
+    def _try_wrapper(f):
+        @wraps(f)
+        def _try():
+            try:
+                f()
+                assert e == expected_error
+            except Exception as e:
+                success = e == expected_error
+            else:
+                success = False
+            assert success, "Expected %r" % expected_error
+        return _try
+    return _try_wrapper
+
+
 def test_create_context():
     ctx = Context()
     ctx.add_term('label', 'http://example.org/ns/label')
@@ -88,3 +106,46 @@ def test_creating_a_subcontext():
     ctx = Context()
     ctx4 = ctx.subcontext({'lang': '@language'})
     assert ctx4.get_language({'lang': 'en'}) == 'en'
+
+
+# Mock external sources loading
+from rdflib_jsonld import context
+_source_to_sjon = context.source_to_json
+SOURCES = {}
+context.source_to_json = SOURCES.get
+
+def test_loading_contexts():
+    # Given context data:
+    source1 = "http://example.org/base.jsonld"
+    source2 = "http://example.org/context.jsonld"
+    SOURCES[source1]  = {'@context': {"@vocab": "http://example.org/vocab/"}}
+    SOURCES[source2]  = {'@context': [source1, {"n": "name"}]}
+
+    # Create a context:
+    ctx = Context(source2)
+    assert ctx.expand('n') == 'http://example.org/vocab/name'
+
+    # Context can be a list:
+    ctx = Context([source2])
+    assert ctx.expand('n') == 'http://example.org/vocab/name'
+
+def test_use_base_in_local_context():
+    ctx = Context({'@base': "/local"})
+    assert ctx.base == '/local'
+    # Ignore @base in remote contexts
+    ctx_url = "http://example.org/remote-base.jsonld"
+    SOURCES[ctx_url] = {'@context': {'@base': "/remote"}}
+    ctx = Context(ctx_url)
+    assert ctx.base == None
+
+@_expect_exception(errors.RECURSIVE_CONTEXT_INCLUSION)
+def test_recursive_context_inclusion_error():
+    ctx_url = "http://example.org/recursive.jsonld"
+    SOURCES[ctx_url] = {'@context': ctx_url}
+    ctx = Context(ctx_url)
+
+@_expect_exception(errors.INVALID_REMOTE_CONTEXT)
+def test_invalid_remote_context():
+    ctx_url = "http://example.org/recursive.jsonld"
+    SOURCES[ctx_url] = {"key": "value"}
+    ctx = Context(ctx_url)

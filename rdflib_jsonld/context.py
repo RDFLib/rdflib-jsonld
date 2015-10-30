@@ -7,9 +7,10 @@ Implementation of the JSON-LD Context structure. See:
 """
 from rdflib.namespace import RDF
 
-from .util import source_to_json, urljoin, urlsplit, split_iri, norm_url
 from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANG, LIST,
         REV, SET, TYPE, VALUE, VOCAB)
+from . import errors
+from .util import source_to_json, urljoin, urlsplit, split_iri, norm_url
 
 
 NODE_KEYS = set([LANG, ID, TYPE, VALUE, LIST, SET, REV, GRAPH])
@@ -45,26 +46,6 @@ class Context(object):
                 base = base[0:hash_index]
         self._base = base
         self._basedomain = '%s://%s' % urlsplit(base)[0:2] if base else None
-
-    def load(self, source, base=None):
-        self.active = True
-        inputs = not isinstance(source, list) and [source] or source
-        sources = []
-        for source in inputs:
-            if isinstance(source, basestring):
-                url = urljoin(base, source)
-                #if url in visited_urls: continue
-                #visited_urls.append(url)
-                source = source_to_json(url)
-            if isinstance(source, dict):
-                if CONTEXT in source:
-                    source = source[CONTEXT]
-            if isinstance(source, list):
-                sources.extend(source)
-            else:
-                sources.append(source)
-        for source in sources:
-            self._read_source(source)
 
     def subcontext(self, source):
         # IMPROVE: to optimize, implement SubContext with parent fallback support
@@ -202,7 +183,37 @@ class Context(object):
             return u":".join((pfx, name))
         return iri
 
-    def _read_source(self, source):
+    def load(self, source, base=None):
+        self.active = True
+        sources = []
+        source = source if isinstance(source, list) else [source]
+        self._prep_sources(base, source, sources)
+        for source_url, source in sources:
+            self._read_source(source, source_url)
+
+    def _prep_sources(self, base, inputs, sources, referenced_contexts=None,
+            source_url=None):
+        referenced_contexts = referenced_contexts or set()
+        for source in inputs:
+            if isinstance(source, basestring):
+                source_url = urljoin(base, source)
+                if source_url in referenced_contexts:
+                    raise errors.RECURSIVE_CONTEXT_INCLUSION
+                referenced_contexts.add(source_url)
+                source = source_to_json(source_url)
+                if CONTEXT not in source:
+                    raise errors.INVALID_REMOTE_CONTEXT
+
+            if isinstance(source, dict):
+                if CONTEXT in source:
+                    source = source[CONTEXT]
+                    source = source if isinstance(source, list) else [source]
+            if isinstance(source, list):
+                self._prep_sources(base, source, sources, referenced_contexts, source_url)
+            else:
+                sources.append((source_url, source))
+
+    def _read_source(self, source, source_url=None):
         self.vocab = source.get(VOCAB, self.vocab)
         for key, value in source.items():
             if key == LANG:
@@ -210,10 +221,8 @@ class Context(object):
             elif key == VOCAB:
                 continue
             elif key == BASE:
-                # TODO: only base to None if source is embedded
-                #if value is None and remote:
-                #    self.base = self.doc_base
-                #else:
+                if source_url:
+                    continue
                 self.base = value
             else:
                 self._read_term(source, key, value)
