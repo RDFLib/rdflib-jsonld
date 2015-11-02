@@ -138,6 +138,12 @@ def test_override_base():
             source={'@base': "http://example.org/"})
     assert ctx.base == "http://example.org/"
 
+def test_resolve_relative_base():
+    ctx = Context(base="http://example.org/app/data/item",
+            source={'@base': "../"})
+    assert ctx.base == "http://example.org/app/"
+    assert ctx.resolve_iri("../other") == "http://example.org/other"
+
 def test_set_null_base():
     ctx = Context(base="http://example.org/app/data/item",
             source={'@base': None})

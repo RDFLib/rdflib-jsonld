@@ -44,7 +44,8 @@ class Context(object):
             hash_index = base.find('#')
             if hash_index > -1:
                 base = base[0:hash_index]
-        self._base = base
+        self._base = self.resolve_iri(base) if (
+                hasattr(self, '_base') and base is not None) else base
         self._basedomain = '%s://%s' % urlsplit(base)[0:2] if base else None
 
     def subcontext(self, source):
