@@ -5,6 +5,7 @@ Implementation of the JSON-LD Context structure. See:
     http://json-ld.org/
 
 """
+from collections import namedtuple
 from rdflib.namespace import RDF
 
 from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANG, LIST,
@@ -291,12 +292,6 @@ class Context(object):
         return term
 
 
-class Term(object):
-    def __init__(self, idref, name, coercion=UNDEF, container=UNDEF,
-            language=UNDEF, reverse=False):
-        self.name = name
-        self.id = idref
-        self.type = coercion
-        self.container = container
-        self.language = language
-        self.reverse = reverse
+Term = namedtuple('Term',
+        'id, name, type, container, language, reverse')
+Term.__new__.__defaults__ = (UNDEF, UNDEF, UNDEF, False)
