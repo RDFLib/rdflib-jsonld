@@ -132,7 +132,19 @@ def test_loading_contexts():
 def test_use_base_in_local_context():
     ctx = Context({'@base': "/local"})
     assert ctx.base == '/local'
-    # Ignore @base in remote contexts
+
+def test_override_base():
+    ctx = Context(base="http://example.org/app/data/item",
+            source={'@base': "http://example.org/"})
+    assert ctx.base == "http://example.org/"
+
+def test_set_null_base():
+    ctx = Context(base="http://example.org/app/data/item",
+            source={'@base': None})
+    assert ctx.base is None
+    assert ctx.resolve_iri("../other") == "../other"
+
+def test_ignore_base_remote_context():
     ctx_url = "http://example.org/remote-base.jsonld"
     SOURCES[ctx_url] = {'@context': {'@base': "/remote"}}
     ctx = Context(ctx_url)

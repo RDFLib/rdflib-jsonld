@@ -192,7 +192,7 @@ class Context(object):
             self._read_source(source, source_url)
 
     def _prep_sources(self, base, inputs, sources, referenced_contexts=None,
-            source_url=None):
+            in_source_url=None):
         referenced_contexts = referenced_contexts or set()
         for source in inputs:
             if isinstance(source, basestring):
@@ -203,6 +203,8 @@ class Context(object):
                 source = source_to_json(source_url)
                 if CONTEXT not in source:
                     raise errors.INVALID_REMOTE_CONTEXT
+            else:
+                source_url = in_source_url
 
             if isinstance(source, dict):
                 if CONTEXT in source:
