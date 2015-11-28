@@ -97,9 +97,11 @@ config = dict(
     entry_points = {
         'rdf.plugins.parser': [
             'json-ld = rdflib_jsonld.parser:JsonLDParser',
+            'application/ld+json = rdflib_jsonld.parser:JsonLDParser',
         ],
         'rdf.plugins.serializer': [
             'json-ld = rdflib_jsonld.serializer:JsonLDSerializer',
+            'application/ld+json = rdflib_jsonld.serializer:JsonLDSerializer',
         ],
     }
 )
