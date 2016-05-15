@@ -197,6 +197,17 @@ PREFIX : <http://example.org/vocab/>
   },
   "@graph": [
     {
+      "@id": "/Thing",
+      "@type": "Class"
+    },
+    {
+      "@id": "/Work",
+      "@type": "Class",
+      "subClassOf": {
+        "@id": "/Thing"
+      }
+    },
+    {
       "@id": "",
       "@type": "Thing"
     },
@@ -205,19 +216,8 @@ PREFIX : <http://example.org/vocab/>
       "@type": "Thing"
     },
     {
-      "@id": "/Thing",
-      "@type": "Class"
-    },
-    {
       "@id": "/some/path/#other",
       "@type": "Thing"
-    },
-    {
-      "@id": "/Work",
-      "@type": "Class",
-      "subClassOf": {
-        "@id": "/Thing"
-      }
     }
   ]
 }
@@ -227,14 +227,23 @@ PREFIX : <http://example.org/vocab/>
 json_kwargs = dict(indent=2, separators=(',', ': '), sort_keys=True, ensure_ascii=False)
 
 def run(data, expected):
-    context = expected['@context']
     g = Graph().parse(data=data, format='turtle')
-    result = g.serialize(format='json-ld', context=context, **json_kwargs).decode('utf-8')
+    result = g.serialize(format='json-ld', context=expected['@context']).decode('utf-8')
+    result = json.loads(result)
+
+    sort_graph(result)
+    result = json.dumps(result, **json_kwargs)
     incr = itertools.count(1)
     result = re.sub(r'"_:[^"]+"', lambda m: '"_:blank-%s"' % incr.next(), result)
-    expected = json.dumps(expected, **json_kwargs)
-    assert result == expected
 
+    sort_graph(expected)
+    expected = json.dumps(expected, **json_kwargs)
+
+    assert result == expected, "Expected not equal to result: %s" % result
+
+def sort_graph(data):
+    if '@graph' in data:
+        data['@graph'].sort(key=lambda node: node.get('@id'))
 
 def test_cases():
     for data, expected in cases:
