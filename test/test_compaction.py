@@ -4,7 +4,8 @@ import re
 import json
 import itertools
 from rdflib import Graph
-from rdflib.serializer import Serializer
+from rdflib.plugin import register, Serializer
+register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
 
 
 cases = []
@@ -175,6 +176,50 @@ case("""
     },
     "@id": "v:World",
     "unionOf": ["v:Everyhing", "v:Nothing"]
+}
+)
+
+
+# Shorten result IRIs by using @base
+case("""
+BASE <http://example.org/>
+PREFIX : <http://example.org/vocab/>
+<Thing> a :Class .
+<Work> a :Class; :subClassOf <Thing> .
+</some/path/> a :Thing .
+</some/path/#this> a :Thing .
+</some/path/#other> a :Thing .
+""",
+{
+  "@context": {
+    "@base": "http://example.org/some/path/#other",
+    "@vocab": "http://example.org/vocab/"
+  },
+  "@graph": [
+    {
+      "@id": "",
+      "@type": "Thing"
+    },
+    {
+      "@id": "/some/path/#this",
+      "@type": "Thing"
+    },
+    {
+      "@id": "/Thing",
+      "@type": "Class"
+    },
+    {
+      "@id": "/some/path/#other",
+      "@type": "Thing"
+    },
+    {
+      "@id": "/Work",
+      "@type": "Class",
+      "subClassOf": {
+        "@id": "/Thing"
+      }
+    }
+  ]
 }
 )
 
