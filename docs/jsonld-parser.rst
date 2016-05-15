@@ -8,8 +8,7 @@ Using the plug-in JSONLD parser with RDFLib
 ---------------------------------------------
 
 The plugin serializer is automatically registered if installed by
-setuptools, otherwise call ``rdfextras.registerplugins()`` after
-importing, as shown below.
+setuptools.
 
 Identify a source of JSON-LD, pass the source to the parser,
 manipulate the resulting graph.
@@ -17,9 +16,6 @@ manipulate the resulting graph.
 .. code-block:: python
 
     >>> from rdflib import Graph, URIRef, Literal
-    >>> from rdflib.parser import Parser
-    >>> import rdfextras
-    >>> rdfextras.registerplugins() # if no setuptools
     >>> test_json = '''
     ... {
     ...     "@context": {
@@ -30,7 +26,7 @@ manipulate the resulting graph.
     ...     "@id": "http://example.org/about",
     ...     "dc:title": {
     ...         "@language": "en",
-    ...         "@literal": "Someone's Homepage"
+    ...         "@value": "Someone's Homepage"
     ...     }
     ... }
     ... '''

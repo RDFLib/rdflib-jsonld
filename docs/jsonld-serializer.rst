@@ -8,17 +8,13 @@ Using the plug-in JSONLD serializer with RDFLib
 ------------------------------------------------
 
 The plugin serializer is automatically registered if installed by
-setuptools, otherwise call ``rdfextras.registerplugins()`` after
-importing, as shown below.
+setuptools.
 
 Read in an RDFLib Graph and serialize it, specifying ``format='json-ld'``.
 
 .. code-block:: python
 
     >>> from rdflib import Graph, plugin
-    >>> from rdflib.serializer import Serializer
-    >>> import rdfextras
-    >>> rdfextras.registerplugins()
 
     >>> testrdf = '''
     ... @prefix dc: <http://purl.org/dc/terms/> .
@@ -38,7 +34,7 @@ Read in an RDFLib Graph and serialize it, specifying ``format='json-ld'``.
         "@id": "http://example.org/about",
         "dc:title": {
             "@language": "en",
-            "@literal": "Someone's Homepage"
+            "@value": "Someone's Homepage"
         }
     }
 
