@@ -71,12 +71,21 @@ class JsonLDParser(Parser):
         produce_generalized_rdf = kwargs.get('produce_generalized_rdf', False)
 
         data = source_to_json(source)
-        conj_sink = ConjunctiveGraph(
-            store=sink.store, identifier=sink.identifier)
+
+        # NOTE: A ConjunctiveGraph parses into a Graph sink, so no sink will be
+        # context_aware. Keeping this check in case RDFLib is changed, or
+        # someone passes something context_aware to this parser directly.
+        if not sink.context_aware:
+            conj_sink = ConjunctiveGraph(
+                store=sink.store,
+                identifier=sink.identifier)
+        else:
+            conj_sink = sink
+
         to_rdf(data, conj_sink, base, context_data)
 
 
-def to_rdf(data, graph, base=None, context_data=None,
+def to_rdf(data, dataset, base=None, context_data=None,
         produce_generalized_rdf=False,
         allow_lists_of_lists=None):
     # TODO: docstring w. args and return value
@@ -85,7 +94,7 @@ def to_rdf(data, graph, base=None, context_data=None,
         context.load(context_data)
     parser = Parser(generalized_rdf=produce_generalized_rdf,
             allow_lists_of_lists=allow_lists_of_lists)
-    return parser.parse(data, context, graph)
+    return parser.parse(data, context, dataset)
 
 
 class Parser(object):
@@ -95,7 +104,7 @@ class Parser(object):
         self.allow_lists_of_lists = (allow_lists_of_lists
                 if allow_lists_of_lists is not None else ALLOW_LISTS_OF_LISTS)
 
-    def parse(self, data, context, graph):
+    def parse(self, data, context, dataset):
         topcontext = False
 
         if isinstance(data, list):
@@ -110,13 +119,15 @@ class Parser(object):
                 resources = [resources]
 
         if context.vocab:
-            graph.bind(None, context.vocab)
+            dataset.bind(None, context.vocab)
         for name, term in context.terms.items():
             if term.id and term.id.endswith(VOCAB_DELIMS):
-                graph.bind(name, term.id)
+                dataset.bind(name, term.id)
+
+        graph = dataset.default_context if dataset.context_aware else dataset
 
         for node in resources:
-            self._add_to_graph(graph, graph, context, node, topcontext)
+            self._add_to_graph(dataset, graph, context, node, topcontext)
 
         return graph
 
@@ -141,19 +152,25 @@ class Parser(object):
         if subj is None:
             return None
 
+        # NOTE: crude way to signify that this node might represent a named graph
+        no_id = id_val is None
+
         for key, obj in node.items():
             if key in (CONTEXT, ID, context.get_key(ID)):
                 continue
             if key in (REV, context.get_key(REV)):
                 for rkey, robj in obj.items():
-                    self._key_to_graph(dataset, graph, context, subj, rkey, robj, True)
+                    self._key_to_graph(dataset, graph, context, subj, rkey, robj,
+                            reverse=True, no_id=no_id)
             else:
-                self._key_to_graph(dataset, graph, context, subj, key, obj)
+                self._key_to_graph(dataset, graph, context, subj, key, obj,
+                        no_id=no_id)
 
         return subj
 
 
-    def _key_to_graph(self, dataset, graph, context, subj, key, obj, reverse=False):
+    def _key_to_graph(self, dataset, graph, context, subj, key, obj,
+            reverse=False, no_id=False):
 
         if isinstance(obj, list):
             obj_nodes = obj
@@ -186,8 +203,10 @@ class Parser(object):
         if TYPE in (key, term_id):
             term = TYPE_TERM
         elif GRAPH in (key, term_id):
-            #assert graph.context_aware
-            subgraph = dataset.get_context(subj)
+            if dataset.context_aware and not no_id:
+                subgraph = dataset.get_context(subj)
+            else:
+                subgraph = graph
             for onode in obj_nodes:
                 self._add_to_graph(dataset, subgraph, context, onode)
             return
