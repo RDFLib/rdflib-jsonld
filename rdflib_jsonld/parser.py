@@ -47,6 +47,15 @@ from .keys import CONTEXT, GRAPH, ID, INDEX, LANG, LIST, REV, SET, TYPE, VALUE, 
 __all__ = ['JsonLDParser', 'to_rdf']
 
 
+# Add jsonld suffix so RDFLib can guess format from file name
+try:
+    from rdflib.util import SUFFIX_FORMAT_MAP
+    if 'jsonld' not in SUFFIX_FORMAT_MAP:
+        SUFFIX_FORMAT_MAP['jsonld'] = 'application/ld+json'
+except ImportError:
+    pass
+
+
 TYPE_TERM = Term(unicode(RDF.type), TYPE, VOCAB)
 
 ALLOW_LISTS_OF_LISTS = True # NOTE: Not allowed in JSON-LD 1.0
