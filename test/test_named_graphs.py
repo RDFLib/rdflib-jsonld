@@ -33,25 +33,23 @@ def test_graph():
 
 def test_conjunctive_graph():
     cg = ConjunctiveGraph()
-    cg.parse(data=data, format="application/ld+json")
+    cg.default_context.parse(data=data, format="application/ld+json")
     assert len(cg) == 3
 
     print("default graph (%s) contains %s triples (expected 2)" % (cg.identifier, len(cg.default_context)))
-    contexts = {ctx.identifier: ctx for ctx in cg.contexts()}
-    for ctx in contexts.values():
+    for ctx in cg.contexts():
         print("named graph (%s) contains %s triples" % (ctx.identifier, len(ctx)))
-    # TODO: see <https://github.com/RDFLib/rdflib/issues/436>
-    #assert len(cg.default_context) == 2
-    #assert len(contexts) == 2
+    assert len(cg.default_context) == 2
+    assert len(list(cg.contexts())) == 2
 
 def test_dataset():
     ds = Dataset()
-    ds.parse(data=data, format="application/ld+json", publicID=ds.default_context.identifier)
+    ds.default_context.parse(data=data, format="application/ld+json")
     assert len(ds) == 3
 
     assert len(ds.default_context) == 2
     print("default graph (%s) contains %s triples (expected 2)" % (ds.identifier, len(ds.default_context)))
-    contexts = {ctx.identifier: ctx for ctx in ds.contexts()}
+    contexts = dict((ctx.identifier, ctx) for ctx in ds.contexts())
     assert len(contexts) == 2
     assert len(contexts.pop(meta_ctx)) == 1
     assert len(contexts.values()[0]) == 2
