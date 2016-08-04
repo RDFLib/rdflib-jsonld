@@ -9,11 +9,17 @@ python:
     - "2.7"
     - "3.2"
     - "3.3"
+
+before_install:
+    # Travis has too old setuptools for html5lib. Please remove this when a fix
+    # for html5lib or rdflib is released.
+    - pip install -U setuptools pip
+
 install:
     # iodate0.4.8 is problematic with Pypy, use fixed version
     - if [[ $TRAVIS_PYTHON_VERSION == '2.5' ]]; then pip install --use-mirrors "simplejson==2.0.9"; fi
     - if [[ $TRAVIS_PYTHON_VERSION == 'pypy' ]]; then pip install --upgrade "https://bitbucket.org/gjhiggins/isodate/downloads/isodate-0.4.8.tar.gz"; fi
-    - pip install -r requirements.travis.txt --use-mirrors
+    - pip install -r requirements.travis.txt
     - python setup.py install
 
 before_script:
