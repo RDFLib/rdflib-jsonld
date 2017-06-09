@@ -21,3 +21,7 @@ before_script:
 
 script:
     - nosetests
+
+matrix:
+  allow_failures:
+    - python: pypy3
