@@ -40,6 +40,7 @@ from rdflib.parser import Parser, URLInputSource
 from rdflib.namespace import RDF, XSD
 from rdflib.term import URIRef, BNode, Literal
 
+from ._compat import basestring, unicode
 from .context import Context, Term, UNDEF
 from .util import source_to_json, VOCAB_DELIMS, context_from_urlinputsource
 from .keys import CONTEXT, GRAPH, ID, INDEX, LANG, LIST, REV, SET, TYPE, VALUE, VOCAB

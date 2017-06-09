@@ -45,6 +45,7 @@ from rdflib.graph import Graph
 from rdflib.term import URIRef, Literal, BNode
 from rdflib.namespace import RDF, XSD
 
+from ._compat import unicode
 from .context import Context, UNDEF
 from .util import json
 from .keys import CONTEXT, GRAPH, ID, VOCAB, LIST, SET, LANG
@@ -180,7 +181,7 @@ class Converter(object):
                     and not any(graph.subjects(None, s))):
                 self.process_subject(graph, s, nodemap)
 
-        return nodemap.values()
+        return list(nodemap.values())
 
     def process_subject(self, graph, s, nodemap):
         if isinstance(s, URIRef):
