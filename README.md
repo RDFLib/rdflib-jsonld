@@ -65,6 +65,8 @@ setuptools.
 }
 ```
 
+<!-- CUT HERE -->
+<!-- Text after this comment won't appear on PyPI -->
 
 ## Building the Sphinx documentation
 
@@ -79,4 +81,4 @@ The documentation will be created in ./build/sphinx.
 
 ## Continuous integration tests
 
-[![Build Status](https://travis-ci.org/RDFLib/rdflib-jsonld.png?branch=master)](https://travis-ci.org/RDFLib/rdflib-jsonld)
+[![Build Status](https://travis-ci.org/RDFLib/rdflib-jsonld.svg?branch=master)](https://travis-ci.org/RDFLib/rdflib-jsonld)

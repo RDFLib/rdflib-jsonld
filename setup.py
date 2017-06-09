@@ -17,8 +17,8 @@ RE_SELF_LINK = re.compile(r'\[(.*?)\]\[\]')
 RE_LINK_TO_URL = re.compile(r'\[(?P<text>.*?)\]\((?P<url>.*?)\)')
 RE_LINK_TO_REF = re.compile(r'\[(?P<text>.*?)\]\[(?P<ref>.*?)\]')
 RE_LINK_REF = re.compile(r'^\[(?P<key>[^!].*?)\]:\s*(?P<url>.*)$', re.M)
-RE_BADGE = re.compile(r'^\[\!\[(?P<text>.*?)\]\[(?P<badge>.*?)\]\]\[(?P<target>.*?)\]$', re.M)
 RE_TITLE = re.compile(r'^(?P<level>#+)\s*(?P<title>.*)$', re.M)
+CUT = '<!-- CUT HERE -->'
 
 RST_TITLE_LEVELS = ['=', '-', '*']
 
@@ -27,10 +27,9 @@ def md2pypi(filename):
     '''
     Load .md (markdown) file and sanitize it for PyPI.
     Remove unsupported github tags:
-     - code-block directive
      - travis ci build badges
     '''
-    content = io.open(filename).read()
+    content = io.open(filename).read().split(CUT)[0]
 
     for match in RE_MD_CODE_BLOCK.finditer(content):
         rst_block = '\n'.join(
@@ -45,10 +44,6 @@ def md2pypi(filename):
     content = RE_SELF_LINK.sub('`\g<1>`_', content)
     content = RE_LINK_TO_URL.sub('`\g<text> <\g<url>>`_', content)
 
-    for match in RE_BADGE.finditer(content):
-        content = content.replace(match.group(0), '')
-
-    # Must occur after badges
     for match in RE_LINK_TO_REF.finditer(content):
         content = content.replace(match.group(0), '`{text} <{url}>`_'.format(
             text=match.group('text'),
