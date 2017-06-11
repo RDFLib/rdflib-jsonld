@@ -40,9 +40,9 @@ manipulate the resulting graph.
 Module contents
 ---------------
 
-.. currentmodule:: rdflib_jsonld.jsonld_parser
+.. currentmodule:: rdflib_jsonld.parser
 
-.. automodule:: rdflib_jsonld.jsonld_parser
+.. automodule:: rdflib_jsonld.parser
 
 .. autoclass:: JsonLDParser
    :members: parse

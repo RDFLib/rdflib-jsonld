@@ -8,6 +8,7 @@ Implementation of the JSON-LD Context structure. See:
 from collections import namedtuple
 from rdflib.namespace import RDF
 
+from ._compat import basestring, unicode
 from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANG, LIST,
         REV, SET, TYPE, VALUE, VOCAB)
 from . import errors

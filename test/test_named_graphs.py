@@ -52,4 +52,4 @@ def test_dataset():
     contexts = dict((ctx.identifier, ctx) for ctx in ds.contexts())
     assert len(contexts) == 2
     assert len(contexts.pop(meta_ctx)) == 1
-    assert len(contexts.values()[0]) == 2
+    assert len(list(contexts.values())[0]) == 2

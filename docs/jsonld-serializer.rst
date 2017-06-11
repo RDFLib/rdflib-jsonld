@@ -41,9 +41,9 @@ Read in an RDFLib Graph and serialize it, specifying ``format='json-ld'``.
 Module contents
 ---------------
 
-.. currentmodule:: rdflib_jsonld.jsonld_serializer
+.. currentmodule:: rdflib_jsonld.serializer
 
 .. autoclass:: JsonLDSerializer
    :members: serialize
 
-.. autofunction:: to_tree
+.. autofunction:: from_rdf

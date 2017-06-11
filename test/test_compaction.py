@@ -234,7 +234,7 @@ def run(data, expected):
     sort_graph(result)
     result = json.dumps(result, **json_kwargs)
     incr = itertools.count(1)
-    result = re.sub(r'"_:[^"]+"', lambda m: '"_:blank-%s"' % incr.next(), result)
+    result = re.sub(r'"_:[^"]+"', lambda m: '"_:blank-%s"' % next(incr), result)
 
     sort_graph(expected)
     expected = json.dumps(expected, **json_kwargs)

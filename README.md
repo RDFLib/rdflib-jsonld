@@ -1,32 +1,35 @@
-RDFLib plugin providing JSON-LD parsing and serialization
-=========================================================
+# RDFLib plugin providing JSON-LD parsing and serialization
 
-This is an implementation of [JSON-LD](http://www.w3.org/TR/json-ld/) for [RDFLib](https://github.com/RDFLib/rdflib). For more information about this technology, see the [JSON-LD website](http://json-ld.org/).
+This is an implementation of [JSON-LD](http://www.w3.org/TR/json-ld/)
+for [RDFLib](https://github.com/RDFLib/rdflib).
+For more information about this technology, see the [JSON-LD website](http://json-ld.org/).
 
 This implementation will:
 
-* read in an JSON-LD formatted document and create an RDF graph
-* serialize an RDF graph to JSON-LD formatted output
+- read in an JSON-LD formatted document and create an RDF graph
+- serialize an RDF graph to JSON-LD formatted output
 
 
-Installation
-------------
+## Installation
 
 The easiest way to install the RDFLib JSON-LD plugin is directly from PyPi using pip by running the command below:
 
-    pip install rdflib-jsonld
+```shell
+pip install rdflib-jsonld
+```
 
 Otherwise you can download the source and install it directly by running:
 
-    python setup.py install
+```shell
+python setup.py install
+```
 
 
-Using the plug-in JSONLD serializer/parser with RDFLib
-------------------------------------------------------
+## Using the plug-in JSONLD serializer/parser with RDFLib
 
 The plugin parser and serializer are automatically registered if installed by
 setuptools.
-    
+
 ```python
 >>> from rdflib import Graph, plugin
 >>> from rdflib.serializer import Serializer
@@ -62,18 +65,20 @@ setuptools.
 }
 ```
 
+<!-- CUT HERE -->
+<!-- Text after this comment won't appear on PyPI -->
 
-Building the Sphinx documentation
----------------------------------
+## Building the Sphinx documentation
 
-If Sphinx is installed, Sphinx documentation can be generated with::
+If Sphinx is installed, Sphinx documentation can be generated with:
 
-    $ python setup.py build_sphinx
+```shell
+$ python setup.py build_sphinx
+```
 
 The documentation will be created in ./build/sphinx.
 
 
-Continuous integration tests
-----------------------------
+## Continuous integration tests
 
-[![Build Status](https://travis-ci.org/RDFLib/rdflib-jsonld.png?branch=master)](https://travis-ci.org/RDFLib/rdflib-jsonld)
+[![Build Status](https://travis-ci.org/RDFLib/rdflib-jsonld.svg?branch=master)](https://travis-ci.org/RDFLib/rdflib-jsonld)
