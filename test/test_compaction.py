@@ -56,7 +56,7 @@ case("""
 )
 
 
-# .. Requires set values to be sorted to be predicatble
+# .. Requires set values to be sorted to be predictable
 #case("""
 #@prefix dc: <http://purl.org/dc/terms/> .
 #<http://example.org/>
