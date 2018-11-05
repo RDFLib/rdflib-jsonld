@@ -7,7 +7,7 @@ except ImportError:
     import simplejson as json
 from rdflib import ConjunctiveGraph, Graph, Literal, URIRef
 from rdflib.compare import isomorphic
-from rdflib.py3compat import PY3
+from six import PY3
 import rdflib_jsonld.parser
 from rdflib_jsonld.parser import to_rdf
 from rdflib_jsonld.serializer import from_rdf

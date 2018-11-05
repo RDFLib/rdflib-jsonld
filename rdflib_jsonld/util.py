@@ -4,7 +4,7 @@ try:
 except ImportError:
     import simplejson as json
 
-from rdflib.py3compat import PY3, format_doctest_out
+from six import PY3
 
 from os import sep
 from os.path import normpath
@@ -41,7 +41,6 @@ def split_iri(iri):
             return iri[:at+1], iri[at+1:]
     return iri, None
 
-@format_doctest_out
 def norm_url(base, url):
     """
     >>> norm_url('http://example.org/', '/one')
