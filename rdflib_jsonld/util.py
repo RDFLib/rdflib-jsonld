@@ -6,6 +6,9 @@ except ImportError:
 
 from six import PY3
 
+if PY3:
+    from html.parser import HTMLParser
+
 from os import sep
 from os.path import normpath
 if PY3:
@@ -18,6 +21,41 @@ if PY3:
     from io import StringIO
 
 
+class HTMLJSONParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.json = []
+        self.contains_json = False
+
+    def handle_starttag(self, tag, attrs):
+        self.contains_json = False
+
+        # Only set self. contains_json to True if the
+        # type is 'application/ld+json'
+        if tag == "script":
+            for (attr, value) in attrs:
+                if attr == 'type' and value == 'application/ld+json':
+                    self.contains_json = True
+                else:
+                    # Nothing to do
+                    continue
+
+    def handle_data(self, data):
+        # Only do something when we know the context is a
+        # script element containing application/ld+json
+
+        if self.contains_json is True:
+            if data.strip() == "":
+                # skip empty data elements
+                return
+
+            # Try to parse the json
+            self.json.append(json.loads(data))
+
+    def get_json(self):
+        return self.json
+
+
 def source_to_json(source):
     # TODO: conneg for JSON (fix support in rdflib's URLInputSource!)
     source = create_input_source(source, format='json-ld')
@@ -28,6 +66,22 @@ def source_to_json(source):
             return json.load(StringIO(stream.read().decode('utf-8')))
         else:
             return json.load(stream)
+    except json.JSONDecodeError as e:
+        # The document is not a JSON document, let's see whether we can parse
+        # it as HTML
+
+        # Reset stream pointer to 0
+        stream.seek(0)
+        if PY3:
+            # Only do this when in Python 3
+            parser = HTMLJSONParser()
+            parser.feed(stream.read().decode('utf-8'))
+
+            return parser.get_json()
+        else:
+            # If not PY3, then we're just going to continue with the original
+            # parse exception
+            raise e
     finally:
         stream.close()
 
