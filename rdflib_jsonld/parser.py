@@ -96,14 +96,14 @@ class JsonLDParser(Parser):
 
 
 def to_rdf(data, dataset, base=None, context_data=None,
-           produce_generalized_rdf=False,
-           allow_lists_of_lists=None,normalize_literals=True):
+        produce_generalized_rdf=False,
+        allow_lists_of_lists=None, normalize_literals=True):
     # TODO: docstring w. args and return value
     context=Context(base=base)
     if context_data:
         context.load(context_data)
     parser = Parser(generalized_rdf=produce_generalized_rdf,
-                    allow_lists_of_lists=allow_lists_of_lists)
+            allow_lists_of_lists=allow_lists_of_lists)
     return parser.parse(data, context, dataset, normalize_literals=normalize_literals)
 
 
@@ -112,7 +112,7 @@ class Parser(object):
     def __init__(self, generalized_rdf=False, allow_lists_of_lists=None):
         self.generalized_rdf = generalized_rdf
         self.allow_lists_of_lists = (allow_lists_of_lists
-                                     if allow_lists_of_lists is not None else ALLOW_LISTS_OF_LISTS)
+                if allow_lists_of_lists is not None else ALLOW_LISTS_OF_LISTS)
 
     def parse(self, data, context, dataset, normalize_literals=True):
         topcontext = False
@@ -171,16 +171,16 @@ class Parser(object):
             if key in (REV, context.get_key(REV)):
                 for rkey, robj in obj.items():
                     self._key_to_graph(dataset, graph, context, subj, rkey, robj,
-                                       reverse=True, no_id=no_id, normalize_literals=normalize_literals)
+                            reverse=True, no_id=no_id, normalize_literals=normalize_literals)
             else:
                 self._key_to_graph(dataset, graph, context, subj, key, obj,
-                                   no_id=no_id, normalize_literals=normalize_literals)
+                        no_id=no_id, normalize_literals=normalize_literals)
 
         return subj
 
 
     def _key_to_graph(self, dataset, graph, context, subj, key, obj,
-                      reverse=False, no_id=False, normalize_literals=True):
+            reverse=False, no_id=False, normalize_literals=True):
 
         if isinstance(obj, list):
             obj_nodes = obj
