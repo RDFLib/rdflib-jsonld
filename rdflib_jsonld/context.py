@@ -250,10 +250,13 @@ class Context(object):
                 coercion = self._rec_expand(source, coercion)
             self.add_term(name, idref, coercion,
                     dfn.get(CONTAINER, UNDEF), dfn.get(LANG, UNDEF), bool(rev))
-        else:
+        elif isinstance(dfn, unicode):
             idref = self._rec_expand(source, dfn)
             self.add_term(name, idref)
-        if idref in NODE_KEYS:
+        else:
+            idref = None
+
+        if idref and idref in NODE_KEYS:
             self._alias[idref] = name
 
     def _rec_expand(self, source, expr, prev=None):
