@@ -233,6 +233,7 @@ class Context(object):
                 self._read_term(source, key, value)
 
     def _read_term(self, source, name, dfn):
+        idref = None
         if isinstance(dfn, dict):
             #term = self._create_term(source, key, value)
             rev = dfn.get(REV)
@@ -250,13 +251,12 @@ class Context(object):
                 coercion = self._rec_expand(source, coercion)
             self.add_term(name, idref, coercion,
                     dfn.get(CONTAINER, UNDEF), dfn.get(LANG, UNDEF), bool(rev))
-        elif isinstance(dfn, unicode):
-            idref = self._rec_expand(source, dfn)
-            self.add_term(name, idref)
         else:
-            idref = None
+            if isinstance(dfn, unicode):
+                idref = self._rec_expand(source, dfn)
+            self.add_term(name, idref)
 
-        if idref and idref in NODE_KEYS:
+        if idref in NODE_KEYS:
             self._alias[idref] = name
 
     def _rec_expand(self, source, expr, prev=None):
