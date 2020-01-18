@@ -53,6 +53,8 @@ def norm_url(base, url):
     'http://example.org/one/two'
     >>> norm_url('http://example.org/', 'http://example.net/one')
     'http://example.net/one'
+    >>> norm_url('http://example.org/', 'http://example.org//one')
+    'http://example.org//one'
     """
     parts = urlsplit(urljoin(base, url))
     path = normpath(parts[2])
