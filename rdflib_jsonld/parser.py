@@ -168,12 +168,14 @@ class Parser(object):
         for key, obj in node.items():
             if key in (CONTEXT, ID) or key in context.get_keys(ID):
                 continue
+
+            subcontext = context.get_context_for(key, node)
             if key == REV or key in context.get_keys(REV):
                 for rkey, robj in obj.items():
-                    self._key_to_graph(dataset, graph, context, subj, rkey, robj,
+                    self._key_to_graph(dataset, graph, subcontext, subj, rkey, robj,
                             reverse=True, no_id=no_id)
             else:
-                self._key_to_graph(dataset, graph, context, subj, key, obj,
+                self._key_to_graph(dataset, graph, subcontext, subj, key, obj,
                         no_id=no_id)
 
         return subj
@@ -263,7 +265,6 @@ class Parser(object):
 
 
     def _to_object(self, dataset, graph, context, term, node, inlist=False):
-
         if node is None:
             return
 
@@ -337,19 +338,26 @@ class Parser(object):
     def _add_list(self, dataset, graph, context, term, node_list):
         if not isinstance(node_list, list):
             node_list = [node_list]
+
         first_subj = BNode()
         subj, rest = first_subj, None
+
         for node in node_list:
             if node is None:
                 continue
+
             if rest:
                 graph.add((subj, RDF.rest, rest))
                 subj = rest
+
             obj = self._to_object(dataset, graph, context, term, node, inlist=True)
+
             if obj is None:
                 continue
+
             graph.add((subj, RDF.first, obj))
             rest = BNode()
+
         if rest:
             graph.add((subj, RDF.rest, RDF.nil))
             return first_subj

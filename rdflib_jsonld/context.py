@@ -10,7 +10,7 @@ from rdflib.namespace import RDF
 
 from ._compat import basestring, unicode
 from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANG, LIST,
-        REV, SET, TYPE, VALUE, VOCAB)
+        REV, SET, TYPE, VALUE, VERSION, VOCAB)
 from . import errors
 from .util import source_to_json, urljoin, urlsplit, split_iri, norm_url
 
@@ -24,6 +24,7 @@ UNDEF = Defined(0)
 class Context(object):
 
     def __init__(self, source=None, base=None):
+        self.version = 1.0
         self.language = None
         self.vocab = None
         self.base = base
@@ -64,6 +65,24 @@ class Context(object):
         ctx._prefixes = self._prefixes.copy()
         ctx.load(source)
         return ctx
+
+    def get_context_for(self, key, node):
+        if self.version >= 1.1:
+            context = None
+
+            rtype = self.get_type(node) if isinstance(node, dict) else None
+            typeterm = self.terms.get(rtype)
+            if typeterm and typeterm.context:
+                context = typeterm.context
+            else:
+                term = self.terms.get(key)
+                if term and term.context:
+                    context = term.context
+
+            if context:
+                return self.subcontext(context)
+
+        return self
 
     def get_id(self, obj):
         return self._get(obj, ID)
@@ -110,8 +129,8 @@ class Context(object):
     graph_key = property(lambda self: self.get_key(GRAPH))
 
     def add_term(self, name, idref, coercion=UNDEF, container=UNDEF,
-            language=UNDEF, reverse=False):
-        term = Term(idref, name, coercion, container, language, reverse)
+            language=UNDEF, reverse=False, context=None):
+        term = Term(idref, name, coercion, container, language, reverse, context)
         self.terms[name] = term
         self._lookup[(idref, coercion or language, container, reverse)] = term
         self._prefixes[idref] = name
@@ -236,6 +255,8 @@ class Context(object):
                 if source_url:
                     continue
                 self.base = value
+            if key == VERSION:
+                self.version = value
             else:
                 self._read_term(source, key, value)
 
@@ -244,6 +265,7 @@ class Context(object):
         if isinstance(dfn, dict):
             #term = self._create_term(source, key, value)
             rev = dfn.get(REV)
+
             idref = rev or dfn.get(ID, UNDEF)
             if idref == TYPE:
                 idref = unicode(RDF.type)
@@ -253,11 +275,16 @@ class Context(object):
                 idref = self._rec_expand(source, name)
             elif self.vocab:
                 idref = self.vocab + name
+
             coercion = dfn.get(TYPE, UNDEF)
             if coercion and coercion not in (ID, TYPE, VOCAB):
                 coercion = self._rec_expand(source, coercion)
+
+            context = dfn.get(CONTEXT)
+
             self.add_term(name, idref, coercion,
-                    dfn.get(CONTAINER, UNDEF), dfn.get(LANG, UNDEF), bool(rev))
+                    dfn.get(CONTAINER, UNDEF), dfn.get(LANG, UNDEF), bool(rev),
+                    context)
         else:
             if isinstance(dfn, unicode):
                 idref = self._rec_expand(source, dfn)
@@ -312,5 +339,5 @@ class Context(object):
 
 
 Term = namedtuple('Term',
-        'id, name, type, container, language, reverse')
-Term.__new__.__defaults__ = (UNDEF, UNDEF, UNDEF, False)
+        'id, name, type, container, language, reverse, context')
+Term.__new__.__defaults__ = (UNDEF, UNDEF, UNDEF, False, None)
