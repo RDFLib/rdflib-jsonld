@@ -29,6 +29,7 @@ class Context(object):
         self.base = base
         self.doc_base = base
         self.terms = {}
+        # _alias maps NODE_KEY to list of aliases
         self._alias = {}
         self._lookup = {}
         self._prefixes = {}
@@ -89,10 +90,16 @@ class Context(object):
         return self._get(obj, REV)
 
     def _get(self, obj, key):
-        return obj.get(self._alias.get(key)) or obj.get(key)
+        for alias in self._alias.get(key, []):
+            if alias in obj:
+                return obj.get(alias)
+        return obj.get(key)
 
     def get_key(self, key):
-        return self._alias.get(key, key)
+        return self.get_keys(key)[0]
+
+    def get_keys(self, key):
+        return self._alias.get(key, [key])
 
     lang_key = property(lambda self: self.get_key(LANG))
     id_key = property(lambda self: self.get_key(ID))
@@ -257,7 +264,7 @@ class Context(object):
             self.add_term(name, idref)
 
         if idref in NODE_KEYS:
-            self._alias[idref] = name
+            self._alias.setdefault(idref, []).append(name)
 
     def _rec_expand(self, source, expr, prev=None):
         if expr == prev or expr in NODE_KEYS:

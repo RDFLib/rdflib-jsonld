@@ -166,9 +166,9 @@ class Parser(object):
         no_id = id_val is None
 
         for key, obj in node.items():
-            if key in (CONTEXT, ID, context.get_key(ID)):
+            if key in (CONTEXT, ID) or key in context.get_keys(ID):
                 continue
-            if key in (REV, context.get_key(REV)):
+            if key == REV or key in context.get_keys(REV):
                 for rkey, robj in obj.items():
                     self._key_to_graph(dataset, graph, context, subj, rkey, robj,
                             reverse=True, no_id=no_id)
