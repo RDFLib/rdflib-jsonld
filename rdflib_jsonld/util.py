@@ -4,7 +4,7 @@ try:
 except ImportError:
     import simplejson as json
 
-from six import PY3
+from ._compat import IS_PY3 as PY3
 
 from os import sep
 from os.path import normpath
