@@ -807,13 +807,6 @@
       "purpose": "Proper (re-)labeling of blank nodes if used with reverse properties.",
       "input": "toRdf-0119-in.jsonld",
       "expect": "toRdf-0119-out.nq"
-    }, {
-      "@id": "#t0120",
-      "@type": ["jld:PositiveEvaluationTest", "jld:ToRDFTest"],
-      "name": "Two identifier nodes",
-      "purpose": "Multiple @id aliases.  Issue #58",
-      "input": "toRdf-0120-in.jsonld",
-      "expect": "toRdf-0120-out.nq"
     }
   ]
 }

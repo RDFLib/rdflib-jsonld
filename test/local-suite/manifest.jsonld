@@ -1,0 +1,16 @@
+{
+  "@context": "http://json-ld.org/test-suite/context.jsonld",
+  "@id": "",
+  "@type": "mf:Manifest",
+  "name": "RDFLib-jsonld local test suite",
+  "sequence": [
+    {
+      "@id": "#toRdf-twoidnodes",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ToRDFTest"],
+      "name": "Two identifier nodes",
+      "purpose": "Multiple @id aliases.  Issue #58",
+      "input": "toRdf-twoidnodes-in.jsonld",
+      "expect": "toRdf-twoidnodes-out.nq"
+    }
+  ]
+}
