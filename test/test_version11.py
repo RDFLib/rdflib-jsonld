@@ -9,6 +9,7 @@ data = """
         "@version": 1.1,
         "@vocab": "http://example.org/",
         "name": "label",
+        "note": "comment",
         "Person": {
           "@context": {
             "name": "name"
@@ -23,7 +24,9 @@ data = """
           "@context": {
             "name": "title"
           }
-        }
+        },
+        "common": "@nest",
+        "details": "@nest"
     },
     "@graph": [
         {
@@ -42,6 +45,14 @@ data = """
           "chapter": {
             "name": "Beginning"
           }
+        },
+        {
+          "common": {
+            "name": "Common"
+          },
+          "details": {
+            "note": "Detailed"
+          }
         }
     ]
 }
@@ -56,4 +67,7 @@ def test_graph():
             ''' :label "Some Thing" ''' in ttl and \
             ''' :name "Some Body" ''' in ttl and \
             ''' :title "Somewhere" ''' in ttl and \
-            ''' :title "Beginning" ''' in ttl
+            ''' :title "Beginning" ''' in ttl and \
+            'nest' not in ttl and \
+            ''' :label "Common" ''' in ttl and \
+            ''' :comment "Detailed" ''' in ttl

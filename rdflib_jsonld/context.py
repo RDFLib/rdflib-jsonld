@@ -10,12 +10,12 @@ from rdflib.namespace import RDF
 
 from ._compat import basestring, unicode
 from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANG, LIST,
-        REV, SET, TYPE, VALUE, VERSION, VOCAB)
+        NEST, REV, SET, TYPE, VALUE, VERSION, VOCAB)
 from . import errors
 from .util import source_to_json, urljoin, urlsplit, split_iri, norm_url
 
 
-NODE_KEYS = set([LANG, ID, TYPE, VALUE, LIST, SET, REV, GRAPH])
+NODE_KEYS = set([LANG, ID, TYPE, VALUE, LIST, SET, REV, GRAPH, NEST])
 
 class Defined(int): pass
 UNDEF = Defined(0)

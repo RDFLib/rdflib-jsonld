@@ -43,7 +43,7 @@ from rdflib.term import URIRef, BNode, Literal
 from ._compat import basestring, unicode
 from .context import Context, Term, UNDEF
 from .util import source_to_json, VOCAB_DELIMS, context_from_urlinputsource
-from .keys import CONTEXT, GRAPH, ID, INDEX, LANG, LIST, REV, SET, TYPE, VALUE, VOCAB
+from .keys import CONTEXT, GRAPH, ID, INDEX, LANG, LIST, REV, SET, TYPE, VALUE, VOCAB, NEST
 
 __all__ = ['JsonLDParser', 'to_rdf']
 
@@ -174,6 +174,11 @@ class Parser(object):
                 for rkey, robj in obj.items():
                     self._key_to_graph(dataset, graph, subcontext, subj, rkey, robj,
                             reverse=True, no_id=no_id)
+            elif context.version >= 1.1 and (
+                    key == NEST or key in context.get_keys(NEST)):
+                for nkey, nobj in obj.items():
+                    self._key_to_graph(dataset, graph, subcontext, subj, nkey, nobj,
+                            no_id=no_id)
             else:
                 self._key_to_graph(dataset, graph, subcontext, subj, key, obj,
                         no_id=no_id)
