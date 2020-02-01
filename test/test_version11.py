@@ -39,7 +39,10 @@ data = """
         },
         {
           "@type": "Book",
-          "name": "Somewhere"
+          "name": "Somewhere",
+          "author": {
+            "name": "Someone"
+          }
         },
         {
           "chapter": {
@@ -63,11 +66,11 @@ def test_graph():
     g.parse(data=data, format="application/ld+json")
     ttl = g.serialize(format='text/turtle').decode('utf8')
     print(ttl)
-    assert \
-            ''' :label "Some Thing" ''' in ttl and \
-            ''' :name "Some Body" ''' in ttl and \
-            ''' :title "Somewhere" ''' in ttl and \
-            ''' :title "Beginning" ''' in ttl and \
-            'nest' not in ttl and \
-            ''' :label "Common" ''' in ttl and \
-            ''' :comment "Detailed" ''' in ttl
+    assert ''' :label "Some Thing" ''' in ttl
+    assert ''' :name "Some Body" ''' in ttl
+    assert ''' :title "Somewhere" ''' in ttl
+    assert ''' :label "Someone" ''' in ttl
+    assert ''' :title "Beginning" ''' in ttl
+    assert 'nest' not in ttl
+    assert ''' :label "Common" ''' in ttl
+    assert ''' :comment "Detailed" '''

@@ -10,7 +10,7 @@ from rdflib.namespace import RDF
 
 from ._compat import basestring, unicode
 from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANG, LIST,
-        NEST, REV, SET, TYPE, VALUE, VERSION, VOCAB)
+        NEST, PREFIX, PROPAGATE, REV, SET, TYPE, VALUE, VERSION, VOCAB)
 from . import errors
 from .util import source_to_json, urljoin, urlsplit, split_iri, norm_url
 
@@ -35,6 +35,8 @@ class Context(object):
         self._lookup = {}
         self._prefixes = {}
         self.active = False
+        self.parent = None
+        self.propagate = True
         if source:
             self.load(source)
 
@@ -52,37 +54,42 @@ class Context(object):
                 hasattr(self, '_base') and base is not None) else base
         self._basedomain = '%s://%s' % urlsplit(base)[0:2] if base else None
 
-    def subcontext(self, source):
+    def subcontext(self, source, propagate=True):
         # IMPROVE: to optimize, implement SubContext with parent fallback support
+        parent = self.parent if self.propagate is False else self
         ctx = Context()
-        ctx.language = self.language
-        ctx.vocab = self.vocab
-        ctx.base = self.base
-        ctx.doc_base = self.doc_base
-        ctx._alias = self._alias.copy()
-        ctx.terms = self.terms.copy()
-        ctx._lookup = self._lookup.copy()
-        ctx._prefixes = self._prefixes.copy()
+        ctx.propagate = propagate
+        ctx.parent = parent
+        ctx.language = parent.language
+        ctx.vocab = parent.vocab
+        ctx.base = parent.base
+        ctx.doc_base = parent.doc_base
+        ctx._alias = parent._alias.copy()
+        ctx.terms = parent.terms.copy()
+        ctx._lookup = parent._lookup.copy()
+        ctx._prefixes = parent._prefixes.copy()
         ctx.load(source)
         return ctx
 
     def get_context_for(self, key, node):
         if self.version >= 1.1:
             context = None
+            propagate = True
 
             rtype = self.get_type(node) if isinstance(node, dict) else None
             typeterm = self.terms.get(rtype)
             if typeterm and typeterm.context:
                 context = typeterm.context
+                propagate = False
             else:
                 term = self.terms.get(key)
                 if term and term.context:
                     context = term.context
 
             if context:
-                return self.subcontext(context)
+                return self.subcontext(context, propagate=propagate)
 
-        return self
+        return self.parent if self.propagate is False else self
 
     def get_id(self, obj):
         return self._get(obj, ID)
@@ -250,6 +257,8 @@ class Context(object):
         for key, value in source.items():
             if key in {VOCAB, VERSION}:
                 continue
+            elif key == PROPAGATE and isinstance(value, bool):
+                self.propagate = value
             elif key == LANG:
                 self.language = value
             elif key == BASE:
