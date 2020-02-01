@@ -246,17 +246,16 @@ class Context(object):
 
     def _read_source(self, source, source_url=None):
         self.vocab = source.get(VOCAB, self.vocab)
+        self.version = source.get(VERSION, 1.0)
         for key, value in source.items():
-            if key == LANG:
-                self.language = value
-            elif key == VOCAB:
+            if key in {VOCAB, VERSION}:
                 continue
+            elif key == LANG:
+                self.language = value
             elif key == BASE:
                 if source_url:
                     continue
                 self.base = value
-            if key == VERSION:
-                self.version = value
             else:
                 self._read_term(source, key, value)
 
