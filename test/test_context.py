@@ -108,6 +108,12 @@ def test_creating_a_subcontext():
     assert ctx4.get_language({'lang': 'en'}) == 'en'
 
 
+def test_prefix_like_vocab():
+    ctx = Context({'@vocab': 'ex:', 'term': 'ex:term'})
+    term = ctx.terms.get('term')
+    assert term.id == 'ex:term'
+
+
 # Mock external sources loading
 from rdflib_jsonld import context
 _source_to_sjon = context.source_to_json

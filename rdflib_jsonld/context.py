@@ -269,9 +269,16 @@ class Context(object):
     def _rec_expand(self, source, expr, prev=None):
         if expr == prev or expr in NODE_KEYS:
             return expr
+
         is_term, pfx, nxt = self._prep_expand(expr)
         if pfx:
-            iri = self._get_source_id(source, pfx) or self.expand(pfx)
+            iri = self._get_source_id(source, pfx)
+            if iri is None:
+                if pfx + ':' == self.vocab:
+                    return expr
+                else:
+                    iri = self.expand(pfx)
+
             if iri is None:
                 nxt = expr
             else:
@@ -280,6 +287,7 @@ class Context(object):
             nxt = self._get_source_id(source, nxt) or nxt
             if ':' not in nxt and self.vocab:
                 return self.vocab + nxt
+
         return self._rec_expand(source, nxt, expr)
 
     def _prep_expand(self, expr):
