@@ -43,7 +43,9 @@ from rdflib.term import URIRef, BNode, Literal
 from ._compat import basestring, unicode
 from .context import Context, Term, UNDEF
 from .util import source_to_json, VOCAB_DELIMS, context_from_urlinputsource
-from .keys import CONTEXT, GRAPH, ID, INDEX, LANG, LIST, REV, SET, TYPE, VALUE, VOCAB, NEST
+from .keys import (CONTEXT, GRAPH, ID, INDEX, LANG, LIST, NEST, NONE, REV, SET,
+        TYPE, VALUE, VOCAB)
+
 
 __all__ = ['JsonLDParser', 'to_rdf']
 
@@ -212,8 +214,11 @@ class Parser(object):
                     for lang, values in obj.items():
                         if not isinstance(values, list):
                             values = [values]
-                        for v in values:
-                            obj_nodes.append((v, lang))
+                        if lang in context.get_keys(NONE):
+                            obj_nodes += values
+                        else:
+                            for v in values:
+                                obj_nodes.append((v, lang))
         else:
             term_id = None
 
