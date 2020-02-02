@@ -16,6 +16,10 @@ known_bugs = (
         "fromRdf-0002-in", "toRdf-0035-in", "toRdf-0101-in",
         "fromRdf-0008-in", # TODO: needs to disallow outer lists-of-lists
         #"toRdf-0091-in", # TODO: multiple aliases version?
+
+        # TODO: check that these are corrected in 1.1 testsuite (1.0-deprecated prefix forms)
+        "toRdf-0088-in",
+        "toRdf-0118-in",
         )
 
 import sys

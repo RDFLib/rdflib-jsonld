@@ -20,6 +20,9 @@ NODE_KEYS = set([LANG, ID, TYPE, VALUE, LIST, SET, REV, GRAPH, NEST])
 class Defined(int): pass
 UNDEF = Defined(0)
 
+# From <https://tools.ietf.org/html/rfc3986#section-2.2>
+URI_GEN_DELIMS = (':', '/', '?', '#', '[', ']', '@')
+
 
 class Context(object):
 
@@ -136,11 +139,16 @@ class Context(object):
     graph_key = property(lambda self: self.get_key(GRAPH))
 
     def add_term(self, name, idref, coercion=UNDEF, container=UNDEF,
-            language=UNDEF, reverse=False, context=None):
-        term = Term(idref, name, coercion, container, language, reverse, context)
+            language=UNDEF, reverse=False, context=None, prefix=None):
+        if self.version < 1.1 or prefix is None:
+            prefix = isinstance(idref, str) and idref.endswith(URI_GEN_DELIMS)
+
+        term = Term(idref, name, coercion, container, language, reverse, context, prefix)
+
         self.terms[name] = term
         self._lookup[(idref, coercion or language, container, reverse)] = term
-        self._prefixes[idref] = name
+        if term.prefix is True:
+            self._prefixes[idref] = name
 
     def find_term(self, idref, coercion=None, container=UNDEF,
             language=None, reverse=False):
@@ -181,17 +189,20 @@ class Context(object):
             term = self.terms.get(term_curie_or_iri)
             if term:
                 return term.id
+
         is_term, pfx, local = self._prep_expand(term_curie_or_iri)
         if pfx == '_':
             return term_curie_or_iri
+
         if pfx is not None:
             ns = self.terms.get(pfx)
-            if ns and ns.id:
+            if ns and ns.prefix and ns.id:
                 return ns.id + local
         elif is_term and use_vocab:
             if self.vocab:
                 return self.vocab + term_curie_or_iri
             return None
+
         return self.resolve_iri(term_curie_or_iri)
 
     def shrink_iri(self, iri):
@@ -292,7 +303,7 @@ class Context(object):
 
             self.add_term(name, idref, coercion,
                     dfn.get(CONTAINER, UNDEF), dfn.get(LANG, UNDEF), bool(rev),
-                    context)
+                    context, dfn.get(PREFIX))
         else:
             if isinstance(dfn, unicode):
                 idref = self._rec_expand(source, dfn)
@@ -347,5 +358,5 @@ class Context(object):
 
 
 Term = namedtuple('Term',
-        'id, name, type, container, language, reverse, context')
-Term.__new__.__defaults__ = (UNDEF, UNDEF, UNDEF, False, None)
+        'id, name, type, container, language, reverse, context, prefix')
+Term.__new__.__defaults__ = (UNDEF, UNDEF, UNDEF, False, None, False)
