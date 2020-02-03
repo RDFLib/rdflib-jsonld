@@ -177,7 +177,8 @@ class Parser(object):
                     self._key_to_graph(dataset, graph, subcontext, subj, rkey, robj,
                             reverse=True, no_id=no_id)
             elif context.version >= 1.1 and (
-                    key == NEST or key in context.get_keys(NEST)):
+                    key == NEST or key in context.get_keys(NEST)
+                    ) and isinstance(obj, dict):
                 for nkey, nobj in obj.items():
                     self._key_to_graph(dataset, graph, subcontext, subj, nkey, nobj,
                             no_id=no_id)
@@ -305,7 +306,7 @@ class Parser(object):
             else:
                 if term.type == ID:
                     node = {ID: context.resolve(node)}
-                elif term.type == VOCAB:
+                elif term.type == VOCAB and isinstance(node, unicode):
                     node = {ID: context.expand(node) or context.resolve_iri(node)}
                 else:
                     node = {TYPE: term.type,
