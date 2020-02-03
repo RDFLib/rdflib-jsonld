@@ -97,11 +97,11 @@ class JsonLDParser(Parser):
         to_rdf(data, conj_sink, base, context_data)
 
 
-def to_rdf(data, dataset, base=None, context_data=None,
+def to_rdf(data, dataset, base=None, context_data=None, version=1.0,
         produce_generalized_rdf=False,
         allow_lists_of_lists=None):
     # TODO: docstring w. args and return value
-    context=Context(base=base)
+    context=Context(base=base, version=version)
     if context_data:
         context.load(context_data)
     parser = Parser(generalized_rdf=produce_generalized_rdf,

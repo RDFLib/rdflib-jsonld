@@ -56,8 +56,10 @@ def do_test_parser(cat, num, inputpath, expectedpath, context, options):
     expected_graph = _load_nquads(expectedpath)
     base = TC_BASE + inputpath
     result_graph = ConjunctiveGraph()
+    version = 1.1 if options.get('specVersion') == 'json-ld-1.1' else 1.0
     to_rdf(input_obj, result_graph, base=base, context_data=context,
-            produce_generalized_rdf = options.get('produceGeneralizedRdf', False))
+            version=version,
+            produce_generalized_rdf=options.get('produceGeneralizedRdf', False))
     assert isomorphic(
             result_graph, expected_graph), "Expected:\n%s\nGot:\n%s" % (
             expected_graph.serialize(format='turtle'),

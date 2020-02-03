@@ -8,6 +8,7 @@ from . import runner
 unsupported_tests = ("frame", "normalize")
 unsupported_tests += ("error", "remote",)
 unsupported_tests += ("flatten", "compact", "expand")
+unsupported_tests += ("html",)
 
 known_bugs = (
         # invalid nquads (bnode as predicate)
@@ -28,9 +29,16 @@ if sys.version_info[:2] < (2, 6):
     known_bugs += ('toRdf-0069-in','toRdf-0102-in')
 
 
+allow_lists_of_lists = True
+
+
 testsuite_dir = environ.get("JSONLD_TESTSUITE") or p.join(
         p.abspath(p.dirname(__file__)), "test-suite")
 test_dir = p.join(testsuite_dir, "tests")
+if not p.isdir(test_dir): # layout of 1.1 testsuite
+    test_dir = testsuite_dir
+else:
+    allow_lists_of_lists = False
 
 
 def read_manifest(skiptests):
@@ -39,28 +47,31 @@ def read_manifest(skiptests):
     f.close()
     # context = manifestdata.get('context')
     for m in manifestdata.get('sequence'):
-        if any(token in m for token in unsupported_tests):
+        if any(token in m for token in skiptests):
             continue
         f = open(p.join(testsuite_dir, m), 'r')
         md = json.load(f)
         f.close()
         for test in md.get('sequence'):
-            parts = test.get(u'input', '').split('.')[0].split('-')
-            category, testnum, direction = parts
+            parts = test.get(u'input', '').split('.')[0]
+            cat_num, direction = parts.rsplit('-', 1)
+            category, testnum = cat_num.split('/') if '/' in cat_num else cat_num.split('-')
             if test.get(u'input', '').split('.')[0] in skiptests \
                 or category in skiptests:
                 pass
             else:
                 inputpath = test.get(u'input')
                 expectedpath = test.get(u'expect')
+                expected_error = test.get(u'expect') # TODO: verify error
                 context = test.get(u'context', False)
                 options = test.get(u'option') or {}
-                yield category, testnum, inputpath, expectedpath, context, options
+                if expectedpath:
+                    yield category, testnum, inputpath, expectedpath, context, options
 
 
 def test_suite(skip_known_bugs=True):
     default_allow = rdflib_jsonld.parser.ALLOW_LISTS_OF_LISTS
-    rdflib_jsonld.parser.ALLOW_LISTS_OF_LISTS = False
+    rdflib_jsonld.parser.ALLOW_LISTS_OF_LISTS = allow_lists_of_lists
 
     skiptests = unsupported_tests
     if skip_known_bugs:

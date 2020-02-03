@@ -26,8 +26,8 @@ URI_GEN_DELIMS = (':', '/', '?', '#', '[', ']', '@')
 
 class Context(object):
 
-    def __init__(self, source=None, base=None):
-        self.version = 1.0
+    def __init__(self, source=None, base=None, version=1.0):
+        self.version = version
         self.language = None
         self.vocab = None
         self.base = base
@@ -185,6 +185,9 @@ class Context(object):
         return ref.startswith('_:')
 
     def expand(self, term_curie_or_iri, use_vocab=True):
+        if not isinstance(term_curie_or_iri, unicode):
+            return term_curie_or_iri
+
         if use_vocab:
             term = self.terms.get(term_curie_or_iri)
             if term:
@@ -242,12 +245,16 @@ class Context(object):
             in_source_url=None):
         referenced_contexts = referenced_contexts or set()
         for source in inputs:
+            if source is None:
+                continue
             if isinstance(source, basestring):
                 source_url = urljoin(base, source)
                 if source_url in referenced_contexts:
                     raise errors.RECURSIVE_CONTEXT_INCLUSION
                 referenced_contexts.add(source_url)
                 source = source_to_json(source_url)
+                if source is None:
+                    continue
                 if CONTEXT not in source:
                     raise errors.INVALID_REMOTE_CONTEXT
             else:
@@ -264,7 +271,7 @@ class Context(object):
 
     def _read_source(self, source, source_url=None):
         self.vocab = source.get(VOCAB, self.vocab)
-        self.version = source.get(VERSION, 1.0)
+        self.version = source.get(VERSION, self.version)
         for key, value in source.items():
             if key in {VOCAB, VERSION}:
                 continue
