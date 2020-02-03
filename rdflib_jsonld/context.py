@@ -80,7 +80,16 @@ class Context(object):
             propagate = True
 
             rtype = self.get_type(node) if isinstance(node, dict) else None
-            typeterm = self.terms.get(rtype)
+            if not isinstance(rtype, list):
+                rtype = [rtype] if rtype else []
+
+            for rt in sorted(rtype):
+                typeterm = self.terms.get(rt)
+                if typeterm:
+                    break
+            else:
+                typeterm = None
+
             if typeterm and typeterm.context:
                 context = typeterm.context
                 propagate = False
