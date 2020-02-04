@@ -3,6 +3,9 @@ import json
 from . import runner
 
 
+TC_BASE = "http://rdflib.net/rdflib-jsonld/local-testsuite/"
+
+
 testsuite_dir = p.join(p.abspath(p.dirname(__file__)), "local-suite")
 
 
@@ -30,4 +33,4 @@ def test_suite():
                 func = runner.do_test_parser
         else:  # fromRdf
             func = runner.do_test_serializer
-        yield func, cat, num, inputpath, expectedpath, context, options
+        yield func, TC_BASE, cat, num, inputpath, expectedpath, context, options

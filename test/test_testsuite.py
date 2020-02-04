@@ -29,6 +29,7 @@ if sys.version_info[:2] < (2, 6):
     known_bugs += ('toRdf-0069-in','toRdf-0102-in')
 
 
+TC_BASE = "https://w3c.github.io/json-ld-api/tests/"
 allow_lists_of_lists = True
 
 
@@ -38,6 +39,7 @@ test_dir = p.join(testsuite_dir, "tests")
 if not p.isdir(test_dir): # layout of 1.1 testsuite
     test_dir = testsuite_dir
 else:
+    TC_BASE = "http://json-ld.org/test-suite/tests/"
     allow_lists_of_lists = False
 
 
@@ -86,7 +88,7 @@ def test_suite(skip_known_bugs=True):
         else:  # fromRdf
             func = runner.do_test_serializer
         #func.description = "%s-%s-%s" % (group, case)
-        yield func, cat, num, inputpath, expectedpath, context, options
+        yield func, TC_BASE, cat, num, inputpath, expectedpath, context, options
 
     rdflib_jsonld.parser.ALLOW_LISTS_OF_LISTS = default_allow
 

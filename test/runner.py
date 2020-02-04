@@ -22,18 +22,15 @@ def _uriref_or_nodeid(self):
 NTriplesParser.uriref = _uriref_or_nodeid
 
 
-TC_BASE = "http://json-ld.org/test-suite/tests/"
-
-
-def do_test_json(cat, num, inputpath, expectedpath, context, options):
-    base = TC_BASE + inputpath
+def do_test_json(suite_base, cat, num, inputpath, expectedpath, context, options):
+    input_uri = suite_base + inputpath
     input_obj = _load_json(inputpath)
     input_graph = ConjunctiveGraph()
-    to_rdf(input_obj, input_graph, base=base, context_data=context,
+    to_rdf(input_obj, input_graph, base=input_uri, context_data=context,
             produce_generalized_rdf=True)
     expected_json = _load_json(expectedpath)
     use_native_types = True # CONTEXT in input_obj
-    result_json = from_rdf(input_graph, context, base=TC_BASE + inputpath,
+    result_json = from_rdf(input_graph, context, base=input_uri,
             use_native_types=options.get('useNativeTypes', use_native_types),
             use_rdf_type=options.get('useRdfType', False))
 
@@ -51,13 +48,13 @@ def do_test_json(cat, num, inputpath, expectedpath, context, options):
     _compare_json(expected_json, result_json)
 
 
-def do_test_parser(cat, num, inputpath, expectedpath, context, options):
+def do_test_parser(suite_base, cat, num, inputpath, expectedpath, context, options):
+    input_uri = suite_base + inputpath
     input_obj = _load_json(inputpath)
     expected_graph = _load_nquads(expectedpath)
-    base = TC_BASE + inputpath
     result_graph = ConjunctiveGraph()
     version = 1.1 if options.get('specVersion') == 'json-ld-1.1' else 1.0
-    to_rdf(input_obj, result_graph, base=base, context_data=context,
+    to_rdf(input_obj, result_graph, base=input_uri, context_data=context,
             version=version,
             produce_generalized_rdf=options.get('produceGeneralizedRdf', False))
     assert isomorphic(
@@ -66,10 +63,11 @@ def do_test_parser(cat, num, inputpath, expectedpath, context, options):
             result_graph.serialize(format='turtle'))
 
 
-def do_test_serializer(cat, num, inputpath, expectedpath, context, options):
+def do_test_serializer(suite_base, cat, num, inputpath, expectedpath, context, options):
+    input_uri = suite_base + inputpath
     input_graph = _load_nquads(inputpath)
     expected_json = _load_json(expectedpath)
-    result_json = from_rdf(input_graph, context, base=TC_BASE + inputpath,
+    result_json = from_rdf(input_graph, context, base=input_uri,
             use_native_types=options.get('useNativeTypes', False),
             use_rdf_type=options.get('useRdfType', False))
     _compare_json(expected_json, result_json)
