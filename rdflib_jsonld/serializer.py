@@ -235,22 +235,22 @@ class Converter(object):
                     term.language is None and o.language is None):
                 node = unicode(o)
 
-            if term.container == SET:
-                use_set = True
-            elif term.container == LIST:
+            if LIST in term.container:
                 node = [self.type_coerce(v, term.type) or self.to_raw_value(graph, s, v, nodemap)
                         for v in self.to_collection(graph, o)]
-            elif term.container == LANG and language:
+            elif LANG in term.container and language:
                 value = s_node.setdefault(p_key, {})
                 values = value.get(language)
                 node = unicode(o)
-                if values:
+                if values or SET in term.container:
                     if not isinstance(values, list):
                         value[language] = values = [values]
                     values.append(node)
                 else:
                     value[language] = node
                 return
+            elif SET in term.container:
+                use_set = True
 
         else:
             p_key = context.to_symbol(p)

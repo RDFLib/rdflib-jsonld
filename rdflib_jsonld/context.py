@@ -147,29 +147,47 @@ class Context(object):
     rev_key = property(lambda self: self.get_key(REV))
     graph_key = property(lambda self: self.get_key(GRAPH))
 
-    def add_term(self, name, idref, coercion=UNDEF, container=UNDEF,
+    def add_term(self, name, idref, coercion=UNDEF, container=UNDEF, index=None,
             language=UNDEF, reverse=False, context=None, prefix=None):
         if self.version < 1.1 or prefix is None:
             prefix = isinstance(idref, str) and idref.endswith(URI_GEN_DELIMS)
 
-        term = Term(idref, name, coercion, container, language, reverse, context, prefix)
+        if isinstance(container, (list, set, tuple)):
+            container = set(container)
+        else:
+            container = set([container])
+
+        term = Term(idref, name, coercion, container, index, language, reverse,
+                context, prefix)
 
         self.terms[name] = term
-        self._lookup[(idref, coercion or language, container, reverse)] = term
+
+        for container_key in (LIST, LANG, SET): #, INDEX, ID, GRAPH):
+            if container_key in container:
+                break
+        else:
+            container_key = UNDEF
+
+        self._lookup[(idref, coercion or language, container_key, reverse)] = term
+
         if term.prefix is True:
             self._prefixes[idref] = name
 
     def find_term(self, idref, coercion=None, container=UNDEF,
             language=None, reverse=False):
         lu = self._lookup
+
         if coercion is None:
             coercion = language
+
         if coercion is not UNDEF and container:
             found = lu.get((idref, coercion, container, reverse))
             if found: return found
+
         if coercion is not UNDEF:
             found = lu.get((idref, coercion, UNDEF, reverse))
             if found: return found
+
         if container:
             found = lu.get((idref, coercion, container, reverse))
             if found: return found
@@ -179,6 +197,7 @@ class Context(object):
         else:
             found = lu.get((idref, coercion or UNDEF, SET, reverse))
             if found: return found
+
         return lu.get((idref, UNDEF, UNDEF, reverse))
 
     def resolve(self, curie_or_iri):
@@ -318,7 +337,8 @@ class Context(object):
             context = dfn.get(CONTEXT)
 
             self.add_term(name, idref, coercion,
-                    dfn.get(CONTAINER, UNDEF), dfn.get(LANG, UNDEF), bool(rev),
+                    dfn.get(CONTAINER, UNDEF), dfn.get(INDEX, UNDEF),
+                    dfn.get(LANG, UNDEF), bool(rev),
                     context, dfn.get(PREFIX))
         else:
             if isinstance(dfn, unicode):
@@ -374,5 +394,5 @@ class Context(object):
 
 
 Term = namedtuple('Term',
-        'id, name, type, container, language, reverse, context, prefix')
-Term.__new__.__defaults__ = (UNDEF, UNDEF, UNDEF, False, None, False)
+        'id, name, type, container, index, language, reverse, context, prefix')
+Term.__new__.__defaults__ = (UNDEF, UNDEF, None, UNDEF, False, None, False)

@@ -200,26 +200,10 @@ class Parser(object):
         term = context.terms.get(key)
         if term:
             term_id = term.id
-            if term.container == LIST:
+            if LIST in term.container:
                 obj_nodes = [{LIST: obj_nodes}]
             elif isinstance(obj, dict):
-                if term.container == INDEX:
-                    obj_nodes = []
-                    for values in obj.values():
-                        if not isinstance(values, list):
-                            obj_nodes.append(values)
-                        else:
-                            obj_nodes += values
-                elif term.container == LANG:
-                    obj_nodes = []
-                    for lang, values in obj.items():
-                        if not isinstance(values, list):
-                            values = [values]
-                        if lang in context.get_keys(NONE):
-                            obj_nodes += values
-                        else:
-                            for v in values:
-                                obj_nodes.append((v, lang))
+                obj_nodes = self._parse_container(context, term, obj)
         else:
             term_id = None
 
@@ -273,6 +257,43 @@ class Parser(object):
                 graph.add((obj, pred, subj))
             else:
                 graph.add((subj, pred, obj))
+
+
+    def _parse_container(self, context, term, obj):
+        if LANG in term.container:
+            obj_nodes = []
+            for lang, values in obj.items():
+                if not isinstance(values, list):
+                    values = [values]
+                if lang in context.get_keys(NONE):
+                    obj_nodes += values
+                else:
+                    for v in values:
+                        obj_nodes.append((v, lang))
+            return obj_nodes
+
+        v11 = context.version >= 1.1
+
+        if v11 and ID in term.container:
+            return [dict({ID: k}, **o) if isinstance(o, dict) else o
+                    for k, o in obj.items()]
+
+        elif v11 and TYPE in term.container:
+            return [dict({TYPE: k}, **o) if isinstance(o, dict) else o
+                    for k, o in obj.items()]
+
+        elif INDEX in term.container:
+            obj_nodes = []
+            for key, values in obj.items():
+                if not isinstance(values, list):
+                    values = [values]
+                for value in values:
+                    if v11 and term.index and isinstance(value, dict):
+                        value.setdefault(term.index, key)
+                    obj_nodes.append(value)
+            return obj_nodes
+
+        return [obj]
 
 
     def _to_object(self, dataset, graph, context, term, node, inlist=False):
