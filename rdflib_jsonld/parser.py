@@ -304,7 +304,7 @@ class Parser(object):
                     lang = context.language
                 return Literal(node, lang=lang)
             else:
-                if term.type == ID:
+                if term.type == ID and isinstance(node, unicode):
                     node = {ID: context.resolve(node)}
                 elif term.type == VOCAB and isinstance(node, unicode):
                     node = {ID: context.expand(node) or context.resolve_iri(node)}
