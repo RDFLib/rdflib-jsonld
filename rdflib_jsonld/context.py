@@ -359,7 +359,9 @@ class Context(object):
                 if pfx + ':' == self.vocab:
                     return expr
                 else:
-                    iri = self.expand(pfx)
+                    term = self.terms.get(pfx)
+                    if term:
+                        iri = term.id
 
             if iri is None:
                 nxt = expr
