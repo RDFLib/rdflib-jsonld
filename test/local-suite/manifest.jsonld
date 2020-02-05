@@ -11,6 +11,14 @@
       "purpose": "Multiple @id aliases.  Issue #58",
       "input": "toRdf-twoidnodes-in.jsonld",
       "expect": "toRdf-twoidnodes-out.nq"
+    },
+    {
+      "@id": "#toRdf-urn-in-vocab-and-prefix-values",
+      "@type": ["jld:PositiveEvaluationTest", "jld:ToRDFTest"],
+      "name": "URN in vocab and prefix values",
+      "purpose": "Expanding urn IRIs recursively. Issue #75",
+      "input": "sample-urn-in.jsonld",
+      "expect": "sample-urn-out.nq"
     }
   ]
 }
