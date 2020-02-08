@@ -279,7 +279,7 @@ class Parser(object):
                     for k, o in obj.items()]
 
         elif v11 and TYPE in term.container:
-            return [dict({TYPE: k}, **o) if isinstance(o, dict) else o
+            return [self._add_type(context, o, k) if isinstance(o, dict) else o
                     for k, o in obj.items()]
 
         elif INDEX in term.container:
@@ -295,6 +295,14 @@ class Parser(object):
 
         return [obj]
 
+    @staticmethod
+    def _add_type(context, o, k):
+        otype = context.get_type(o) or []
+        if otype and not isinstance(otype, list):
+            otype = [otype]
+        otype.append(k)
+        o[TYPE] = otype
+        return o
 
     def _to_object(self, dataset, graph, context, term, node, inlist=False):
         if node is None:
