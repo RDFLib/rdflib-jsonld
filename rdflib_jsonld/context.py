@@ -9,13 +9,13 @@ from collections import namedtuple
 from rdflib.namespace import RDF
 
 from ._compat import basestring, unicode
-from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANG, LIST,
+from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, INDEX, JSON, LANG, LIST,
         NEST, NONE, PREFIX, PROPAGATE, REV, SET, TYPE, VALUE, VERSION, VOCAB)
 from . import errors
 from .util import source_to_json, urljoin, urlsplit, split_iri, norm_url
 
 
-NODE_KEYS = set([LANG, ID, TYPE, VALUE, LIST, SET, REV, GRAPH, NEST, NONE])
+NODE_KEYS = set([GRAPH, ID, JSON, LIST, NEST, NONE, REV, SET, TYPE, VALUE, LANG])
 
 class Defined(int): pass
 UNDEF = Defined(0)

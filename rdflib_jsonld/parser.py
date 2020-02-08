@@ -42,9 +42,9 @@ from rdflib.term import URIRef, BNode, Literal
 
 from ._compat import basestring, unicode
 from .context import Context, Term, UNDEF
-from .util import source_to_json, VOCAB_DELIMS, context_from_urlinputsource
-from .keys import (CONTEXT, GRAPH, ID, INDEX, LANG, LIST, NEST, NONE, REV, SET,
-        TYPE, VALUE, VOCAB)
+from .util import json, source_to_json, VOCAB_DELIMS, context_from_urlinputsource
+from .keys import (CONTEXT, GRAPH, ID, INDEX, JSON, LANG, LIST, NEST, NONE, REV,
+        SET, TYPE, VALUE, VOCAB)
 
 
 __all__ = ['JsonLDParser', 'to_rdf']
@@ -200,7 +200,9 @@ class Parser(object):
         term = context.terms.get(key)
         if term:
             term_id = term.id
-            if LIST in term.container:
+            if term.type == JSON:
+                obj_nodes = [self._to_typed_json_value(obj)]
+            elif LIST in term.container:
                 obj_nodes = [{LIST: obj_nodes}]
             elif isinstance(obj, dict):
                 obj_nodes = self._parse_container(context, term, obj)
@@ -305,9 +307,6 @@ class Parser(object):
         return o
 
     def _to_object(self, dataset, graph, context, term, node, inlist=False):
-        if node is None:
-            return
-
         if isinstance(node, tuple):
             value, lang = node
             if value is None:
@@ -323,30 +322,42 @@ class Parser(object):
                 if listref:
                     return listref
 
-        else: # expand..
-            if not term or not term.type:
-                if isinstance(node, float):
-                    return Literal(node, datatype=XSD.double)
-                if term and term.language is not UNDEF:
-                    lang = term.language
-                else:
-                    lang = context.language
-                return Literal(node, lang=lang)
-            else:
-                if term.type == ID and isinstance(node, unicode):
+        else: # expand compacted value
+            if term and term.type:
+                if term.type == JSON:
+                    node = self._to_typed_json_value(node)
+                elif node is None:
+                    return
+                elif term.type == ID and isinstance(node, unicode):
                     node = {ID: context.resolve(node)}
                 elif term.type == VOCAB and isinstance(node, unicode):
                     node = {ID: context.expand(node) or context.resolve_iri(node)}
                 else:
                     node = {TYPE: term.type,
                             VALUE: node}
+            else:
+                if node is None:
+                    return
+                if isinstance(node, float):
+                    return Literal(node, datatype=XSD.double)
+
+                if term and term.language is not UNDEF:
+                    lang = term.language
+                else:
+                    lang = context.language
+                return Literal(node, lang=lang)
 
         lang = context.get_language(node)
-        if lang or context.get_key(VALUE) in node or VALUE in node:
+        datatype = not lang and context.get_type(node) or None
+        value = context.get_value(node)
+        if datatype in context.get_keys(JSON):
+            node = self._to_typed_json_value(value)
+            datatype = context.get_type(node)
             value = context.get_value(node)
+
+        if lang or context.get_key(VALUE) in node or VALUE in node:
             if value is None:
                 return None
-            datatype = not lang and context.get_type(node) or None
             if lang:
                 return Literal(value, lang=lang)
             elif datatype:
@@ -403,3 +414,11 @@ class Parser(object):
             return first_subj
         else:
             return RDF.nil
+
+    @staticmethod
+    def _to_typed_json_value(value):
+        return {
+            TYPE: URIRef('%sJSON' % str(RDF)),
+            VALUE: json.dumps(value,
+                    separators=(',', ':'), sort_keys=True, ensure_ascii=False)
+        }
