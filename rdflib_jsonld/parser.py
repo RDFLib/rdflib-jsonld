@@ -77,10 +77,17 @@ class JsonLDParser(Parser):
 
         base = kwargs.get('base') or sink.absolutize(
             source.getPublicId() or source.getSystemId() or "")
+
         context_data = kwargs.get('context')
         if not context_data and isinstance(source, URLInputSource):
             context_data = context_from_urlinputsource(source)
-        produce_generalized_rdf = kwargs.get('produce_generalized_rdf', False)
+
+        try:
+            version = float(kwargs.get('version', '1.0'))
+        except ValueError:
+            version = None
+
+        generalized_rdf = kwargs.get('generalized_rdf', False)
 
         data = source_to_json(source)
 
@@ -94,17 +101,17 @@ class JsonLDParser(Parser):
         else:
             conj_sink = sink
 
-        to_rdf(data, conj_sink, base, context_data)
+        to_rdf(data, conj_sink, base, context_data, version, generalized_rdf)
 
 
-def to_rdf(data, dataset, base=None, context_data=None, version=1.0,
-        produce_generalized_rdf=False,
+def to_rdf(data, dataset, base=None, context_data=None, version=None,
+        generalized_rdf=False,
         allow_lists_of_lists=None):
     # TODO: docstring w. args and return value
     context=Context(base=base, version=version)
     if context_data:
         context.load(context_data)
-    parser = Parser(generalized_rdf=produce_generalized_rdf,
+    parser = Parser(generalized_rdf=generalized_rdf,
             allow_lists_of_lists=allow_lists_of_lists)
     return parser.parse(data, context, dataset)
 

@@ -27,7 +27,7 @@ def do_test_json(suite_base, cat, num, inputpath, expectedpath, context, options
     input_obj = _load_json(inputpath)
     input_graph = ConjunctiveGraph()
     to_rdf(input_obj, input_graph, base=input_uri, context_data=context,
-            produce_generalized_rdf=True)
+            generalized_rdf=True)
     expected_json = _load_json(expectedpath)
     use_native_types = True # CONTEXT in input_obj
     result_json = from_rdf(input_graph, context, base=input_uri,
@@ -57,7 +57,7 @@ def do_test_parser(suite_base, cat, num, inputpath, expectedpath, context, optio
     to_rdf(input_obj, result_graph, context_data=context,
             base=options.get('base', input_uri),
             version=version,
-            produce_generalized_rdf=options.get('produceGeneralizedRdf', False))
+            generalized_rdf=options.get('produceGeneralizedRdf', False))
     assert isomorphic(
             result_graph, expected_graph), "Expected:\n%s\nGot:\n%s" % (
             expected_graph.serialize(format='turtle'),

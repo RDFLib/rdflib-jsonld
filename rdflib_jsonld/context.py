@@ -26,8 +26,8 @@ URI_GEN_DELIMS = (':', '/', '?', '#', '[', ']', '@')
 
 class Context(object):
 
-    def __init__(self, source=None, base=None, version=1.0):
-        self.version = version
+    def __init__(self, source=None, base=None, version=None):
+        self.version = version or 1.0
         self.language = None
         self.vocab = None
         self.base = base
