@@ -134,10 +134,14 @@ class Context(object):
         return obj.get(key)
 
     def get_key(self, key):
-        return self.get_keys(key)[0]
+        for alias in self.get_keys(key):
+            return alias
 
     def get_keys(self, key):
-        return self._alias.get(key, [key])
+        if key in self._alias:
+            for alias in self._alias[key]:
+                yield alias
+        yield key
 
     lang_key = property(lambda self: self.get_key(LANG))
     id_key = property(lambda self: self.get_key(ID))
