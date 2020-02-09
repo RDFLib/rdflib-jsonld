@@ -43,8 +43,8 @@ from rdflib.term import URIRef, BNode, Literal
 from ._compat import basestring, unicode
 from .context import Context, Term, UNDEF
 from .util import json, source_to_json, VOCAB_DELIMS, context_from_urlinputsource
-from .keys import (CONTEXT, GRAPH, ID, INDEX, JSON, LANG, LIST, NEST, NONE, REV,
-        SET, TYPE, VALUE, VOCAB)
+from .keys import (CONTEXT, GRAPH, ID, INCLUDED, INDEX, JSON, LANG, LIST, NEST,
+        NONE, REV, SET, TYPE, VALUE, VOCAB)
 
 
 __all__ = ['JsonLDParser', 'to_rdf']
@@ -227,6 +227,10 @@ class Parser(object):
                 self._add_to_graph(dataset, subgraph, context, onode)
             return
         elif SET in (key, term_id):
+            for onode in obj_nodes:
+                self._add_to_graph(dataset, graph, context, onode)
+            return
+        elif INCLUDED in (key, term_id):
             for onode in obj_nodes:
                 self._add_to_graph(dataset, graph, context, onode)
             return
