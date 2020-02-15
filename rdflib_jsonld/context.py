@@ -62,7 +62,7 @@ class Context(object):
     def subcontext(self, source, propagate=True):
         # IMPROVE: to optimize, implement SubContext with parent fallback support
         parent = self.parent if self.propagate is False else self
-        ctx = Context()
+        ctx = Context(version=parent.version)
         ctx.propagate = propagate
         ctx.parent = parent
         ctx.language = parent.language
