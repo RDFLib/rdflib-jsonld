@@ -62,30 +62,33 @@ class Context(object):
     def subcontext(self, source, propagate=True):
         # IMPROVE: to optimize, implement SubContext with parent fallback support
         parent = self.parent if self.propagate is False else self
-        ctx = Context(version=parent.version)
+        return parent._subcontext(source, propagate)
+
+    def _subcontext(self, source, propagate):
+        ctx = Context(version=self.version)
         ctx.propagate = propagate
-        ctx.parent = parent
-        ctx.language = parent.language
-        ctx.vocab = parent.vocab
-        ctx.base = parent.base
-        ctx.doc_base = parent.doc_base
-        ctx._alias = parent._alias.copy()
-        ctx.terms = parent.terms.copy()
-        ctx._lookup = parent._lookup.copy()
-        ctx._prefixes = parent._prefixes.copy()
+        ctx.parent = self
+        ctx.language = self.language
+        ctx.vocab = self.vocab
+        ctx.base = self.base
+        ctx.doc_base = self.doc_base
+        ctx._alias = self._alias.copy()
+        ctx.terms = self.terms.copy()
+        ctx._lookup = self._lookup.copy()
+        ctx._prefixes = self._prefixes.copy()
         ctx.load(source)
         return ctx
 
     def get_context_for(self, key, node):
         if self.version >= 1.1:
-            context = None
+            subcontext = None
             propagate = True
 
             rtype = self.get_type(node) if isinstance(node, dict) else None
             if not isinstance(rtype, list):
                 rtype = [rtype] if rtype else []
 
-            for rt in sorted(rtype):
+            for rt in rtype:
                 typeterm = self.terms.get(rt)
                 if typeterm:
                     break
@@ -93,15 +96,15 @@ class Context(object):
                 typeterm = None
 
             if typeterm and typeterm.context:
-                context = typeterm.context
-                propagate = False
-            else:
-                term = self.terms.get(key)
-                if term and term.context:
-                    context = term.context
+                subcontext = self.subcontext(typeterm.context, propagate=False)
 
-            if context:
-                return self.subcontext(context, propagate=propagate)
+            termcontext = subcontext or self
+            term = termcontext.terms.get(key)
+            if term and term.context:
+                subcontext = termcontext._subcontext(term.context, propagate=True)
+
+            if subcontext:
+                return subcontext
 
         return self.parent if self.propagate is False else self
 

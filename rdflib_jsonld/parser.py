@@ -183,6 +183,7 @@ class Parser(object):
                 continue
 
             subcontext = context.get_context_for(key, node)
+
             if key == REV or key in context.get_keys(REV):
                 for rkey, robj in obj.items():
                     self._key_to_graph(dataset, graph, subcontext,
@@ -296,6 +297,7 @@ class Parser(object):
             pred = BNode(bid)
         else:
             pred = URIRef(pred_uri)
+
         for obj_node in obj_nodes:
             obj = self._to_object(dataset, graph, context, term, obj_node)
             if obj is None:
