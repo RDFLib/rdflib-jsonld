@@ -40,7 +40,7 @@ from rdflib.parser import Parser, URLInputSource
 from rdflib.namespace import RDF, XSD
 from rdflib.term import URIRef, BNode, Literal
 
-from ._compat import basestring, unicode
+from ._compat import unicode
 from .context import Context, Term, UNDEF
 from .util import json, source_to_json, VOCAB_DELIMS, context_from_urlinputsource
 from .keys import (CONTEXT, GRAPH, ID, INCLUDED, INDEX, JSON, LANG, LIST, NEST,
@@ -163,7 +163,11 @@ class Parser(object):
                 context = Context(base=context.doc_base)
 
         id_val = context.get_id(node)
-        if isinstance(id_val, basestring):
+
+        if id_val is None:
+            id_val = self._get_nested_id(context, node)
+
+        if isinstance(id_val, unicode):
             subj = self._to_rdf_id(context, id_val)
         else:
             subj = BNode()
@@ -175,26 +179,36 @@ class Parser(object):
         no_id = id_val is None
 
         for key, obj in node.items():
-            if key in (CONTEXT, ID) or key in context.get_keys(ID):
+            if key == CONTEXT or key in context.get_keys(ID):
                 continue
 
             subcontext = context.get_context_for(key, node)
             if key == REV or key in context.get_keys(REV):
                 for rkey, robj in obj.items():
-                    self._key_to_graph(dataset, graph, subcontext, subj, rkey, robj,
-                            reverse=True, no_id=no_id)
-            elif context.version >= 1.1 and (
-                    key == NEST or key in context.get_keys(NEST)
-                    ) and isinstance(obj, dict):
-                for nkey, nobj in obj.items():
-                    self._key_to_graph(dataset, graph, subcontext, subj, nkey, nobj,
-                            no_id=no_id)
+                    self._key_to_graph(dataset, graph, subcontext,
+                            subj, rkey, robj, reverse=True, no_id=no_id)
             else:
                 self._key_to_graph(dataset, graph, subcontext, subj, key, obj,
                         no_id=no_id)
 
         return subj
 
+    def _get_nested_id(self, context, node):
+        for key, obj in node.items():
+            if context.version >= 1.1 and key in context.get_keys(NEST):
+                term = context.terms.get(key)
+                if term and term.id is None:
+                    continue
+                objs = obj if isinstance(obj, list) else [obj]
+                for obj in objs:
+                    if not isinstance(obj, dict):
+                        continue
+                    id_val = context.get_id(obj)
+                    if not id_val:
+                        subcontext = context.get_context_for(key, node)
+                        id_val = self._get_nested_id(subcontext, obj)
+                    if isinstance(id_val, unicode):
+                        return id_val
 
     def _key_to_graph(self, dataset, graph, context, subj, key, obj,
             reverse=False, no_id=False):
@@ -218,7 +232,8 @@ class Parser(object):
 
         if TYPE in (key, term_id):
             term = TYPE_TERM
-        elif GRAPH in (key, term_id):
+
+        if GRAPH in (key, term_id):
             if dataset.context_aware and not no_id:
                 subgraph = dataset.get_context(subj)
             else:
@@ -226,13 +241,32 @@ class Parser(object):
             for onode in obj_nodes:
                 self._add_to_graph(dataset, subgraph, context, onode)
             return
-        elif SET in (key, term_id):
+
+        if SET in (key, term_id):
             for onode in obj_nodes:
                 self._add_to_graph(dataset, graph, context, onode)
             return
-        elif INCLUDED in (key, term_id):
+
+        if INCLUDED in (key, term_id):
             for onode in obj_nodes:
                 self._add_to_graph(dataset, graph, context, onode)
+            return
+
+        if context.version >= 1.1 and key in context.get_keys(NEST):
+            term = context.terms.get(key)
+            if term and term.id is None:
+                return
+            objs = obj if isinstance(obj, list) else [obj]
+            for obj in objs:
+                if not isinstance(obj, dict):
+                    continue
+                for nkey, nobj in obj.items():
+                    # NOTE: we've already captured subject
+                    if nkey in context.get_keys(ID):
+                        continue
+                    subcontext = context.get_context_for(nkey, obj)
+                    self._key_to_graph(dataset, graph, subcontext,
+                            subj, nkey, nobj)
             return
 
         pred_uri = term.id if term else context.expand(key)
