@@ -374,10 +374,6 @@ class Context(object):
             elif self.vocab:
                 idref = self.vocab + name
 
-            coercion = dfn.get(TYPE, UNDEF)
-            if coercion and coercion not in (ID, TYPE, VOCAB):
-                coercion = self._rec_expand(source, coercion)
-
             context = dfn.get(CONTEXT)
 
             self.add_term(name, idref, coercion,
