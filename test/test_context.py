@@ -117,14 +117,14 @@ def test_prefix_like_vocab():
 
 # Mock external sources loading
 SOURCES = {}
+_source_to_json = context.source_to_json
 
 def _mock_source_loader(f):
     @wraps(f)
     def _wrapper():
-        _source_to_sjon = context.source_to_json
         context.source_to_json = SOURCES.get
         f()
-        context.source_to_json = _source_to_sjon
+        context.source_to_json = _source_to_json
     return _wrapper
 
 
