@@ -120,6 +120,7 @@ _source_to_sjon = context.source_to_json
 SOURCES = {}
 context.source_to_json = SOURCES.get
 
+
 def test_loading_contexts():
     # Given context data:
     source1 = "http://example.org/base.jsonld"
@@ -173,3 +174,7 @@ def test_invalid_remote_context():
     ctx_url = "http://example.org/recursive.jsonld"
     SOURCES[ctx_url] = {"key": "value"}
     ctx = Context(ctx_url)
+
+
+# RESTORE source_to_json!
+context.source_to_json = _source_to_sjon

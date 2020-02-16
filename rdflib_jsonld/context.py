@@ -9,9 +9,9 @@ from collections import namedtuple
 from rdflib.namespace import RDF
 
 from ._compat import basestring, unicode
-from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, INCLUDED, INDEX, JSON,
-        LANG, LIST, NEST, NONE, PREFIX, PROPAGATE, REV, SET, TYPE, VALUE,
-        VERSION, VOCAB)
+from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, IMPORT, INCLUDED,
+        INDEX, JSON, LANG, LIST, NEST, NONE, PREFIX, PROPAGATE, REV, SET, TYPE,
+        VALUE, VERSION, VOCAB)
 from . import errors
 from .util import source_to_json, urljoin, urlsplit, split_iri, norm_url
 
@@ -42,6 +42,7 @@ class Context(object):
         self.active = False
         self.parent = None
         self.propagate = True
+        self._context_cache = {}
         if source:
             self.load(source)
 
@@ -76,6 +77,7 @@ class Context(object):
         ctx.terms = self.terms.copy()
         ctx._lookup = self._lookup.copy()
         ctx._prefixes = self._prefixes.copy()
+        ctx._context_cache = self._context_cache
         ctx.load(source)
         return ctx
 
@@ -270,30 +272,24 @@ class Context(object):
             return u":".join((pfx, name))
         return iri
 
-    def load(self, source, base=None):
+    def load(self, source, base=None, referenced_contexts=None):
         self.active = True
         sources = []
         source = source if isinstance(source, list) else [source]
-        self._prep_sources(base, source, sources)
-        for source_url, source in sources:
-            self._read_source(source, source_url)
-
-    def _prep_sources(self, base, inputs, sources, referenced_contexts=None,
-            in_source_url=None):
         referenced_contexts = referenced_contexts or set()
+        self._prep_sources(base, source, sources, referenced_contexts)
+        for source_url, source in sources:
+            self._read_source(source, source_url, referenced_contexts)
+
+    def _prep_sources(self, base, inputs, sources, referenced_contexts,
+            in_source_url=None):
         for source in inputs:
             if source is None:
                 continue
             if isinstance(source, basestring):
-                source_url = urljoin(base, source)
-                if source_url in referenced_contexts:
-                    raise errors.RECURSIVE_CONTEXT_INCLUSION
-                referenced_contexts.add(source_url)
-                source = source_to_json(source_url)
+                source = self._fetch_context(source, base, referenced_contexts)
                 if source is None:
                     continue
-                if CONTEXT not in source:
-                    raise errors.INVALID_REMOTE_CONTEXT
             else:
                 source_url = in_source_url
 
@@ -306,11 +302,43 @@ class Context(object):
             else:
                 sources.append((source_url, source))
 
-    def _read_source(self, source, source_url=None):
+    def _fetch_context(self, source, base, referenced_contexts):
+        source_url = urljoin(base, source)
+
+        if source_url in referenced_contexts:
+            raise errors.RECURSIVE_CONTEXT_INCLUSION
+        referenced_contexts.add(source_url)
+
+        if source_url in self._context_cache:
+            return self._context_cache[source_url]
+
+        source = source_to_json(source_url)
+        if source and CONTEXT not in source:
+            raise errors.INVALID_REMOTE_CONTEXT
+        self._context_cache[source_url] = source
+
+        return source
+
+    def _read_source(self, source, source_url=None, referenced_contexts=None):
+        imports = source.get(IMPORT)
+        if imports:
+            if not isinstance(imports, unicode):
+                raise errors.INVALID_CONTEXT_ENTRY
+
+            imported = self._fetch_context(imports, self.base,
+                    referenced_contexts or set())
+            if not isinstance(imports, unicode):
+                raise errors.INVALID_CONTEXT_ENTRY
+
+            imported = imported[CONTEXT]
+            imported.update(source)
+            source = imported
+
         self.vocab = source.get(VOCAB, self.vocab)
         self.version = source.get(VERSION, self.version)
+
         for key, value in source.items():
-            if key in {VOCAB, VERSION}:
+            if key in {VOCAB, VERSION, IMPORT}:
                 continue
             elif key == PROPAGATE and isinstance(value, bool):
                 self.propagate = value
