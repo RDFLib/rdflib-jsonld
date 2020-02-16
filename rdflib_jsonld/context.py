@@ -286,17 +286,20 @@ class Context(object):
         for source in inputs:
             if source is None:
                 continue
+
+            source_url = in_source_url
+
             if isinstance(source, basestring):
+                source_url = source
                 source = self._fetch_context(source, base, referenced_contexts)
                 if source is None:
                     continue
-            else:
-                source_url = in_source_url
 
             if isinstance(source, dict):
                 if CONTEXT in source:
                     source = source[CONTEXT]
                     source = source if isinstance(source, list) else [source]
+
             if isinstance(source, list):
                 self._prep_sources(base, source, sources, referenced_contexts, source_url)
             else:
@@ -327,7 +330,7 @@ class Context(object):
 
             imported = self._fetch_context(imports, self.base,
                     referenced_contexts or set())
-            if not isinstance(imports, unicode):
+            if not isinstance(imported, dict):
                 raise errors.INVALID_CONTEXT_ENTRY
 
             imported = imported[CONTEXT]
@@ -345,9 +348,8 @@ class Context(object):
             elif key == LANG:
                 self.language = value
             elif key == BASE:
-                if source_url:
-                    continue
-                self.base = value
+                if not source_url and not imports:
+                    self.base = value
             else:
                 self._read_term(source, key, value)
 
@@ -357,9 +359,14 @@ class Context(object):
             #term = self._create_term(source, key, value)
             rev = dfn.get(REV)
 
+            coercion = dfn.get(TYPE, UNDEF)
+            if coercion and coercion not in (ID, TYPE, VOCAB):
+                coercion = self._rec_expand(source, coercion)
+
             idref = rev or dfn.get(ID, UNDEF)
             if idref == TYPE:
                 idref = unicode(RDF.type)
+                coercion = VOCAB
             elif idref is not UNDEF:
                 idref = self._rec_expand(source, idref)
             elif ':' in name:

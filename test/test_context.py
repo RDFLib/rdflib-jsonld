@@ -2,12 +2,13 @@
 JSON-LD Context Spec
 """
 from __future__ import unicode_literals
+from functools import wraps
 from rdflib_jsonld.context import Context, Term
+from rdflib_jsonld import context
 from rdflib_jsonld import errors
 
 
 # exception utility (see also nose.tools.raises)
-from functools import wraps
 def _expect_exception(expected_error):
     def _try_wrapper(f):
         @wraps(f)
@@ -115,12 +116,19 @@ def test_prefix_like_vocab():
 
 
 # Mock external sources loading
-from rdflib_jsonld import context
-_source_to_sjon = context.source_to_json
 SOURCES = {}
-context.source_to_json = SOURCES.get
+
+def _mock_source_loader(f):
+    @wraps(f)
+    def _wrapper():
+        _source_to_sjon = context.source_to_json
+        context.source_to_json = SOURCES.get
+        f()
+        context.source_to_json = _source_to_sjon
+    return _wrapper
 
 
+@_mock_source_loader
 def test_loading_contexts():
     # Given context data:
     source1 = "http://example.org/base.jsonld"
@@ -136,45 +144,55 @@ def test_loading_contexts():
     ctx = Context([source2])
     assert ctx.expand('n') == 'http://example.org/vocab/name'
 
+
+@_mock_source_loader
 def test_use_base_in_local_context():
     ctx = Context({'@base': "/local"})
     assert ctx.base == '/local'
 
+
+@_mock_source_loader
 def test_override_base():
     ctx = Context(base="http://example.org/app/data/item",
             source={'@base': "http://example.org/"})
     assert ctx.base == "http://example.org/"
 
+
+@_mock_source_loader
 def test_resolve_relative_base():
     ctx = Context(base="http://example.org/app/data/item",
             source={'@base': "../"})
     assert ctx.base == "http://example.org/app/"
     assert ctx.resolve_iri("../other") == "http://example.org/other"
 
+
+@_mock_source_loader
 def test_set_null_base():
     ctx = Context(base="http://example.org/app/data/item",
             source={'@base': None})
     assert ctx.base is None
     assert ctx.resolve_iri("../other") == "../other"
 
+
+@_mock_source_loader
 def test_ignore_base_remote_context():
     ctx_url = "http://example.org/remote-base.jsonld"
     SOURCES[ctx_url] = {'@context': {'@base': "/remote"}}
     ctx = Context(ctx_url)
     assert ctx.base == None
 
+
 @_expect_exception(errors.RECURSIVE_CONTEXT_INCLUSION)
+@_mock_source_loader
 def test_recursive_context_inclusion_error():
     ctx_url = "http://example.org/recursive.jsonld"
     SOURCES[ctx_url] = {'@context': ctx_url}
     ctx = Context(ctx_url)
 
+
 @_expect_exception(errors.INVALID_REMOTE_CONTEXT)
+@_mock_source_loader
 def test_invalid_remote_context():
     ctx_url = "http://example.org/recursive.jsonld"
     SOURCES[ctx_url] = {"key": "value"}
     ctx = Context(ctx_url)
-
-
-# RESTORE source_to_json!
-context.source_to_json = _source_to_sjon
