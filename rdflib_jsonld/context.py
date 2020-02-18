@@ -10,8 +10,8 @@ from rdflib.namespace import RDF
 
 from ._compat import basestring, unicode
 from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, IMPORT, INCLUDED,
-        INDEX, JSON, LANG, LIST, NEST, NONE, PREFIX, PROPAGATE, REV, SET, TYPE,
-        VALUE, VERSION, VOCAB)
+        INDEX, JSON, LANG, LIST, NEST, NONE, PREFIX, PROPAGATE, PROTECTED, REV,
+        SET, TYPE, VALUE, VERSION, VOCAB)
 from . import errors
 from .util import source_to_json, urljoin, urlsplit, split_iri, norm_url
 
@@ -81,11 +81,23 @@ class Context(object):
         ctx.load(source)
         return ctx
 
-    def get_context_for(self, key, node):
-        if self.version >= 1.1:
-            subcontext = None
-            propagate = True
+    def _clear(self):
+        self.language = None
+        self.vocab = None
+        self.terms = {}
+        self._alias = {}
+        self._lookup = {}
+        self._prefixes = {}
+        self.active = False
+        self.propagate = True
 
+    def get_context_for_term(self, term):
+        if term and term.context is not UNDEF:
+            return self._subcontext(term.context, propagate=True)
+        return self
+
+    def get_context_for_type(self, node):
+        if self.version >= 1.1:
             rtype = self.get_type(node) if isinstance(node, dict) else None
             if not isinstance(rtype, list):
                 rtype = [rtype] if rtype else []
@@ -99,14 +111,8 @@ class Context(object):
 
             if typeterm and typeterm.context:
                 subcontext = self.subcontext(typeterm.context, propagate=False)
-
-            termcontext = subcontext or self
-            term = termcontext.terms.get(key)
-            if term and term.context:
-                subcontext = termcontext._subcontext(term.context, propagate=True)
-
-            if subcontext:
-                return subcontext
+                if subcontext:
+                    return subcontext
 
         return self.parent if self.propagate is False else self
 
@@ -159,9 +165,18 @@ class Context(object):
     graph_key = property(lambda self: self.get_key(GRAPH))
 
     def add_term(self, name, idref, coercion=UNDEF, container=UNDEF, index=None,
-            language=UNDEF, reverse=False, context=None, prefix=None):
+            language=UNDEF, reverse=False, context=UNDEF, prefix=None,
+            protected=False):
         if self.version < 1.1 or prefix is None:
             prefix = isinstance(idref, str) and idref.endswith(URI_GEN_DELIMS)
+
+        if not self._accept_term(name):
+            return
+
+        if self.version >= 1.1:
+            existing = self.terms.get(name)
+            if existing and existing.protected:
+                return
 
         if isinstance(container, (list, set, tuple)):
             container = set(container)
@@ -169,7 +184,7 @@ class Context(object):
             container = set([container])
 
         term = Term(idref, name, coercion, container, index, language, reverse,
-                context, prefix)
+                context, prefix, protected)
 
         self.terms[name] = term
 
@@ -227,6 +242,9 @@ class Context(object):
         if not isinstance(term_curie_or_iri, unicode):
             return term_curie_or_iri
 
+        if not self._accept_term(term_curie_or_iri):
+            return ''
+
         if use_vocab:
             term = self.terms.get(term_curie_or_iri)
             if term:
@@ -279,14 +297,22 @@ class Context(object):
         referenced_contexts = referenced_contexts or set()
         self._prep_sources(base, source, sources, referenced_contexts)
         for source_url, source in sources:
-            self._read_source(source, source_url, referenced_contexts)
+            if source is None:
+                self._clear()
+            else:
+                self._read_source(source, source_url, referenced_contexts)
+
+    def _accept_term(self, key):
+        if self.version < 1.1:
+            return True
+        if key and len(key) > 1 and key[0] == '@' and key[1].isalnum():
+            return key in NODE_KEYS
+        else:
+            return True
 
     def _prep_sources(self, base, inputs, sources, referenced_contexts,
             in_source_url=None):
         for source in inputs:
-            if source is None:
-                continue
-
             source_url = in_source_url
 
             if isinstance(source, basestring):
@@ -339,9 +365,10 @@ class Context(object):
 
         self.vocab = source.get(VOCAB, self.vocab)
         self.version = source.get(VERSION, self.version)
+        protected = source.get(PROTECTED, False)
 
         for key, value in source.items():
-            if key in {VOCAB, VERSION, IMPORT}:
+            if key in {VOCAB, VERSION, IMPORT, PROTECTED}:
                 continue
             elif key == PROPAGATE and isinstance(value, bool):
                 self.propagate = value
@@ -351,13 +378,14 @@ class Context(object):
                 if not source_url and not imports:
                     self.base = value
             else:
-                self._read_term(source, key, value)
+                self._read_term(source, key, value, protected)
 
-    def _read_term(self, source, name, dfn):
+    def _read_term(self, source, name, dfn, protected=False):
         idref = None
         if isinstance(dfn, dict):
             #term = self._create_term(source, key, value)
             rev = dfn.get(REV)
+            protected = dfn.get(PROTECTED, protected)
 
             coercion = dfn.get(TYPE, UNDEF)
             if coercion and coercion not in (ID, TYPE, VOCAB):
@@ -374,16 +402,19 @@ class Context(object):
             elif self.vocab:
                 idref = self.vocab + name
 
-            context = dfn.get(CONTEXT)
+            context = dfn.get(CONTEXT, UNDEF)
 
             self.add_term(name, idref, coercion,
                     dfn.get(CONTAINER, UNDEF), dfn.get(INDEX, UNDEF),
                     dfn.get(LANG, UNDEF), bool(rev),
-                    context, dfn.get(PREFIX))
+                    context, dfn.get(PREFIX), protected=protected)
         else:
             if isinstance(dfn, unicode):
+                if not self._accept_term(dfn):
+                    return
                 idref = self._rec_expand(source, dfn)
-            self.add_term(name, idref)
+
+            self.add_term(name, idref, protected=protected)
 
         if idref in NODE_KEYS:
             self._alias.setdefault(idref, []).append(name)
@@ -436,5 +467,6 @@ class Context(object):
 
 
 Term = namedtuple('Term',
-        'id, name, type, container, index, language, reverse, context, prefix')
-Term.__new__.__defaults__ = (UNDEF, UNDEF, None, UNDEF, False, None, False)
+        'id, name, type, container, index, language, reverse, context,'
+        'prefix, protected')
+Term.__new__.__defaults__ = (UNDEF, UNDEF, UNDEF, UNDEF, False, UNDEF, False, False)

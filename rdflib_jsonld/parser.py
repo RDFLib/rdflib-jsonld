@@ -129,9 +129,9 @@ class Parser(object):
         if isinstance(data, list):
             resources = data
         elif isinstance(data, dict):
-            l_ctx = data.get(CONTEXT)
-            if l_ctx:
-                context.load(l_ctx, context.base)
+            local_context = data.get(CONTEXT)
+            if local_context:
+                context.load(local_context, context.base)
                 topcontext = True
             resources = data
             if not isinstance(resources, list):
@@ -156,11 +156,13 @@ class Parser(object):
             return
 
         if CONTEXT in node and not topcontext:
-            l_ctx = node.get(CONTEXT)
-            if l_ctx:
-                context = context.subcontext(l_ctx)
+            local_context = node[CONTEXT]
+            if local_context:
+                context = context.subcontext(local_context)
             else:
                 context = Context(base=context.doc_base)
+
+        context = context.get_context_for_type(node)
 
         id_val = context.get_id(node)
 
@@ -182,14 +184,12 @@ class Parser(object):
             if key == CONTEXT or key in context.get_keys(ID):
                 continue
 
-            subcontext = context.get_context_for(key, node)
-
             if key == REV or key in context.get_keys(REV):
                 for rkey, robj in obj.items():
-                    self._key_to_graph(dataset, graph, subcontext,
+                    self._key_to_graph(dataset, graph, context,
                             subj, rkey, robj, reverse=True, no_id=no_id)
             else:
-                self._key_to_graph(dataset, graph, subcontext, subj, key, obj,
+                self._key_to_graph(dataset, graph, context, subj, key, obj,
                         no_id=no_id)
 
         return subj
@@ -206,7 +206,7 @@ class Parser(object):
                         continue
                     id_val = context.get_id(obj)
                     if not id_val:
-                        subcontext = context.get_context_for(key, node)
+                        subcontext = context.get_context_for_term(context.terms.get(key))
                         id_val = self._get_nested_id(subcontext, obj)
                     if isinstance(id_val, unicode):
                         return id_val
@@ -265,12 +265,14 @@ class Parser(object):
                     # NOTE: we've already captured subject
                     if nkey in context.get_keys(ID):
                         continue
-                    subcontext = context.get_context_for(nkey, obj)
+                    subcontext = context.get_context_for_type(obj)
                     self._key_to_graph(dataset, graph, subcontext,
                             subj, nkey, nobj)
             return
 
         pred_uri = term.id if term else context.expand(key)
+
+        context = context.get_context_for_term(term)
 
         flattened = []
         for obj in obj_nodes:
