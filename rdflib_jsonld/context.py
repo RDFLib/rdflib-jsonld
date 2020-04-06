@@ -230,6 +230,8 @@ class Context(object):
         iri = self.expand(curie_or_iri, False)
         if self.isblank(iri):
             return iri
+        if ' ' in iri:
+            return ''
         return self.resolve_iri(iri)
 
     def resolve_iri(self, iri):
