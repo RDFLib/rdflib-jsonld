@@ -385,6 +385,8 @@ class Parser(object):
             value, lang = node
             if value is None:
                 return
+            if lang and ' ' in lang:
+                return
             return Literal(value, lang=lang)
 
         if isinstance(node, dict):
@@ -433,6 +435,8 @@ class Parser(object):
             if value is None:
                 return None
             if lang:
+                if ' ' in lang:
+                    return
                 return Literal(value, lang=lang)
             elif datatype:
                 return Literal(value, datatype=context.expand(datatype))
