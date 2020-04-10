@@ -71,7 +71,7 @@ setup(
     description='rdflib extension adding JSON-LD parser and serializer',
     long_description=md2pypi('README.md'),
     maintainer='RDFLib Team',
-    maintainer_email='http://groups.google.com/group/rdflib-dev',
+    maintainer_email='rdflib-dev@google.com',
     url='https://github.com/RDFLib/rdflib-jsonld',
     license='BSD',
     packages=['rdflib_jsonld'],
