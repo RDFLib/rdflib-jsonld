@@ -57,14 +57,15 @@ def norm_url(base, url):
     'http://example.org//one'
     """
     parts = urlsplit(urljoin(base, url))
-    path = normpath(parts[2])
-    if sep != '/':
-        path = '/'.join(path.split(sep))
-    if parts[2].endswith('/') and not path.endswith('/'):
-        path += '/'
-    result = urlunsplit(parts[0:2] + (path,) + parts[3:])
-    if url.endswith('#') and not result.endswith('#'):
-        result += '#'
+    #path = normpath(parts[2])
+    #if sep != '/':
+    #    path = '/'.join(path.split(sep))
+    #if parts[2].endswith('/') and not path.endswith('/'):
+    #    path += '/'
+    #result = urlunsplit(parts[0:2] + (path,) + parts[3:])
+    #if url.endswith('#') and not result.endswith('#'):
+    #    result += '#'
+    result = url
     return result
 
 def context_from_urlinputsource(source):
