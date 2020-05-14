@@ -42,7 +42,7 @@ setuptools.
 
 >>> g = Graph().parse(data=testrdf, format='n3')
 
->>> print(g.serialize(format='json-ld', indent=4))
+>>> print(g.serialize(format='json-ld', indent=4).decode())
 {
     "@id": "http://example.org/about",
     "http://purl.org/dc/terms/title": [
@@ -54,7 +54,7 @@ setuptools.
 }
 
 >>> context = {"@vocab": "http://purl.org/dc/terms/", "@language": "en"}
->>> print(g.serialize(format='json-ld', context=context, indent=4))
+>>> print(g.serialize(format='json-ld', context=context, indent=4).decode())
 {
     "@context": {
         "@language": "en",
