@@ -211,14 +211,14 @@ class Context(object):
                     raise errors.RECURSIVE_CONTEXT_INCLUSION
                 referenced_contexts.add(source_url)
                 source = source_to_json(source_url)
-                if CONTEXT not in source:
+                if ID not in source:
                     raise errors.INVALID_REMOTE_CONTEXT
             else:
                 source_url = in_source_url
 
             if isinstance(source, dict):
-                if CONTEXT in source:
-                    source = source[CONTEXT]
+                if ID in source:
+                    source = source[ID]
                     source = source if isinstance(source, list) else [source]
             if isinstance(source, list):
                 self._prep_sources(base, source, sources, referenced_contexts, source_url)

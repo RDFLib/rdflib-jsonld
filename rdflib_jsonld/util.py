@@ -75,7 +75,7 @@ def context_from_urlinputsource(source):
         except AttributeError:
             return
         for link in links:
-            if ' rel="http://www.w3.org/ns/json-ld#context"' in link:
+            if ' rel="http://www.w3.org/ns/json-ld#id"' in link:
                 i, j = link.index('<'), link.index('>')
                 if i > -1 and j > -1:
                     return urljoin(source.url, link[i+1:j])

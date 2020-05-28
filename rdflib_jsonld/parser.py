@@ -120,7 +120,7 @@ class Parser(object):
         if isinstance(data, list):
             resources = data
         elif isinstance(data, dict):
-            l_ctx = data.get(CONTEXT)
+            l_ctx = data.get(ID)
             if l_ctx:
                 context.load(l_ctx, context.base)
                 topcontext = True
@@ -146,8 +146,8 @@ class Parser(object):
         if not isinstance(node, dict) or context.get_value(node):
             return
 
-        if CONTEXT in node and not topcontext:
-            l_ctx = node.get(CONTEXT)
+        if ID in node and not topcontext:
+            l_ctx = node.get(ID)
             if l_ctx:
                 context = context.subcontext(l_ctx)
             else:
@@ -166,7 +166,7 @@ class Parser(object):
         no_id = id_val is None
 
         for key, obj in node.items():
-            if key in (CONTEXT, ID) or key in context.get_keys(ID):
+            if key in (ID, CONTEXT) or key in context.get_keys(CONTEXT):
                 continue
             if key == REV or key in context.get_keys(REV):
                 for rkey, robj in obj.items():
@@ -292,10 +292,10 @@ class Parser(object):
                     lang = context.language
                 return Literal(node, lang=lang)
             else:
-                if term.type == ID:
-                    node = {ID: context.resolve(node)}
+                if term.type == CONTEXT:
+                    node = {CONTEXT: context.resolve(node)}
                 elif term.type == VOCAB:
-                    node = {ID: context.expand(node) or context.resolve_iri(node)}
+                    node = {CONTEXT: context.expand(node) or context.resolve_iri(node)}
                 else:
                     node = {TYPE: term.type,
                             VALUE: node}
