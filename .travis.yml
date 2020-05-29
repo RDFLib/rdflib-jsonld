@@ -1,0 +1,27 @@
+# http://travis-ci.org/#!/RDFLib/rdflib-jsonld
+language: python
+# whitelist
+branches:
+  only:
+    - master
+python:
+    - 2.7
+    - 3.3
+    - 3.4
+    - 3.5
+    - 3.6
+    - pypy
+    - pypy3
+
+install:
+    - pip install . nose flake8
+
+before_script:
+    - flake8 --exit-zero rdflib_jsonld
+
+script:
+    - nosetests
+
+matrix:
+  allow_failures:
+    - python: pypy3

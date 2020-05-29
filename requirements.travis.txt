@@ -1,0 +1,2 @@
+flake8
+rdflib>=4.1.2
