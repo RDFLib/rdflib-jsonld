@@ -69,6 +69,7 @@ class JsonLDParser(Parser):
     def parse(self, source, sink, **kwargs):
         # TODO: docstring w. args and return value
         encoding = kwargs.get('encoding') or 'utf-8'
+        prefix = kwargs.get('prefix') or False
         if encoding not in ('utf-8', 'utf-16'):
             warnings.warn("JSON should be encoded as unicode. " +
                           "Given encoding was: %s" % encoding)
@@ -92,19 +93,19 @@ class JsonLDParser(Parser):
         else:
             conj_sink = sink
 
-        to_rdf(data, conj_sink, base, context_data)
+        to_rdf(data, conj_sink, base, context_data, prefix=prefix)
 
 
 def to_rdf(data, dataset, base=None, context_data=None,
         produce_generalized_rdf=False,
-        allow_lists_of_lists=None):
+        allow_lists_of_lists=None, prefix=False):
     # TODO: docstring w. args and return value
     context=Context(base=base)
     if context_data:
         context.load(context_data)
     parser = Parser(generalized_rdf=produce_generalized_rdf,
             allow_lists_of_lists=allow_lists_of_lists)
-    return parser.parse(data, context, dataset)
+    return parser.parse(data, context, dataset, prefix=prefix)
 
 
 class Parser(object):
@@ -114,7 +115,7 @@ class Parser(object):
         self.allow_lists_of_lists = (allow_lists_of_lists
                 if allow_lists_of_lists is not None else ALLOW_LISTS_OF_LISTS)
 
-    def parse(self, data, context, dataset):
+    def parse(self, data, context, dataset, prefix=False):
         topcontext = False
 
         if isinstance(data, list):
@@ -131,7 +132,7 @@ class Parser(object):
         if context.vocab:
             dataset.bind(None, context.vocab)
         for name, term in context.terms.items():
-            if term.id and term.id.endswith(VOCAB_DELIMS):
+            if term.id and (term.id.endswith(VOCAB_DELIMS) or prefix):
                 dataset.bind(name, term.id)
 
         graph = dataset.default_context if dataset.context_aware else dataset
