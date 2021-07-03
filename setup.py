@@ -24,11 +24,11 @@ RST_TITLE_LEVELS = ['=', '-', '*']
 
 
 def md2pypi(filename):
-    '''
+    """
     Load .md (markdown) file and sanitize it for PyPI.
     Remove unsupported github tags:
      - travis ci build badges
-    '''
+    """
     content = io.open(filename).read().split(CUT)[0]
 
     for match in RE_MD_CODE_BLOCK.finditer(content):
@@ -80,20 +80,18 @@ setup(
     platforms=['any'],
     classifiers=[
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
         'License :: OSI Approved :: BSD License',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Operating System :: OS Independent',
         'Natural Language :: English',
     ],
     test_suite='nose.collector',
-    install_requires = ['rdflib>=4.2.2'],
+    install_requires=['rdflib>=5.0.0'],
     tests_require=['nose'],
     command_options={
         'build_sphinx': {

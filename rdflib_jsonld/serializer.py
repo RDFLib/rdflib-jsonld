@@ -12,9 +12,9 @@ Example usage::
     >>> from rdflib import Graph
 
     >>> testrdf = '''
-    ... @prefix dc: <http://purl.org/dc/terms/> .
+    ... @prefix dcterms: <http://purl.org/dc/terms/> .
     ... <http://example.org/about>
-    ...     dc:title "Someone's Homepage"@en .
+    ...     dcterms:title "Someone's Homepage"@en .
     ... '''
 
     >>> g = Graph().parse(data=testrdf, format='n3')

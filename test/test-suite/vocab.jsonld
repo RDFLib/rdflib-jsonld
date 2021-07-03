@@ -9,7 +9,7 @@
     "jld:Test": {
       "@type": "@id"
     },
-    "dc:identifier": {
+    "dcterms:identifier": {
       "@type": "@id"
     },
     "rdfs:subClassOf": {
@@ -25,12 +25,12 @@
   "@graph": [
     {
       "@id": "http://json-ld.org/test-suite/vocab#",
-      "dc:creator": "Gregg Kellogg",
-      "dc:date": "2013-09-23",
-      "dc:description": "Test case manifest vocabulary extensions",
-      "dc:identifier": "http://json-ld.org/test-suite/vocab#",
-      "dc:publisher": "W3C Linked JSON Community Group",
-      "dc:title": "Test case manifest vocabulary extensions",
+      "dcterms:creator": "Gregg Kellogg",
+      "dcterms:date": "2013-09-23",
+      "dcterms:description": "Test case manifest vocabulary extensions",
+      "dcterms:identifier": "http://json-ld.org/test-suite/vocab#",
+      "dcterms:publisher": "W3C Linked JSON Community Group",
+      "dcterms:title": "Test case manifest vocabulary extensions",
       "rdfs:comment": "Manifest vocabulary for JSON-LD test cases"
     },
     {

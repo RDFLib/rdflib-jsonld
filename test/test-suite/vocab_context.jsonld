@@ -7,7 +7,7 @@
     "xsd": "http://www.w3.org/2001/XMLSchema#",
     "jld": "http://json-ld.org/test-suite/vocab#",
     "jld:Test": {"@type": "@id"},
-    "dc:identifier": {"@type": "@id"},
+    "dcterms:identifier": {"@type": "@id"},
     "rdfs:subClassOf": {"@type": "@id"},
     "rdfs:domain": {"@type": "@id"},
     "rdfs:range": {"@type": "@id"}

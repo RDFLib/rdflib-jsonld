@@ -13,9 +13,9 @@ def case(*args): cases.append(args)
 
 
 case("""
-@prefix dc: <http://purl.org/dc/terms/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
 <http://example.org/>
-    dc:title "Homepage"@en .
+    dcterms:title "Homepage"@en .
 """,
 {
     "@context": {"@vocab": "http://purl.org/dc/terms/", "@language": "en"},
@@ -26,9 +26,9 @@ case("""
 
 
 case("""
-@prefix dc: <http://purl.org/dc/terms/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
 <http://example.org/>
-    dc:title "Homepage"@en, "Hemsida"@sv .
+    dcterms:title "Homepage"@en, "Hemsida"@sv .
 """,
 {
     "@context": {"@vocab": "http://purl.org/dc/terms/", "title": {"@container": "@language"}},
@@ -39,9 +39,9 @@ case("""
 
 
 case("""
-@prefix dc: <http://purl.org/dc/terms/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
 <http://example.org/>
-    dc:title "Homepage"@en, "Hemsida"@sv .
+    dcterms:title "Homepage"@en, "Hemsida"@sv .
 """,
 {
     "@context": {
@@ -58,9 +58,9 @@ case("""
 
 # .. Requires set values to be sorted to be predictable
 #case("""
-#@prefix dc: <http://purl.org/dc/terms/> .
+#@prefix dcterms: <http://purl.org/dc/terms/> .
 #<http://example.org/>
-#    dc:title "Homepage"@en, "Home Page"@en, "Home Page"@en-GB, "Hemsida"@sv .
+#    dcterms:title "Homepage"@en, "Home Page"@en, "Home Page"@en-GB, "Hemsida"@sv .
 #""",
 #{
 #    "@context": "-||-",
@@ -72,9 +72,9 @@ case("""
 
 
 case("""
-@prefix dc: <http://purl.org/dc/terms/> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
 <http://example.org/easter_island>
-    dc:title "Påskön"@sv .
+    dcterms:title "Påskön"@sv .
 """,
 {
     "@context": {"@vocab": "http://purl.org/dc/terms/", "@language": "sv"},

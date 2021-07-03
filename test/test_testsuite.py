@@ -97,7 +97,7 @@ if __name__ == '__main__':
 
     graph.parse(data="""
         @prefix earl: <{EARL}> .
-        @prefix dc: <{DC}> .
+        @prefix dcterms: <{DC}> .
         @prefix foaf: <{FOAF}> .
         @prefix doap: <{DOAP}> .
 
