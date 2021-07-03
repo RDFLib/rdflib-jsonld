@@ -45,21 +45,22 @@ from .context import Context, Term, UNDEF
 from .util import source_to_json, VOCAB_DELIMS, context_from_urlinputsource
 from .keys import CONTEXT, GRAPH, ID, INDEX, LANG, LIST, REV, SET, TYPE, VALUE, VOCAB
 
-__all__ = ['JsonLDParser', 'to_rdf']
+__all__ = ["JsonLDParser", "to_rdf"]
 
 
 # Add jsonld suffix so RDFLib can guess format from file name
 try:
     from rdflib.util import SUFFIX_FORMAT_MAP
-    if 'jsonld' not in SUFFIX_FORMAT_MAP:
-        SUFFIX_FORMAT_MAP['jsonld'] = 'application/ld+json'
+
+    if "jsonld" not in SUFFIX_FORMAT_MAP:
+        SUFFIX_FORMAT_MAP["jsonld"] = "application/ld+json"
 except ImportError:
     pass
 
 
 TYPE_TERM = Term(unicode(RDF.type), TYPE, VOCAB)
 
-ALLOW_LISTS_OF_LISTS = True # NOTE: Not allowed in JSON-LD 1.0
+ALLOW_LISTS_OF_LISTS = True  # NOTE: Not allowed in JSON-LD 1.0
 
 
 class JsonLDParser(Parser):
@@ -68,17 +69,20 @@ class JsonLDParser(Parser):
 
     def parse(self, source, sink, **kwargs):
         # TODO: docstring w. args and return value
-        encoding = kwargs.get('encoding') or 'utf-8'
-        if encoding not in ('utf-8', 'utf-16'):
-            warnings.warn("JSON should be encoded as unicode. " +
-                          "Given encoding was: %s" % encoding)
+        encoding = kwargs.get("encoding") or "utf-8"
+        if encoding not in ("utf-8", "utf-16"):
+            warnings.warn(
+                "JSON should be encoded as unicode. "
+                + "Given encoding was: %s" % encoding
+            )
 
-        base = kwargs.get('base') or sink.absolutize(
-            source.getPublicId() or source.getSystemId() or "")
-        context_data = kwargs.get('context')
+        base = kwargs.get("base") or sink.absolutize(
+            source.getPublicId() or source.getSystemId() or ""
+        )
+        context_data = kwargs.get("context")
         if not context_data and isinstance(source, URLInputSource):
             context_data = context_from_urlinputsource(source)
-        produce_generalized_rdf = kwargs.get('produce_generalized_rdf', False)
+        produce_generalized_rdf = kwargs.get("produce_generalized_rdf", False)
 
         data = source_to_json(source)
 
@@ -86,33 +90,40 @@ class JsonLDParser(Parser):
         # context_aware. Keeping this check in case RDFLib is changed, or
         # someone passes something context_aware to this parser directly.
         if not sink.context_aware:
-            conj_sink = ConjunctiveGraph(
-                store=sink.store,
-                identifier=sink.identifier)
+            conj_sink = ConjunctiveGraph(store=sink.store, identifier=sink.identifier)
         else:
             conj_sink = sink
 
         to_rdf(data, conj_sink, base, context_data)
 
 
-def to_rdf(data, dataset, base=None, context_data=None,
-        produce_generalized_rdf=False,
-        allow_lists_of_lists=None):
+def to_rdf(
+    data,
+    dataset,
+    base=None,
+    context_data=None,
+    produce_generalized_rdf=False,
+    allow_lists_of_lists=None,
+):
     # TODO: docstring w. args and return value
-    context=Context(base=base)
+    context = Context(base=base)
     if context_data:
         context.load(context_data)
-    parser = Parser(generalized_rdf=produce_generalized_rdf,
-            allow_lists_of_lists=allow_lists_of_lists)
+    parser = Parser(
+        generalized_rdf=produce_generalized_rdf,
+        allow_lists_of_lists=allow_lists_of_lists,
+    )
     return parser.parse(data, context, dataset)
 
 
 class Parser(object):
-
     def __init__(self, generalized_rdf=False, allow_lists_of_lists=None):
         self.generalized_rdf = generalized_rdf
-        self.allow_lists_of_lists = (allow_lists_of_lists
-                if allow_lists_of_lists is not None else ALLOW_LISTS_OF_LISTS)
+        self.allow_lists_of_lists = (
+            allow_lists_of_lists
+            if allow_lists_of_lists is not None
+            else ALLOW_LISTS_OF_LISTS
+        )
 
     def parse(self, data, context, dataset):
         topcontext = False
@@ -140,7 +151,6 @@ class Parser(object):
             self._add_to_graph(dataset, graph, context, node, topcontext)
 
         return graph
-
 
     def _add_to_graph(self, dataset, graph, context, node, topcontext=False):
         if not isinstance(node, dict) or context.get_value(node):
@@ -170,17 +180,24 @@ class Parser(object):
                 continue
             if key == REV or key in context.get_keys(REV):
                 for rkey, robj in obj.items():
-                    self._key_to_graph(dataset, graph, context, subj, rkey, robj,
-                            reverse=True, no_id=no_id)
+                    self._key_to_graph(
+                        dataset,
+                        graph,
+                        context,
+                        subj,
+                        rkey,
+                        robj,
+                        reverse=True,
+                        no_id=no_id,
+                    )
             else:
-                self._key_to_graph(dataset, graph, context, subj, key, obj,
-                        no_id=no_id)
+                self._key_to_graph(dataset, graph, context, subj, key, obj, no_id=no_id)
 
         return subj
 
-
-    def _key_to_graph(self, dataset, graph, context, subj, key, obj,
-            reverse=False, no_id=False):
+    def _key_to_graph(
+        self, dataset, graph, context, subj, key, obj, reverse=False, no_id=False
+    ):
 
         if isinstance(obj, list):
             obj_nodes = obj
@@ -261,7 +278,6 @@ class Parser(object):
             else:
                 graph.add((subj, pred, obj))
 
-
     def _to_object(self, dataset, graph, context, term, node, inlist=False):
 
         if node is None:
@@ -282,7 +298,7 @@ class Parser(object):
                 if listref:
                     return listref
 
-        else: # expand..
+        else:  # expand..
             if not term or not term.type:
                 if isinstance(node, float):
                     return Literal(node, datatype=XSD.double)
@@ -297,8 +313,7 @@ class Parser(object):
                 elif term.type == VOCAB:
                     node = {ID: context.expand(node) or context.resolve_iri(node)}
                 else:
-                    node = {TYPE: term.type,
-                            VALUE: node}
+                    node = {TYPE: term.type, VALUE: node}
 
         lang = context.get_language(node)
         if lang or context.get_key(VALUE) in node or VALUE in node:
@@ -315,24 +330,21 @@ class Parser(object):
         else:
             return self._add_to_graph(dataset, graph, context, node)
 
-
     def _to_rdf_id(self, context, id_val):
         bid = self._get_bnodeid(id_val)
         if bid:
             return BNode(bid)
         else:
             uri = context.resolve(id_val)
-            if not self.generalized_rdf and ':' not in uri:
+            if not self.generalized_rdf and ":" not in uri:
                 return None
             return URIRef(uri)
 
-
     def _get_bnodeid(self, ref):
-        if not ref.startswith('_:'):
+        if not ref.startswith("_:"):
             return
-        bid = ref.split('_:', 1)[-1]
+        bid = ref.split("_:", 1)[-1]
         return bid or None
-
 
     def _add_list(self, dataset, graph, context, term, node_list):
         if not isinstance(node_list, list):

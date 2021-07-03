@@ -9,20 +9,36 @@ from collections import namedtuple
 from rdflib.namespace import RDF
 
 from ._compat import basestring, unicode
-from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, INDEX, LANG, LIST,
-        REV, SET, TYPE, VALUE, VOCAB)
+from .keys import (
+    BASE,
+    CONTAINER,
+    CONTEXT,
+    GRAPH,
+    ID,
+    INDEX,
+    LANG,
+    LIST,
+    REV,
+    SET,
+    TYPE,
+    VALUE,
+    VOCAB,
+)
 from . import errors
 from .util import source_to_json, urljoin, urlsplit, split_iri, norm_url
 
 
 NODE_KEYS = set([LANG, ID, TYPE, VALUE, LIST, SET, REV, GRAPH])
 
-class Defined(int): pass
+
+class Defined(int):
+    pass
+
+
 UNDEF = Defined(0)
 
 
 class Context(object):
-
     def __init__(self, source=None, base=None):
         self.language = None
         self.vocab = None
@@ -44,12 +60,15 @@ class Context(object):
     @base.setter
     def base(self, base):
         if base:
-            hash_index = base.find('#')
+            hash_index = base.find("#")
             if hash_index > -1:
                 base = base[0:hash_index]
-        self._base = self.resolve_iri(base) if (
-                hasattr(self, '_base') and base is not None) else base
-        self._basedomain = '%s://%s' % urlsplit(base)[0:2] if base else None
+        self._base = (
+            self.resolve_iri(base)
+            if (hasattr(self, "_base") and base is not None)
+            else base
+        )
+        self._basedomain = "%s://%s" % urlsplit(base)[0:2] if base else None
 
     def subcontext(self, source):
         # IMPROVE: to optimize, implement SubContext with parent fallback support
@@ -109,33 +128,46 @@ class Context(object):
     rev_key = property(lambda self: self.get_key(REV))
     graph_key = property(lambda self: self.get_key(GRAPH))
 
-    def add_term(self, name, idref, coercion=UNDEF, container=UNDEF,
-            language=UNDEF, reverse=False):
+    def add_term(
+        self,
+        name,
+        idref,
+        coercion=UNDEF,
+        container=UNDEF,
+        language=UNDEF,
+        reverse=False,
+    ):
         term = Term(idref, name, coercion, container, language, reverse)
         self.terms[name] = term
         self._lookup[(idref, coercion or language, container, reverse)] = term
         self._prefixes[idref] = name
 
-    def find_term(self, idref, coercion=None, container=UNDEF,
-            language=None, reverse=False):
+    def find_term(
+        self, idref, coercion=None, container=UNDEF, language=None, reverse=False
+    ):
         lu = self._lookup
         if coercion is None:
             coercion = language
         if coercion is not UNDEF and container:
             found = lu.get((idref, coercion, container, reverse))
-            if found: return found
+            if found:
+                return found
         if coercion is not UNDEF:
             found = lu.get((idref, coercion, UNDEF, reverse))
-            if found: return found
+            if found:
+                return found
         if container:
             found = lu.get((idref, coercion, container, reverse))
-            if found: return found
+            if found:
+                return found
         elif language:
             found = lu.get((idref, UNDEF, LANG, reverse))
-            if found: return found
+            if found:
+                return found
         else:
             found = lu.get((idref, coercion or UNDEF, SET, reverse))
-            if found: return found
+            if found:
+                return found
         return lu.get((idref, UNDEF, UNDEF, reverse))
 
     def resolve(self, curie_or_iri):
@@ -148,7 +180,7 @@ class Context(object):
         return norm_url(self._base, iri)
 
     def isblank(self, ref):
-        return ref.startswith('_:')
+        return ref.startswith("_:")
 
     def expand(self, term_curie_or_iri, use_vocab=True):
         if use_vocab:
@@ -156,7 +188,7 @@ class Context(object):
             if term:
                 return term.id
         is_term, pfx, local = self._prep_expand(term_curie_or_iri)
-        if pfx == '_':
+        if pfx == "_":
             return term_curie_or_iri
         if pfx is not None:
             ns = self.terms.get(pfx)
@@ -177,7 +209,7 @@ class Context(object):
             if unicode(iri) == self._base:
                 return ""
             elif iri.startswith(self._basedomain):
-                    return iri[len(self._basedomain):]
+                return iri[len(self._basedomain) :]
         return iri
 
     def to_symbol(self, iri):
@@ -201,8 +233,9 @@ class Context(object):
         for source_url, source in sources:
             self._read_source(source, source_url)
 
-    def _prep_sources(self, base, inputs, sources, referenced_contexts=None,
-            in_source_url=None):
+    def _prep_sources(
+        self, base, inputs, sources, referenced_contexts=None, in_source_url=None
+    ):
         referenced_contexts = referenced_contexts or set()
         for source in inputs:
             if isinstance(source, basestring):
@@ -221,7 +254,9 @@ class Context(object):
                     source = source[CONTEXT]
                     source = source if isinstance(source, list) else [source]
             if isinstance(source, list):
-                self._prep_sources(base, source, sources, referenced_contexts, source_url)
+                self._prep_sources(
+                    base, source, sources, referenced_contexts, source_url
+                )
             else:
                 sources.append((source_url, source))
 
@@ -242,22 +277,28 @@ class Context(object):
     def _read_term(self, source, name, dfn):
         idref = None
         if isinstance(dfn, dict):
-            #term = self._create_term(source, key, value)
+            # term = self._create_term(source, key, value)
             rev = dfn.get(REV)
             idref = rev or dfn.get(ID, UNDEF)
             if idref == TYPE:
                 idref = unicode(RDF.type)
             elif idref is not UNDEF:
                 idref = self._rec_expand(source, idref)
-            elif ':' in name:
+            elif ":" in name:
                 idref = self._rec_expand(source, name)
             elif self.vocab:
                 idref = self.vocab + name
             coercion = dfn.get(TYPE, UNDEF)
             if coercion and coercion not in (ID, TYPE, VOCAB):
                 coercion = self._rec_expand(source, coercion)
-            self.add_term(name, idref, coercion,
-                    dfn.get(CONTAINER, UNDEF), dfn.get(LANG, UNDEF), bool(rev))
+            self.add_term(
+                name,
+                idref,
+                coercion,
+                dfn.get(CONTAINER, UNDEF),
+                dfn.get(LANG, UNDEF),
+                bool(rev),
+            )
         else:
             if isinstance(dfn, unicode):
                 idref = self._rec_expand(source, dfn)
@@ -274,7 +315,7 @@ class Context(object):
         if pfx:
             iri = self._get_source_id(source, pfx)
             if iri is None:
-                if pfx + ':' == self.vocab:
+                if pfx + ":" == self.vocab:
                     return expr
                 else:
                     term = self.terms.get(pfx)
@@ -287,16 +328,16 @@ class Context(object):
                 nxt = iri + nxt
         else:
             nxt = self._get_source_id(source, nxt) or nxt
-            if ':' not in nxt and self.vocab:
+            if ":" not in nxt and self.vocab:
                 return self.vocab + nxt
 
         return self._rec_expand(source, nxt, expr)
 
     def _prep_expand(self, expr):
-        if ':' not in expr:
+        if ":" not in expr:
             return True, None, expr
-        pfx, local = expr.split(':', 1)
-        if not local.startswith('//'):
+        pfx, local = expr.split(":", 1)
+        if not local.startswith("//"):
             return False, pfx, local
         else:
             return False, None, expr
@@ -313,6 +354,5 @@ class Context(object):
         return term
 
 
-Term = namedtuple('Term',
-        'id, name, type, container, language, reverse')
+Term = namedtuple("Term", "id, name, type, container, language, reverse")
 Term.__new__.__defaults__ = (UNDEF, UNDEF, UNDEF, False)
