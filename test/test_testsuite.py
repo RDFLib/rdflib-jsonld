@@ -1,6 +1,6 @@
 from os import environ, chdir, path as p
+import sys
 import json
-from rdflib import ConjunctiveGraph, Graph, Literal, URIRef
 import rdflib_jsonld.parser
 from . import runner
 
@@ -20,10 +20,9 @@ known_bugs = (
     "toRdf-0035-in",
     "toRdf-0101-in",
     "fromRdf-0008-in",  # TODO: needs to disallow outer lists-of-lists
-    # "toRdf-0091-in", # TODO: multiple aliases version?
+    # "toRdf-0091-in",  # TODO: multiple aliases version?
 )
 
-import sys
 
 if sys.version_info[:2] < (2, 6):
     # Fails on bug in older urlparse.urljoin; ignoring..
