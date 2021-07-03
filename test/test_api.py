@@ -1,11 +1,13 @@
 from rdflib.plugin import register, Parser, Serializer
-register('json-ld', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
-register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
+
+register("json-ld", Parser, "rdflib_jsonld.parser", "JsonLDParser")
+register("json-ld", Serializer, "rdflib_jsonld.serializer", "JsonLDSerializer")
 
 from rdflib import Graph, Literal, URIRef
 
+
 def test_parse():
-    test_json = '''
+    test_json = """
     {
         "@context": {
             "dc": "http://purl.org/dc/terms/",
@@ -18,9 +20,12 @@ def test_parse():
             "@value": "Someone's Homepage"
         }
     }
-    '''
-    g = Graph().parse(data=test_json, format='json-ld')
-    assert list(g) == [(
-        URIRef('http://example.org/about'),
-        URIRef('http://purl.org/dc/terms/title'),
-        Literal("Someone's Homepage", lang='en'))]
+    """
+    g = Graph().parse(data=test_json, format="json-ld")
+    assert list(g) == [
+        (
+            URIRef("http://example.org/about"),
+            URIRef("http://purl.org/dc/terms/title"),
+            Literal("Someone's Homepage", lang="en"),
+        )
+    ]

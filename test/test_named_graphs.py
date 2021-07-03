@@ -1,7 +1,8 @@
 from __future__ import unicode_literals, print_function
 from rdflib import *
 from rdflib.plugin import register, Parser
-register('application/ld+json', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
+
+register("application/ld+json", Parser, "rdflib_jsonld.parser", "JsonLDParser")
 
 data = """
 {
@@ -24,23 +25,29 @@ data = """
 }
 """
 
-meta_ctx = URIRef('http://example.org/data#metadata')
+meta_ctx = URIRef("http://example.org/data#metadata")
+
 
 def test_graph():
     g = Graph()
     g.parse(data=data, format="application/ld+json")
     assert len(g) == 2
 
+
 def test_conjunctive_graph():
     cg = ConjunctiveGraph()
     cg.default_context.parse(data=data, format="application/ld+json")
     assert len(cg) == 3
 
-    print("default graph (%s) contains %s triples (expected 2)" % (cg.identifier, len(cg.default_context)))
+    print(
+        "default graph (%s) contains %s triples (expected 2)"
+        % (cg.identifier, len(cg.default_context))
+    )
     for ctx in cg.contexts():
         print("named graph (%s) contains %s triples" % (ctx.identifier, len(ctx)))
     assert len(cg.default_context) == 2
     assert len(list(cg.contexts())) == 2
+
 
 def test_dataset():
     ds = Dataset()
@@ -48,7 +55,10 @@ def test_dataset():
     assert len(ds) == 3
 
     assert len(ds.default_context) == 2
-    print("default graph (%s) contains %s triples (expected 2)" % (ds.identifier, len(ds.default_context)))
+    print(
+        "default graph (%s) contains %s triples (expected 2)"
+        % (ds.identifier, len(ds.default_context))
+    )
     contexts = dict((ctx.identifier, ctx) for ctx in ds.contexts())
     assert len(contexts) == 2
     assert len(contexts.pop(meta_ctx)) == 1

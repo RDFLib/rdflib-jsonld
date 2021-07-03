@@ -1,7 +1,8 @@
 from __future__ import unicode_literals, print_function
 from rdflib import *
 from rdflib.plugin import register, Parser
-register('application/ld+json', Parser, 'rdflib_jsonld.parser', 'JsonLDParser')
+
+register("application/ld+json", Parser, "rdflib_jsonld.parser", "JsonLDParser")
 
 data = """
 {
@@ -61,16 +62,17 @@ data = """
 }
 """
 
+
 def test_graph():
     g = Graph()
     g.parse(data=data, format="application/ld+json")
-    ttl = g.serialize(format='text/turtle').decode('utf8')
+    ttl = g.serialize(format="text/turtle").decode("utf8")
     print(ttl)
-    assert ''' :label "Some Thing" ''' in ttl
-    assert ''' :name "Some Body" ''' in ttl
-    assert ''' :title "Somewhere" ''' in ttl
-    assert ''' :label "Someone" ''' in ttl
-    assert ''' :title "Beginning" ''' in ttl
-    assert 'nest' not in ttl
-    assert ''' :label "Common" ''' in ttl
-    assert ''' :comment "Detailed" '''
+    assert """ :label "Some Thing" """ in ttl
+    assert """ :name "Some Body" """ in ttl
+    assert """ :title "Somewhere" """ in ttl
+    assert """ :label "Someone" """ in ttl
+    assert """ :title "Beginning" """ in ttl
+    assert "nest" not in ttl
+    assert """ :label "Common" """ in ttl
+    assert """ :comment "Detailed" """

@@ -9,25 +9,50 @@ from collections import namedtuple
 from rdflib.namespace import RDF
 
 from ._compat import basestring, unicode
-from .keys import (BASE, CONTAINER, CONTEXT, GRAPH, ID, IMPORT, INCLUDED,
-        INDEX, JSON, LANG, LIST, NEST, NONE, PREFIX, PROPAGATE, PROTECTED, REV,
-        SET, TYPE, VALUE, VERSION, VOCAB)
+from .keys import (
+    BASE,
+    CONTAINER,
+    CONTEXT,
+    GRAPH,
+    ID,
+    IMPORT,
+    INCLUDED,
+    INDEX,
+    JSON,
+    LANG,
+    LIST,
+    NEST,
+    NONE,
+    PREFIX,
+    PROPAGATE,
+    PROTECTED,
+    REV,
+    SET,
+    TYPE,
+    VALUE,
+    VERSION,
+    VOCAB,
+)
 from . import errors
 from .util import source_to_json, urljoin, urlsplit, split_iri, norm_url
 
 
-NODE_KEYS = set([GRAPH, ID, INCLUDED, JSON, LIST, NEST, NONE, REV, SET, TYPE,
-                 VALUE, LANG])
+NODE_KEYS = set(
+    [GRAPH, ID, INCLUDED, JSON, LIST, NEST, NONE, REV, SET, TYPE, VALUE, LANG]
+)
 
-class Defined(int): pass
+
+class Defined(int):
+    pass
+
+
 UNDEF = Defined(0)
 
 # From <https://tools.ietf.org/html/rfc3986#section-2.2>
-URI_GEN_DELIMS = (':', '/', '?', '#', '[', ']', '@')
+URI_GEN_DELIMS = (":", "/", "?", "#", "[", "]", "@")
 
 
 class Context(object):
-
     def __init__(self, source=None, base=None, version=None):
         self.version = version or 1.0
         self.language = None
@@ -53,12 +78,15 @@ class Context(object):
     @base.setter
     def base(self, base):
         if base:
-            hash_index = base.find('#')
+            hash_index = base.find("#")
             if hash_index > -1:
                 base = base[0:hash_index]
-        self._base = self.resolve_iri(base) if (
-                hasattr(self, '_base') and base is not None) else base
-        self._basedomain = '%s://%s' % urlsplit(base)[0:2] if base else None
+        self._base = (
+            self.resolve_iri(base)
+            if (hasattr(self, "_base") and base is not None)
+            else base
+        )
+        self._basedomain = "%s://%s" % urlsplit(base)[0:2] if base else None
 
     def subcontext(self, source, propagate=True):
         # IMPROVE: to optimize, implement SubContext with parent fallback support
@@ -164,9 +192,19 @@ class Context(object):
     rev_key = property(lambda self: self.get_key(REV))
     graph_key = property(lambda self: self.get_key(GRAPH))
 
-    def add_term(self, name, idref, coercion=UNDEF, container=UNDEF, index=None,
-            language=UNDEF, reverse=False, context=UNDEF, prefix=None,
-            protected=False):
+    def add_term(
+        self,
+        name,
+        idref,
+        coercion=UNDEF,
+        container=UNDEF,
+        index=None,
+        language=UNDEF,
+        reverse=False,
+        context=UNDEF,
+        prefix=None,
+        protected=False,
+    ):
         if self.version < 1.1 or prefix is None:
             prefix = isinstance(idref, str) and idref.endswith(URI_GEN_DELIMS)
 
@@ -183,12 +221,22 @@ class Context(object):
         else:
             container = set([container])
 
-        term = Term(idref, name, coercion, container, index, language, reverse,
-                context, prefix, protected)
+        term = Term(
+            idref,
+            name,
+            coercion,
+            container,
+            index,
+            language,
+            reverse,
+            context,
+            prefix,
+            protected,
+        )
 
         self.terms[name] = term
 
-        for container_key in (LIST, LANG, SET): #, INDEX, ID, GRAPH):
+        for container_key in (LIST, LANG, SET):  # , INDEX, ID, GRAPH):
             if container_key in container:
                 break
         else:
@@ -199,8 +247,9 @@ class Context(object):
         if term.prefix is True:
             self._prefixes[idref] = name
 
-    def find_term(self, idref, coercion=None, container=UNDEF,
-            language=None, reverse=False):
+    def find_term(
+        self, idref, coercion=None, container=UNDEF, language=None, reverse=False
+    ):
         lu = self._lookup
 
         if coercion is None:
@@ -208,21 +257,26 @@ class Context(object):
 
         if coercion is not UNDEF and container:
             found = lu.get((idref, coercion, container, reverse))
-            if found: return found
+            if found:
+                return found
 
         if coercion is not UNDEF:
             found = lu.get((idref, coercion, UNDEF, reverse))
-            if found: return found
+            if found:
+                return found
 
         if container:
             found = lu.get((idref, coercion, container, reverse))
-            if found: return found
+            if found:
+                return found
         elif language:
             found = lu.get((idref, UNDEF, LANG, reverse))
-            if found: return found
+            if found:
+                return found
         else:
             found = lu.get((idref, coercion or UNDEF, SET, reverse))
-            if found: return found
+            if found:
+                return found
 
         return lu.get((idref, UNDEF, UNDEF, reverse))
 
@@ -230,22 +284,22 @@ class Context(object):
         iri = self.expand(curie_or_iri, False)
         if self.isblank(iri):
             return iri
-        if ' ' in iri:
-            return ''
+        if " " in iri:
+            return ""
         return self.resolve_iri(iri)
 
     def resolve_iri(self, iri):
         return norm_url(self._base, iri)
 
     def isblank(self, ref):
-        return ref.startswith('_:')
+        return ref.startswith("_:")
 
     def expand(self, term_curie_or_iri, use_vocab=True):
         if not isinstance(term_curie_or_iri, unicode):
             return term_curie_or_iri
 
         if not self._accept_term(term_curie_or_iri):
-            return ''
+            return ""
 
         if use_vocab:
             term = self.terms.get(term_curie_or_iri)
@@ -253,7 +307,7 @@ class Context(object):
                 return term.id
 
         is_term, pfx, local = self._prep_expand(term_curie_or_iri)
-        if pfx == '_':
+        if pfx == "_":
             return term_curie_or_iri
 
         if pfx is not None:
@@ -276,7 +330,7 @@ class Context(object):
             if unicode(iri) == self._base:
                 return ""
             elif iri.startswith(self._basedomain):
-                    return iri[len(self._basedomain):]
+                return iri[len(self._basedomain) :]
         return iri
 
     def to_symbol(self, iri):
@@ -307,13 +361,14 @@ class Context(object):
     def _accept_term(self, key):
         if self.version < 1.1:
             return True
-        if key and len(key) > 1 and key[0] == '@' and key[1].isalnum():
+        if key and len(key) > 1 and key[0] == "@" and key[1].isalnum():
             return key in NODE_KEYS
         else:
             return True
 
-    def _prep_sources(self, base, inputs, sources, referenced_contexts,
-            in_source_url=None):
+    def _prep_sources(
+        self, base, inputs, sources, referenced_contexts, in_source_url=None
+    ):
         for source in inputs:
             source_url = in_source_url
 
@@ -329,7 +384,9 @@ class Context(object):
                     source = source if isinstance(source, list) else [source]
 
             if isinstance(source, list):
-                self._prep_sources(base, source, sources, referenced_contexts, source_url)
+                self._prep_sources(
+                    base, source, sources, referenced_contexts, source_url
+                )
             else:
                 sources.append((source_url, source))
 
@@ -356,8 +413,9 @@ class Context(object):
             if not isinstance(imports, unicode):
                 raise errors.INVALID_CONTEXT_ENTRY
 
-            imported = self._fetch_context(imports, self.base,
-                    referenced_contexts or set())
+            imported = self._fetch_context(
+                imports, self.base, referenced_contexts or set()
+            )
             if not isinstance(imported, dict):
                 raise errors.INVALID_CONTEXT_ENTRY
 
@@ -385,7 +443,7 @@ class Context(object):
     def _read_term(self, source, name, dfn, protected=False):
         idref = None
         if isinstance(dfn, dict):
-            #term = self._create_term(source, key, value)
+            # term = self._create_term(source, key, value)
             rev = dfn.get(REV)
             protected = dfn.get(PROTECTED, protected)
 
@@ -399,17 +457,25 @@ class Context(object):
                 coercion = VOCAB
             elif idref is not UNDEF:
                 idref = self._rec_expand(source, idref)
-            elif ':' in name:
+            elif ":" in name:
                 idref = self._rec_expand(source, name)
             elif self.vocab:
                 idref = self.vocab + name
 
             context = dfn.get(CONTEXT, UNDEF)
 
-            self.add_term(name, idref, coercion,
-                    dfn.get(CONTAINER, UNDEF), dfn.get(INDEX, UNDEF),
-                    dfn.get(LANG, UNDEF), bool(rev),
-                    context, dfn.get(PREFIX), protected=protected)
+            self.add_term(
+                name,
+                idref,
+                coercion,
+                dfn.get(CONTAINER, UNDEF),
+                dfn.get(INDEX, UNDEF),
+                dfn.get(LANG, UNDEF),
+                bool(rev),
+                context,
+                dfn.get(PREFIX),
+                protected=protected,
+            )
         else:
             if isinstance(dfn, unicode):
                 if not self._accept_term(dfn):
@@ -429,7 +495,7 @@ class Context(object):
         if pfx:
             iri = self._get_source_id(source, pfx)
             if iri is None:
-                if pfx + ':' == self.vocab:
+                if pfx + ":" == self.vocab:
                     return expr
                 else:
                     term = self.terms.get(pfx)
@@ -442,16 +508,16 @@ class Context(object):
                 nxt = iri + nxt
         else:
             nxt = self._get_source_id(source, nxt) or nxt
-            if ':' not in nxt and self.vocab:
+            if ":" not in nxt and self.vocab:
                 return self.vocab + nxt
 
         return self._rec_expand(source, nxt, expr)
 
     def _prep_expand(self, expr):
-        if ':' not in expr:
+        if ":" not in expr:
             return True, None, expr
-        pfx, local = expr.split(':', 1)
-        if not local.startswith('//'):
+        pfx, local = expr.split(":", 1)
+        if not local.startswith("//"):
             return False, pfx, local
         else:
             return False, None, expr
@@ -468,7 +534,8 @@ class Context(object):
         return term
 
 
-Term = namedtuple('Term',
-        'id, name, type, container, index, language, reverse, context,'
-        'prefix, protected')
+Term = namedtuple(
+    "Term",
+    "id, name, type, container, index, language, reverse, context," "prefix, protected",
+)
 Term.__new__.__defaults__ = (UNDEF, UNDEF, UNDEF, UNDEF, False, UNDEF, False, False)

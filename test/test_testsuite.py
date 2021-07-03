@@ -6,27 +6,32 @@ from . import runner
 
 
 unsupported_tests = ("frame", "normalize")
-unsupported_tests += ("error", "remote",)
+unsupported_tests += (
+    "error",
+    "remote",
+)
 unsupported_tests += ("flatten", "compact", "expand")
 unsupported_tests += ("html",)
 
 known_bugs = (
-        # invalid nquads (bnode as predicate)
-        #"toRdf-0078-in", "toRdf-0108-in",
-        # TODO: Literal doesn't preserve representations
-        "fromRdf-0002-in", "toRdf-0035-in", "toRdf-0101-in",
-        "fromRdf-0008-in", # TODO: needs to disallow outer lists-of-lists
-        #"toRdf-0091-in", # TODO: multiple aliases version?
-
-        # TODO: check that these are corrected in 1.1 testsuite (1.0-deprecated prefix forms)
-        "toRdf-0088-in",
-        "toRdf-0118-in",
-        )
+    # invalid nquads (bnode as predicate)
+    # "toRdf-0078-in", "toRdf-0108-in",
+    # TODO: Literal doesn't preserve representations
+    "fromRdf-0002-in",
+    "toRdf-0035-in",
+    "toRdf-0101-in",
+    "fromRdf-0008-in",  # TODO: needs to disallow outer lists-of-lists
+    # "toRdf-0091-in", # TODO: multiple aliases version?
+    # TODO: check that these are corrected in 1.1 testsuite (1.0-deprecated prefix forms)
+    "toRdf-0088-in",
+    "toRdf-0118-in",
+)
 
 import sys
+
 if sys.version_info[:2] < (2, 6):
     # Fails on bug in older urlparse.urljoin; ignoring..
-    known_bugs += ('toRdf-0069-in','toRdf-0102-in')
+    known_bugs += ("toRdf-0069-in", "toRdf-0102-in")
 
 
 TC_BASE = "https://w3c.github.io/json-ld-api/tests/"
@@ -34,9 +39,10 @@ allow_lists_of_lists = True
 
 
 testsuite_dir = environ.get("JSONLD_TESTSUITE") or p.join(
-        p.abspath(p.dirname(__file__)), "test-suite")
+    p.abspath(p.dirname(__file__)), "test-suite"
+)
 test_dir = p.join(testsuite_dir, "tests")
-if not p.isdir(test_dir): # layout of 1.1 testsuite
+if not p.isdir(test_dir):  # layout of 1.1 testsuite
     test_dir = testsuite_dir
 else:
     TC_BASE = "http://json-ld.org/test-suite/tests/"
@@ -44,29 +50,33 @@ else:
 
 
 def read_manifest(skiptests):
-    f = open(p.join(testsuite_dir, "manifest.jsonld"), 'r')
+    f = open(p.join(testsuite_dir, "manifest.jsonld"), "r")
     manifestdata = json.load(f)
     f.close()
     # context = manifestdata.get('context')
-    for m in manifestdata.get('sequence'):
+    for m in manifestdata.get("sequence"):
         if any(token in m for token in skiptests):
             continue
-        f = open(p.join(testsuite_dir, m), 'r')
+        f = open(p.join(testsuite_dir, m), "r")
         md = json.load(f)
         f.close()
-        for test in md.get('sequence'):
-            parts = test.get(u'input', '').split('.')[0]
-            cat_num, direction = parts.rsplit('-', 1)
-            category, testnum = cat_num.split('/') if '/' in cat_num else cat_num.split('-')
-            if test.get(u'input', '').split('.')[0] in skiptests \
-                or category in skiptests:
+        for test in md.get("sequence"):
+            parts = test.get(u"input", "").split(".")[0]
+            cat_num, direction = parts.rsplit("-", 1)
+            category, testnum = (
+                cat_num.split("/") if "/" in cat_num else cat_num.split("-")
+            )
+            if (
+                test.get(u"input", "").split(".")[0] in skiptests
+                or category in skiptests
+            ):
                 pass
             else:
-                inputpath = test.get(u'input')
-                expectedpath = test.get(u'expect')
-                expected_error = test.get(u'expect') # TODO: verify error
-                context = test.get(u'context', False)
-                options = test.get(u'option') or {}
+                inputpath = test.get(u"input")
+                expectedpath = test.get(u"expect")
+                expected_error = test.get(u"expect")  # TODO: verify error
+                context = test.get(u"context", False)
+                options = test.get(u"option") or {}
                 if expectedpath:
                     yield category, testnum, inputpath, expectedpath, context, options
 
@@ -80,20 +90,20 @@ def test_suite(skip_known_bugs=True):
         skiptests += known_bugs
     chdir(test_dir)
     for cat, num, inputpath, expectedpath, context, options in read_manifest(skiptests):
-        if inputpath.endswith(".jsonld"): # toRdf
-            if expectedpath.endswith(".jsonld"): # compact/expand/flatten
+        if inputpath.endswith(".jsonld"):  # toRdf
+            if expectedpath.endswith(".jsonld"):  # compact/expand/flatten
                 func = runner.do_test_json
-            else: # toRdf
+            else:  # toRdf
                 func = runner.do_test_parser
         else:  # fromRdf
             func = runner.do_test_serializer
-        #func.description = "%s-%s-%s" % (group, case)
+        # func.description = "%s-%s-%s" % (group, case)
         yield func, TC_BASE, cat, num, inputpath, expectedpath, context, options
 
     rdflib_jsonld.parser.ALLOW_LISTS_OF_LISTS = default_allow
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
     from rdflib import *
     from datetime import datetime
@@ -112,7 +122,8 @@ if __name__ == '__main__':
 
     graph = Graph()
 
-    graph.parse(data="""
+    graph.parse(
+        data="""
         @prefix earl: <{EARL}> .
         @prefix dc: <{DC}> .
         @prefix foaf: <{FOAF}> .
@@ -123,7 +134,11 @@ if __name__ == '__main__':
             doap:name "RDFLib-JSONLD" ;
             doap:programming-language "Python" ;
             doap:title "RDFLib plugin for JSON-LD " .
-    """.format(**vars()), format='turtle')
+    """.format(
+            **vars()
+        ),
+        format="turtle",
+    )
 
     if asserter_name:
         graph.add((asserter, RDF.type, FOAF.Person))
@@ -142,12 +157,18 @@ if __name__ == '__main__':
         if asserter:
             assertion.add(EARL.assertedBy, asserter)
         assertion.add(EARL.subject, rdflib_jsonld)
-        assertion.add(EARL.test, URIRef(
-            "http://json-ld.org/test-suite/tests/{1}-manifest.jsonld#t{2}".format(*args)))
+        assertion.add(
+            EARL.test,
+            URIRef(
+                "http://json-ld.org/test-suite/tests/{1}-manifest.jsonld#t{2}".format(
+                    *args
+                )
+            ),
+        )
         result = graph.resource(BNode())
         assertion.add(EARL.result, result)
         result.add(RDF.type, EARL.TestResult)
         result.add(DC.date, Literal(datetime.utcnow()))
         result.add(EARL.outcome, EARL.passed if success else EARL.failed)
 
-    graph.serialize(sys.stdout, format='turtle')
+    graph.serialize(sys.stdout, format="turtle")
