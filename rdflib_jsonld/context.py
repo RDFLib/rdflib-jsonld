@@ -204,7 +204,7 @@ class Context(object):
         ns, name = split_iri(unicode(iri))
         pfx = self._prefixes.get(ns)
         if pfx:
-            return u":".join((pfx, name))
+            return ":".join((pfx, name))
         elif self._base:
             if unicode(iri) == self._base:
                 return ""
@@ -222,7 +222,7 @@ class Context(object):
             return name
         pfx = self._prefixes.get(ns)
         if pfx:
-            return u":".join((pfx, name))
+            return ":".join((pfx, name))
         return iri
 
     def load(self, source, base=None):

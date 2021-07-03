@@ -11,12 +11,12 @@ def read_manifest():
     manifestdata = json.load(f)
     f.close()
     for test in manifestdata.get("sequence"):
-        parts = test.get(u"input", "").split(".")[0].split("-")
+        parts = test.get("input", "").split(".")[0].split("-")
         category, name, direction = parts
-        inputpath = test.get(u"input")
-        expectedpath = test.get(u"expect")
-        context = test.get(u"context", False)
-        options = test.get(u"option") or {}
+        inputpath = test.get("input")
+        expectedpath = test.get("expect")
+        context = test.get("context", False)
+        options = test.get("option") or {}
         yield category, name, inputpath, expectedpath, context, options
 
 

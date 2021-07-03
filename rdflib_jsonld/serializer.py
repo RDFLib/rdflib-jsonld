@@ -116,7 +116,7 @@ def from_rdf(
         context_data = dict(
             (pfx, unicode(ns))
             for (pfx, ns) in graph.namespaces()
-            if pfx and unicode(ns) != u"http://www.w3.org/XML/1998/namespace"
+            if pfx and unicode(ns) != "http://www.w3.org/XML/1998/namespace"
         )
 
     if isinstance(context_data, Context):
