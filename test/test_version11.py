@@ -66,7 +66,7 @@ data = """
 def test_graph():
     g = Graph()
     g.parse(data=data, format="application/ld+json")
-    ttl = g.serialize(format="text/turtle").decode("utf8")
+    ttl = g.serialize()
     print(ttl)
     assert """ :label "Some Thing" """ in ttl
     assert """ :name "Some Body" """ in ttl

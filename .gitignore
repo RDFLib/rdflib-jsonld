@@ -17,3 +17,5 @@
 /.gitignore
 __pycache__
 nosetests.xml
+.idea/
+venv

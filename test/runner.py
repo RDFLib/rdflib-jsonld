@@ -2,32 +2,24 @@ from __future__ import with_statement
 import json
 from rdflib import ConjunctiveGraph
 from rdflib.compare import isomorphic
-from rdflib_jsonld._compat import IS_PY3
 from rdflib_jsonld.parser import to_rdf
 from rdflib_jsonld.serializer import from_rdf
 from rdflib_jsonld.keys import CONTEXT, GRAPH
 
 
 # monkey-patch NTriplesParser to keep source bnode id:s ..
-from rdflib.plugins.parsers.ntriples import NTriplesParser, r_nodeid, bNode
+from rdflib.plugins.parsers.ntriples import W3CNTriplesParser, r_nodeid, bNode
 
 
-def _preserving_nodeid(self):
+def _preserving_nodeid(self, bnode_context=None):
     if not self.peek("_"):
         return False
+    print("_preserving_nodeid()")
     return bNode(self.eat(r_nodeid).group(1))
 
 
-NTriplesParser.nodeid = _preserving_nodeid
+W3CNTriplesParser.nodeid = _preserving_nodeid
 # .. and accept bnodes everywhere
-_uriref = NTriplesParser.uriref
-
-
-def _uriref_or_nodeid(self):
-    return _uriref(self) or self.nodeid()
-
-
-NTriplesParser.uriref = _uriref_or_nodeid
 
 
 def do_test_json(suite_base, cat, num, inputpath, expectedpath, context, options):
@@ -80,8 +72,8 @@ def do_test_parser(suite_base, cat, num, inputpath, expectedpath, context, optio
         generalized_rdf=options.get("produceGeneralizedRdf", False),
     )
     assert isomorphic(result_graph, expected_graph), "Expected:\n%s\nGot:\n%s" % (
-        expected_graph.serialize(format="turtle"),
-        result_graph.serialize(format="turtle"),
+        expected_graph.serialize(),
+        result_graph.serialize(),
     )
 
 
@@ -102,7 +94,7 @@ def do_test_serializer(suite_base, cat, num, inputpath, expectedpath, context, o
 def _load_nquads(source):
     graph = ConjunctiveGraph()
     with open(source) as f:
-        data = f.read() if IS_PY3 else f.read().decode("utf-8")
+        data = f.read()
     graph.parse(data=data, format="nquads")
     return graph
 

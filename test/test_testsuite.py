@@ -1,6 +1,5 @@
 from os import environ, chdir, path as p
 import json
-from rdflib import ConjunctiveGraph, Graph, Literal, URIRef
 import rdflib_jsonld.parser
 from . import runner
 
@@ -171,4 +170,4 @@ if __name__ == "__main__":
         result.add(DC.date, Literal(datetime.utcnow()))
         result.add(EARL.outcome, EARL.passed if success else EARL.failed)
 
-    graph.serialize(sys.stdout, format="turtle")
+    graph.serialize(destination=sys.stdout)
