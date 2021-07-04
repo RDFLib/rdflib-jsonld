@@ -14,7 +14,6 @@ from rdflib.plugins.parsers.ntriples import W3CNTriplesParser, r_nodeid, bNode
 def _preserving_nodeid(self, bnode_context=None):
     if not self.peek("_"):
         return False
-    print("_preserving_nodeid()")
     return bNode(self.eat(r_nodeid).group(1))
 
 
