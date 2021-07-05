@@ -7,7 +7,7 @@ from rdflib_jsonld.serializer import from_rdf
 from rdflib_jsonld.keys import CONTEXT, GRAPH
 
 
-# monkey-patch NTriplesParser to keep source bnode id:s ..
+# monkey-patch N-Quads parser via it's underlying W3CNTriplesParser to keep source bnode id:s ..
 from rdflib.plugins.parsers.ntriples import W3CNTriplesParser, r_nodeid, bNode
 
 

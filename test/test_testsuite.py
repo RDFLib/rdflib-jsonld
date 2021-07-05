@@ -60,22 +60,22 @@ def read_manifest(skiptests):
         md = json.load(f)
         f.close()
         for test in md.get("sequence"):
-            parts = test.get(u"input", "").split(".")[0]
+            parts = test.get("input", "").split(".")[0]
             cat_num, direction = parts.rsplit("-", 1)
             category, testnum = (
                 cat_num.split("/") if "/" in cat_num else cat_num.split("-")
             )
             if (
-                test.get(u"input", "").split(".")[0] in skiptests
+                test.get("input", "").split(".")[0] in skiptests
                 or category in skiptests
             ):
                 pass
             else:
-                inputpath = test.get(u"input")
-                expectedpath = test.get(u"expect")
-                expected_error = test.get(u"expect")  # TODO: verify error
-                context = test.get(u"context", False)
-                options = test.get(u"option") or {}
+                inputpath = test.get("input")
+                expectedpath = test.get("expect")
+                expected_error = test.get("expect")  # TODO: verify error
+                context = test.get("context", False)
+                options = test.get("option") or {}
                 if expectedpath:
                     yield category, testnum, inputpath, expectedpath, context, options
 
