@@ -22,20 +22,16 @@ register("json-ld", Parser, "rdflib_jsonld.parser", "JsonLDParser")
 
 
 g = Graph().parse("1.1/toRdf-manifest.jsonld", format="json-ld")
-
-
 g_context = Graph(base="https://w3c.github.io/json-ld-api/tests/toRdf/").parse("1.1/context.jsonld", format="json-ld")
-# g_context_testing = """{
-#   "@context": {
-#     "@base": "https://w3c.github.io/json-ld-api/tests/toRdf/"
-#   }
-# }"""
-# g_context.parse(data=g_context_testing, format="json-ld")
+
+# TODO: fix tests, in test files, so they run with locally, not just from internet file location, for base URI
+#  dependencies, e.g. 0016
 for s in g.subjects(predicate=RDF.type, object=JLD.ToRDFTest):
     id = str(s).split("#")[-1]
     name = None
     input = None
     expect = None
+    purpose = None
     for p, o in g.predicate_objects(subject=s):
         if p == MF.name:
             name = str(o)
