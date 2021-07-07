@@ -67,7 +67,7 @@ class JsonLDParser(Parser):
     def __init__(self):
         super(JsonLDParser, self).__init__()
 
-    def parse(self, source, sink, **kwargs):
+    def parse(self, source, sink, normalize_literals=True, **kwargs):
         # TODO: docstring w. args and return value
         encoding = kwargs.get("encoding") or "utf-8"
         if encoding not in ("utf-8", "utf-16"):
@@ -94,7 +94,7 @@ class JsonLDParser(Parser):
         else:
             conj_sink = sink
 
-        to_rdf(data, conj_sink, base, context_data)
+        to_rdf(data, conj_sink, base, context_data, normalize_literals=normalize_literals)
 
 
 def to_rdf(
@@ -104,6 +104,7 @@ def to_rdf(
     context_data=None,
     produce_generalized_rdf=False,
     allow_lists_of_lists=None,
+    normalize_literals=True,
 ):
     # TODO: docstring w. args and return value
     context = Context(base=base)
@@ -113,7 +114,7 @@ def to_rdf(
         generalized_rdf=produce_generalized_rdf,
         allow_lists_of_lists=allow_lists_of_lists,
     )
-    return parser.parse(data, context, dataset)
+    return parser.parse(data, context, dataset, normalize_literals=normalize_literals)
 
 
 class Parser(object):
@@ -125,7 +126,7 @@ class Parser(object):
             else ALLOW_LISTS_OF_LISTS
         )
 
-    def parse(self, data, context, dataset):
+    def parse(self, data, context, dataset, normalize_literals=True):
         topcontext = False
 
         if isinstance(data, list):
@@ -148,11 +149,12 @@ class Parser(object):
         graph = dataset.default_context if dataset.context_aware else dataset
 
         for node in resources:
-            self._add_to_graph(dataset, graph, context, node, topcontext)
+            self._add_to_graph(dataset, graph, context, node, topcontext, normalize_literals=normalize_literals)
 
         return graph
 
-    def _add_to_graph(self, dataset, graph, context, node, topcontext=False):
+
+    def _add_to_graph(self, dataset, graph, context, node, topcontext=False, normalize_literals=True):
         if not isinstance(node, dict) or context.get_value(node):
             return
 
@@ -189,16 +191,16 @@ class Parser(object):
                         robj,
                         reverse=True,
                         no_id=no_id,
+                        normalize_literals=normalize_literals,
                     )
             else:
-                self._key_to_graph(dataset, graph, context, subj, key, obj, no_id=no_id)
+                self._key_to_graph(dataset, graph, context, subj, key, obj, no_id=no_id, normalize_literals=normalize_literals)
 
         return subj
 
     def _key_to_graph(
-        self, dataset, graph, context, subj, key, obj, reverse=False, no_id=False
+        self, dataset, graph, context, subj, key, obj, reverse=False, no_id=False, normalize_literals=True
     ):
-
         if isinstance(obj, list):
             obj_nodes = obj
         else:
@@ -235,11 +237,11 @@ class Parser(object):
             else:
                 subgraph = graph
             for onode in obj_nodes:
-                self._add_to_graph(dataset, subgraph, context, onode)
+                self._add_to_graph(dataset, subgraph, context, onode, normalize_literals=normalize_literals)
             return
         elif SET in (key, term_id):
             for onode in obj_nodes:
-                self._add_to_graph(dataset, graph, context, onode)
+                self._add_to_graph(dataset, graph, context, onode, normalize_literals=normalize_literals)
             return
 
         pred_uri = term.id if term else context.expand(key)
@@ -270,7 +272,7 @@ class Parser(object):
         else:
             pred = URIRef(pred_uri)
         for obj_node in obj_nodes:
-            obj = self._to_object(dataset, graph, context, term, obj_node)
+            obj = self._to_object(dataset, graph, context, term, obj_node, normalize_literals=normalize_literals)
             if obj is None:
                 continue
             if reverse:
@@ -278,8 +280,8 @@ class Parser(object):
             else:
                 graph.add((subj, pred, obj))
 
-    def _to_object(self, dataset, graph, context, term, node, inlist=False):
 
+    def _to_object(self, dataset, graph, context, term, node, inlist=False, normalize_literals=True):
         if node is None:
             return
 
@@ -301,7 +303,7 @@ class Parser(object):
         else:  # expand..
             if not term or not term.type:
                 if isinstance(node, float):
-                    return Literal(node, datatype=XSD.double)
+                    return Literal(node, datatype=XSD.double, normalize=normalize_literals)
                 if term and term.language is not UNDEF:
                     lang = term.language
                 else:
@@ -324,7 +326,7 @@ class Parser(object):
             if lang:
                 return Literal(value, lang=lang)
             elif datatype:
-                return Literal(value, datatype=context.expand(datatype))
+                return Literal(value, datatype=context.expand(datatype), normalize=normalize_literals)
             else:
                 return Literal(value)
         else:
