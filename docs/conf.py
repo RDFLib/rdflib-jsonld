@@ -42,7 +42,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'rdflib_jsonld'
-copyright = '2012, RDFLib Team'
+copyright = '2021, RDFLib Team'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the

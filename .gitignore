@@ -12,6 +12,7 @@
 *.pyc
 *.orig
 .coverage
+.eggs
 .hgtags
 /.gitignore
 __pycache__
