@@ -4,21 +4,13 @@ try:
 except ImportError:
     import simplejson as json
 
-from six import PY3
-
-if PY3:
-    from html.parser import HTMLParser
+from html.parser import HTMLParser
 
 from os import sep
 from os.path import normpath
-if PY3:
-    from urllib.parse import urljoin, urlsplit, urlunsplit
-else:
-    from urlparse import urljoin, urlsplit, urlunsplit
-
+from urllib.parse import urljoin, urlsplit, urlunsplit
 from rdflib.parser import create_input_source
-if PY3:
-    from io import StringIO
+from io import StringIO
 
 
 class HTMLJSONParser(HTMLParser):
@@ -62,26 +54,17 @@ def source_to_json(source):
 
     stream = source.getByteStream()
     try:
-        if PY3:
-            return json.load(StringIO(stream.read().decode('utf-8')))
-        else:
-            return json.load(stream)
+        return json.load(StringIO(stream.read().decode('utf-8')))
     except json.JSONDecodeError as e:
         # The document is not a JSON document, let's see whether we can parse
         # it as HTML
 
         # Reset stream pointer to 0
         stream.seek(0)
-        if PY3:
-            # Only do this when in Python 3
-            parser = HTMLJSONParser()
-            parser.feed(stream.read().decode('utf-8'))
+        parser = HTMLJSONParser()
+        parser.feed(stream.read().decode('utf-8'))
 
-            return parser.get_json()
-        else:
-            # If not PY3, then we're just going to continue with the original
-            # parse exception
-            raise e
+        return parser.get_json()
     finally:
         stream.close()
 
