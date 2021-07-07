@@ -245,7 +245,7 @@ class Converter(object):
         use_set = not context.active
 
         if term:
-            p_key = term.name
+            p_key = context.to_symbol(term.id)
 
             if term.type:
                 node = self.type_coerce(o, term.type)
