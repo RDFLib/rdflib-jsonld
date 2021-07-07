@@ -1,0 +1,226 @@
+{
+	"@context":
+	{
+		"isTypeOf": "@type",
+		"id": "@id",
+		"adms": "http://www.w3.org/ns/adms#",
+		"cpsv": "http://purl.org/vocab/cpsv#",
+		"cv" : "http://data.europa.eu/m8g/",
+		"dcat": "http://www.w3.org/ns/dcat#",
+		"dct": "http://purl.org/dc/terms/",
+		"eli": "http://data.europa.eu/eli/ontology#",
+		"foaf": "http://xmlns.com/foaf/0.1/",
+		"locn": "http://www.w3.org/ns/locn#",
+		"rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+		"schema": "https://schema.org/",
+		"skos": "http://www.w3.org/2004/02/skos/core#",
+		"xsd": "http://www.w3.org/2001/XMLSchema#",
+
+		"Agent": "dct:Agent",
+		"BusinessEvent": "cv:BusinessEvent",
+		"Channel": "cv:Channel",
+		"Collection": "skos:Collection",
+		"Concept": "skos:Concept",
+		"ContactPoint": "schema:ContactPoint",
+		"Cost": "cv:Cost",
+		"CriterionRequirement": "cv:CriterionRequirement",
+		"Event": "cv:Event",
+		"Evidence": "cv:Evidence",
+		"LegalResource": "eli:LegalResource",
+		"LifeEvent": "cv:LifeEvent",
+		"LinguisticSystem": "dct:LinguisticSystem",
+		"Location": "dct:Location",
+		"OpeningHoursSpecification": "schema:OpeningHoursSpecification",
+		"Output": "cv:Output",
+		"Participation": "cv:Participation",
+		"PublicOrganisation": "cv:PublicOrganisation",
+		"PublicService": "cpsv:PublicService",
+		"PublicServiceDataset": "cv:PublicServiceDataset",
+		"Rule": "cpsv:Rule",
+
+		"currency": {
+			"@id": "cv:currency",
+			"@type": "@id"
+		},
+		"description": {
+			"@id": "dct:description",
+			"@type": "rdfs:Literal"
+		},
+		"email": {
+			"@id": "schema:email",
+			"@type": "rdfs:Literal"
+		},
+		"fax": {
+			"@id": "schema:faxNumber",
+			"@type": "rdfs:Literal"
+		},
+		"follows": {
+			"@id": "cpsv:follows",
+			"@type": "@id"
+		},
+		"hasAddress": {
+			"@id": "cv:hasAddress",
+			"@type": "@id"
+		},
+		"hasChannel": {
+			"@id": "cv:hasChannel",
+			"@type": "@id"
+		},
+		"hasCompetentAuthority": {
+			"@id": "cv:hasCompetentAuthority",
+			"@type": "@id"
+		},
+		"hasContactPoint": {
+			"@id": "cv:hasContactPoint",
+			"@type": "@id"
+		},
+		"hasCost": {
+			"@id": "cv:hasCost",
+			"@type": "@id"
+		},
+		"hasCriterion": {
+			"@id": "cv:hasCriterion",
+			"@type": "@id"
+		},
+		"hasInput": {
+			"@id": "cpsv:hasInput",
+			"@type": "@id"
+		},
+		"hasLegalResource": {
+			"@id": "cv:hasLegalResource",
+			"@type": "@id"
+		},
+		"hasPart": {
+			"@id": "dct:hasPart",
+			"@type": "@id"
+		},
+		"hasParticipation": {
+			"@id": "cv:hasParticipation",
+			"@type": "@id"
+		},
+		"hoursAvailable": {
+			"@id": "schema:hoursAvailable",
+			"@type": "@id"
+		},
+		"identifier": {
+			"@id": "dct:identifier",
+			"@type": "rdfs:Literal"
+		},
+		"ifAccessedThrough": {
+			"@id": "cv:ifAccessedThrough",
+			"@type": "@id"
+		},
+		"implements": {
+			"@id": "cpsv:implements",
+			"@type": "@id"
+		},
+		"isClassifiedBy": {
+			"@id": "cv:isClassifiedBy",
+			"@type": "@id"
+		},
+		"isDefinedBy": {
+			"@id": "cv:isDefinedBy",
+			"@type": "@id"
+		},
+		"isDescribedAt": {
+			"@id": "cv:isDescribedAt",
+			"@type": "@id"
+		},
+		"isGroupedBy": {
+			"@id": "cv:isGroupedBy",
+			"@type": "@id"
+		},
+		"keyword": {
+			"@id": "dcat:keyword",
+			"@type": "rdfs:Literal"
+		},
+		"landingPage": {
+			"@id": "dcat:landingPage",
+			"@type": "@id"
+		},
+		"language": {
+			"@id": "dct:language",
+			"@type": "@id"
+		},
+		"member": {
+			"@id": "skos:member",
+			"@type": "@id"
+		},
+		"openingHours": {
+			"@id": "schema:openingHours",
+			"@type": "rdfs:Literal"
+		},
+		"ownedBy": {
+			"@id": "cv:ownedBy",
+			"@type": "@id"
+		},
+		"page": {
+			"@id": "foaf:page",
+			"@type": "@id"
+		},
+		"playsRole": {
+			"@id": "cv:playsRole",
+			"@type": "@id"
+		},
+		"prefLabel": {
+			"@id": "skos:prefLabel",
+			"@type": "rdfs:Literal"
+		},
+		"processingTime": {
+			"@id": "cv:processingTime",
+			"@type": "rdfs:Literal"
+		},
+		"produces": {
+			"@id": "cpsv:produces",
+			"@type": "@id"
+		},
+		"publisher": {
+			"@id": "dct:publisher",
+			"@type": "@id"
+		},
+		"related": {
+			"@id": "dct:relation",
+			"@type": "@id"
+		},
+		"requires": {
+			"@id": "dct:requires",
+			"@type": "@id"
+		},
+		"role": {
+			"@id": "cv:role",
+			"@type": "@id"
+		},
+		"sector": {
+			"@id": "cv:sector",
+			"@type": "@id"
+		},
+		"spatial": {
+			"@id": "dct:spatial",
+			"@type": "@id"
+		},
+		"status": {
+			"@id": "adms:status",
+			"@type": "@id"
+		},
+		"telephone": {
+			"@id": "schema:telephone",
+			"@type": "rdfs:Literal"
+		},
+		"thematicArea": {
+			"@id": "cv:thematicArea",
+			"@type": "@id"
+		},
+		"title": {
+			"@id": "dct:title",
+			"@type": "rdfs:Literal"
+		},
+		"type": {
+			"@id": "dct:type",
+			"@type": "@id"
+		},
+		"value": {
+			"@id": "cv:value",
+			"@type": "xsd:double"
+		}
+	}
+}
