@@ -12,9 +12,9 @@ Example usage::
     >>> from rdflib import Graph
 
     >>> testrdf = '''
-    ... @prefix dc: <http://purl.org/dc/terms/> .
+    ... @prefix dcterms: <http://purl.org/dc/terms/> .
     ... <http://example.org/about>
-    ...     dc:title "Someone's Homepage"@en .
+    ...     dcterms:title "Someone's Homepage"@en .
     ... '''
 
     >>> g = Graph().parse(data=testrdf, format='n3')
@@ -50,7 +50,7 @@ from .context import Context, UNDEF
 from .util import json
 from .keys import CONTEXT, GRAPH, ID, VOCAB, LIST, SET, LANG
 
-__all__ = ['JsonLDSerializer', 'from_rdf']
+__all__ = ["JsonLDSerializer", "from_rdf"]
 
 
 PLAIN_LITERAL_TYPES = set([XSD.boolean, XSD.integer, XSD.double, XSD.string])
@@ -62,42 +62,62 @@ class JsonLDSerializer(Serializer):
 
     def serialize(self, stream, base=None, encoding=None, **kwargs):
         # TODO: docstring w. args and return value
-        encoding = encoding or 'utf-8'
-        if encoding not in ('utf-8', 'utf-16'):
-            warnings.warn("JSON should be encoded as unicode. " +
-                          "Given encoding was: %s" % encoding)
+        encoding = encoding or "utf-8"
+        if encoding not in ("utf-8", "utf-16"):
+            warnings.warn(
+                "JSON should be encoded as unicode. "
+                + "Given encoding was: %s" % encoding
+            )
 
-        context_data = kwargs.get('context')
-        use_native_types = kwargs.get('use_native_types', False),
-        use_rdf_type = kwargs.get('use_rdf_type', False)
-        auto_compact = kwargs.get('auto_compact', False)
+        context_data = kwargs.get("context")
+        use_native_types = (kwargs.get("use_native_types", False),)
+        use_rdf_type = kwargs.get("use_rdf_type", False)
+        auto_compact = kwargs.get("auto_compact", False)
 
-        indent = kwargs.get('indent', 2)
-        separators = kwargs.get('separators', (',', ': '))
-        sort_keys = kwargs.get('sort_keys', True)
-        ensure_ascii = kwargs.get('ensure_ascii', False)
+        indent = kwargs.get("indent", 2)
+        separators = kwargs.get("separators", (",", ": "))
+        sort_keys = kwargs.get("sort_keys", True)
+        ensure_ascii = kwargs.get("ensure_ascii", False)
 
-        obj = from_rdf(self.store, context_data, base,
-                use_native_types, use_rdf_type,
-                auto_compact=auto_compact)
+        obj = from_rdf(
+            self.store,
+            context_data,
+            base,
+            use_native_types,
+            use_rdf_type,
+            auto_compact=auto_compact,
+        )
 
-        data = json.dumps(obj, indent=indent, separators=separators,
-                          sort_keys=sort_keys, ensure_ascii=ensure_ascii)
+        data = json.dumps(
+            obj,
+            indent=indent,
+            separators=separators,
+            sort_keys=sort_keys,
+            ensure_ascii=ensure_ascii,
+        )
 
-        stream.write(data.encode(encoding, 'replace'))
+        stream.write(data.encode(encoding, "replace"))
 
 
-def from_rdf(graph, context_data=None, base=None,
-        use_native_types=False, use_rdf_type=False,
-        auto_compact=False, startnode=None, index=False):
+def from_rdf(
+    graph,
+    context_data=None,
+    base=None,
+    use_native_types=False,
+    use_rdf_type=False,
+    auto_compact=False,
+    startnode=None,
+    index=False,
+):
     # TODO: docstring w. args and return value
     # TODO: support for index and startnode
 
     if not context_data and auto_compact:
         context_data = dict(
             (pfx, unicode(ns))
-            for (pfx, ns) in graph.namespaces() if pfx and
-            unicode(ns) != u"http://www.w3.org/XML/1998/namespace")
+            for (pfx, ns) in graph.namespaces()
+            if pfx and unicode(ns) != "http://www.w3.org/XML/1998/namespace"
+        )
 
     if isinstance(context_data, Context):
         context = context_data
@@ -117,7 +137,6 @@ def from_rdf(graph, context_data=None, base=None,
 
 
 class Converter(object):
-
     def __init__(self, context, use_native_types, use_rdf_type):
         self.context = context
         self.use_native_types = context.active or use_native_types
@@ -177,8 +196,9 @@ class Converter(object):
 
         for s in set(graph.subjects()):
             ## only iri:s and unreferenced (rest will be promoted to top if needed)
-            if isinstance(s, URIRef) or (isinstance(s, BNode)
-                    and not any(graph.subjects(None, s))):
+            if isinstance(s, URIRef) or (
+                isinstance(s, BNode) and not any(graph.subjects(None, s))
+            ):
                 self.process_subject(graph, s, nodemap)
 
         return list(nodemap.values())
@@ -191,7 +211,7 @@ class Converter(object):
         else:
             node_id = None
 
-        #used_as_object = any(graph.subjects(None, s))
+        # used_as_object = any(graph.subjects(None, s))
         if node_id in nodemap:
             return None
 
@@ -231,15 +251,17 @@ class Converter(object):
                 node = self.type_coerce(o, term.type)
             elif term.language and o.language == term.language:
                 node = unicode(o)
-            elif context.language and (
-                    term.language is None and o.language is None):
+            elif context.language and (term.language is None and o.language is None):
                 node = unicode(o)
 
             if term.container == SET:
                 use_set = True
             elif term.container == LIST:
-                node = [self.type_coerce(v, term.type) or self.to_raw_value(graph, s, v, nodemap)
-                        for v in self.to_collection(graph, o)]
+                node = [
+                    self.type_coerce(v, term.type)
+                    or self.to_raw_value(graph, s, v, nodemap)
+                    for v in self.to_collection(graph, o)
+                ]
             elif term.container == LANG and language:
                 value = s_node.setdefault(p_key, {})
                 values = value.get(language)
@@ -296,11 +318,15 @@ class Converter(object):
         context = self.context
         coll = self.to_collection(graph, o)
         if coll is not None:
-            coll = [self.to_raw_value(graph, s, lo, nodemap)
-                    for lo in self.to_collection(graph, o)]
+            coll = [
+                self.to_raw_value(graph, s, lo, nodemap)
+                for lo in self.to_collection(graph, o)
+            ]
             return {context.list_key: coll}
         elif isinstance(o, BNode):
-            embed = False # TODO: self.context.active or using startnode and only one ref
+            embed = (
+                False  # TODO: self.context.active or using startnode and only one ref
+            )
             onode = self.process_subject(graph, o, nodemap)
             if onode:
                 if embed and not any(s2 for s2 in graph.subjects(None, o) if s2 != s):
@@ -324,11 +350,12 @@ class Converter(object):
                         return v
                     else:
                         return {context.value_key: v}
-                return {context.type_key: context.to_symbol(o.datatype),
-                        context.value_key: v}
+                return {
+                    context.type_key: context.to_symbol(o.datatype),
+                    context.value_key: v,
+                }
             elif o.language and o.language != context.language:
-                return {context.lang_key: o.language,
-                        context.value_key: v}
+                return {context.lang_key: o.language, context.value_key: v}
             elif not context.active or context.language and not o.language:
                 return {context.value_key: v}
             else:
