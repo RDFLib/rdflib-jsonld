@@ -1,5 +1,12 @@
 # RDFLib plugin providing JSON-LD parsing and serialization
 
+## ARCHIVED
+*As of 2021-07-21, this repository is archived since this plugin's code at that point has been absorbed into core [RDFLib](https://github.com/RDFLib/rdflib) for its 6.0.0 release.*
+
+The repo will be kep to transfer Issues, PRs etc to rdflib core.
+
+---
+
 This is an implementation of [JSON-LD](http://www.w3.org/TR/json-ld/)
 for [RDFLib](https://github.com/RDFLib/rdflib).
 For more information about this technology, see the [JSON-LD website](http://json-ld.org/).
