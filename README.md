@@ -1,13 +1,13 @@
 # RDFLib plugin providing JSON-LD parsing and serialization
 
 ## ARCHIVED
-_The 0.6.0 release of this tool is a tombstoning release. As of 2021-07-21, JSON-LD handling capability has been merged into the rdflib core [RDFLib](https://github.com/RDFLib/rdflib) in its 6.0.0 release._
+*The 0.6.0 release of this tool is a tombstoning release. As of 2021-07-21, JSON-LD handling capability has been merged into the rdflib core [RDFLib](https://github.com/RDFLib/rdflib) in its 6.0.0 release.*
 
-_Please stop using this plugin as soon as you can and migrate to rdflib >= 6.0.0. We - maintainers - will be much more able to fix/enhance JSON-LD handing in rdflib core!_
+*Please stop using this plugin as soon as you can and migrate to rdflib >= 6.0.0. We - maintainers - will be much more able to fix/enhance JSON-LD handing in rdflib core!*
 
-_If you are forced to keep using Python <= 3.6, you will need to keep using this plugin with RDFlib 5.0.0._
+*If you are forced to keep using Python <= 3.6, you will need to keep using this plugin with RDFlib 5.0.0.*
 
----
+----
 
 This is an implementation of [JSON-LD](http://www.w3.org/TR/json-ld/)
 for [RDFLib](https://github.com/RDFLib/rdflib).
