@@ -233,7 +233,9 @@ json_kwargs = dict(indent=2, separators=(",", ": "), sort_keys=True, ensure_asci
 
 def run(data, expected):
     g = Graph().parse(data=data, format="turtle")
-    result = g.serialize(format="json-ld", context=expected["@context"]).decode("utf-8")
+    result = g.serialize(format="json-ld", context=expected["@context"])
+    if isinstance(result, bytes):
+        result = result.decode("utf-8")
     result = json.loads(result)
 
     sort_graph(result)

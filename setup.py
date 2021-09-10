@@ -77,7 +77,6 @@ setup(
     url="https://github.com/RDFLib/rdflib-jsonld",
     license="BSD",
     packages=["rdflib_jsonld"],
-    use_2to3=True,
     zip_safe=False,
     platforms=["any"],
     classifiers=[
@@ -93,7 +92,7 @@ setup(
         "Natural Language :: English",
     ],
     test_suite="nose.collector",
-    install_requires=["rdflib>=5.0.0"],
+    install_requires=["rdflib"],
     tests_require=["nose"],
     command_options={
         "build_sphinx": {
