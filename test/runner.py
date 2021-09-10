@@ -11,6 +11,7 @@ from rdflib_jsonld.keys import CONTEXT, GRAPH
 
 # monkey-patch NTriplesParser to keep source bnode id:s ..
 from rdflib.plugins.parsers.ntriples import r_nodeid, bNode
+
 # NTriplesParser was renamed between 5.0.0 and 6.0.0.
 if rdflib.__version__ < "6":
     from rdflib.plugins.parsers.ntriples import NTriplesParser
@@ -20,15 +21,20 @@ else:
 
 # NTriplesParser.nodeid changed its function signature between 5.0.0 and 6.0.0.
 if rdflib.__version__ < "6":
+
     def _preserving_nodeid(self):
         if not self.peek("_"):
             return False
         return bNode(self.eat(r_nodeid).group(1))
+
+
 else:
+
     def _preserving_nodeid(self, bnode_context=None):
         if not self.peek("_"):
             return False
         return bNode(self.eat(r_nodeid).group(1))
+
 
 NTriplesParser.nodeid = _preserving_nodeid
 # .. and accept bnodes everywhere
