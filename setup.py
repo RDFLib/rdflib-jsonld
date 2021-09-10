@@ -92,7 +92,7 @@ setup(
         "Natural Language :: English",
     ],
     test_suite="nose.collector",
-    install_requires=["rdflib<6.0.0"],
+    install_requires=["rdflib"],
     tests_require=["nose"],
     command_options={
         "build_sphinx": {
