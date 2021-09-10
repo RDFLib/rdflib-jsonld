@@ -19,7 +19,7 @@ Example usage::
 
     >>> g = Graph().parse(data=testrdf, format='n3')
 
-    >>> print(g.serialize(format='json-ld', indent=4).decode())
+    >>> print(g.serialize(format='json-ld', indent=4))
     [
         {
             "@id": "http://example.org/about",
