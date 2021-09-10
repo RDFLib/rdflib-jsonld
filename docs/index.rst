@@ -3,6 +3,17 @@
 Welcome to rdflib_jsonld's documentation!
 =========================================
 
+DEPRECATED
+----------
+This `rdflib <https://pypi.org/project/rdflib/>`_ plugin is deprecated
+for, as of the 2021-07-21 release of rdflib 6.0.0, JSON-LD handing has been
+integrated.
+
+*This plugin is now 'tombstoned' meaning this - 0.6.0 - is a final release and
+all users of Python > 3.6 are encouraged to move to rdflib > 6.0.0.*
+
+----
+
 RDFLib plugin providing JSON-LD parsing and serialization.
 
 This parser/serialiser will 
