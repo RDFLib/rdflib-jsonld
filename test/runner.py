@@ -1,5 +1,6 @@
 from __future__ import with_statement
 import json
+import rdflib
 from rdflib import ConjunctiveGraph
 from rdflib.compare import isomorphic
 from rdflib_jsonld._compat import IS_PY3
@@ -9,7 +10,12 @@ from rdflib_jsonld.keys import CONTEXT, GRAPH
 
 
 # monkey-patch NTriplesParser to keep source bnode id:s ..
-from rdflib.plugins.parsers.ntriples import NTriplesParser, r_nodeid, bNode
+from rdflib.plugins.parsers.ntriples import r_nodeid, bNode
+# NTriplesParser was renamed between 5.0.0 and 6.0.0.
+if rdflib.__version__ < "6":
+    from rdflib.plugins.parsers.ntriples import NTriplesParser
+else:
+    from rdflib.plugins.parsers.ntriples import W3CNTriplesParser as NTriplesParser
 
 
 def _preserving_nodeid(self):
