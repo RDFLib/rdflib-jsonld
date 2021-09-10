@@ -10,6 +10,7 @@ Example usage::
     >>> register('json-ld', Serializer, 'rdflib_jsonld.serializer', 'JsonLDSerializer')
 
     >>> from rdflib import Graph
+    >>> from rdflib import __version__ as rdflib_version
 
     >>> testrdf = '''
     ... @prefix dcterms: <http://purl.org/dc/terms/> .
@@ -19,7 +20,12 @@ Example usage::
 
     >>> g = Graph().parse(data=testrdf, format='n3')
 
-    >>> print(g.serialize(format='json-ld', indent=4))
+    >>> g_display = g.serialize(format='json-ld', indent=4)
+    >>> if rdflib_version < "6.0.0":
+    ...     # rdflib < 6.0.0 returns bytes when no
+    ...     # destination is provided.
+    ...     g_display = g_display.decode()
+    >>> print(g_display)
     [
         {
             "@id": "http://example.org/about",
