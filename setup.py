@@ -77,7 +77,6 @@ setup(
     url="https://github.com/RDFLib/rdflib-jsonld",
     license="BSD",
     packages=["rdflib_jsonld"],
-    use_2to3=True,
     zip_safe=False,
     platforms=["any"],
     classifiers=[
