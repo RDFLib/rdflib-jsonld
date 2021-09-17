@@ -200,7 +200,8 @@ class Converter(object):
     def from_graph(self, graph):
         nodemap = {}
 
-        for s in set(graph.subjects()):
+        subjects = list(graph.subjects())
+        for s in sorted(set(subjects), key=subjects.index):
             ## only iri:s and unreferenced (rest will be promoted to top if needed)
             if isinstance(s, URIRef) or (
                 isinstance(s, BNode) and not any(graph.subjects(None, s))
