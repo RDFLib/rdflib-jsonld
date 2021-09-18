@@ -1,7 +1,0 @@
-{
-  "@id": "_:g",
-  "@graph": {
-    "@id": "http://example/s",
-    "http://example/p": {"@id": "http://example/o"}
-  }
-}

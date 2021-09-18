@@ -1,3 +1,0 @@
-<http://example.com/node> <http://example.com/vocab/property> "einfacher String"@de .
-<http://example.com/node> <http://example.com/vocab/property> <http://example.com/propertyValueNode> .
-<http://example.com/propertyValueNode> <http://example.com/vocab/indexMap> "simple string"@en .

@@ -1,7 +1,0 @@
-{
-  "@context": {
-    "term": "http://example.com/term",
-    "@language": "en"
-  },
-  "term": "v"
-}

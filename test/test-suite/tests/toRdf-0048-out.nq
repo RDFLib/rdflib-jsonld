@@ -1,2 +1,0 @@
-<http://example.org/test> <http://example.org/vocab#keep-full-value> "only value" .
-<http://example.org/test> <http://example.org/vocab#test> "test"@en .

@@ -6,11 +6,13 @@ Welcome to rdflib_jsonld's documentation!
 DEPRECATED
 ----------
 This `rdflib <https://pypi.org/project/rdflib/>`_ plugin is deprecated
-for, as of the 2021-07-21 release of rdflib 6.0.0, JSON-LD handing has been
-integrated.
+for, as of the 2021-09-17 release of rdflib 6.0.1, JSON-LD handing has been
+integrated. All functionality in this package has been removed, as of release 0.6.2.
 
-*This plugin is now 'tombstoned' meaning this - 0.6.0 - is a final release and
-all users of Python > 3.6 are encouraged to move to rdflib > 6.0.0.*
+*This plugin is now 'tombstoned' meaning this - 0.6.2 - is a final release and
+all users of Python > 3.6 are encouraged to move to rdflib > 6.0.1.*
+
+*If you are forced to keep using Python <= 3.6, you will need to keep using release <= 0.5.0 of this plugin with RDFlib 5.0.0.*
 
 ----
 
